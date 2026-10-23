@@ -6,18 +6,22 @@
 .section .text
 .align 2
 .extern sdk_sample_alias
+.extern sdk_sample_classify_engine
 .extern sdk_sample_note_route
 .extern sdk_sample_key
 .extern stock_sample_classify_tail
 .extern stock_sample_key_tail
 
 /* Entry of stock's sample predicate (R0 = engine). Replays the two displaced
- * instructions with the aliased engine, then continues stock. */
+ * instructions with the aliased engine, then continues stock. The caller's
+ * return address, saved by HOOK_SAVE's LINK, lets C++ answer the parameter
+ * editor differently (sample_machines.cpp). */
 .global extensions_sample_classify
 .type extensions_sample_classify, STT_FUNC
 extensions_sample_classify:
     HOOK_SAVE
-    CALL sdk_sample_alias;
+    R1 = [FP + 4];
+    CALL sdk_sample_classify_engine;
     HOOK_RESULT R0
     HOOK_RESTORE
     CC = R0 < 3 (IU);

@@ -3,7 +3,7 @@
 // Every firmware rule (edits, hooks, identity ranges, catalog offsets, table
 // bytes) comes from the reviewed profile, authenticated by this digest. The
 // Python SDK reads the same constant.
-export const PROFILE_SHA256 = 'fb2e68b15a1a8a177dd5308d5d89d584c837903ba89d043bd011d263f0321d2c';
+export const PROFILE_SHA256 = 'c2aae176daf72dbf8c024280720ba224f8093a71d3e64d1b70600fdce7f97207';
 export function requireThat(ok, message) { if (!ok) throw new Error(message); }
 const check = requireThat;
 const utf8 = new TextEncoder();
@@ -95,16 +95,18 @@ export function readObject(bytes) {
   return {sections, symbols, relocations};
 }
 
-// The profile's identity rules, as tooling.machines.check_identity applies them.
-export function validIdentity(rules, kind, identity) {
+// The profile's identity rules, as tooling.machines.check_identity applies them;
+// screen marks a sample engine that draws its own page instead of a stock sample page.
+export function validIdentity(rules, kind, identity, screen = false) {
   const slot = kind === 'effect' ? 'effect' : 'engine';
   if (!identity || typeof identity !== 'object' || Object.keys(identity).sort().join() !== [slot, 'page'].sort().join()) return false;
   const n = identity[slot], page = identity.page;
   if (!Number.isInteger(n) || !Number.isInteger(page)) return false;
   if (kind === 'effect') return rules.effects.includes(n) && page === rules.effect_page;
   if (!(n > 0 && n < rules.engines && n !== rules.engine_none && !rules.stock_engines.includes(n))) return false;
-  return kind === 'sample' ? n > rules.engine_none && rules.sample_pages.includes(page)
-    : kind === 'synth' && page > rules.page_none && page < rules.pages;
+  const own = page > rules.page_none && page < rules.pages;
+  return kind === 'sample' ? n > rules.engine_none && (screen ? own : rules.sample_pages.includes(page))
+    : kind === 'synth' && own;
 }
 
 // Assignments are catalog-wide, independent of selection order. New IDs are
@@ -114,9 +116,9 @@ export function identities(kit, saved = null) {
   for (const m of kit.machines) {
     check(!Object.hasOwn(result, m.id), 'Duplicate machine identity');
     const id = m.identity;
-    check(validIdentity(kit.profile.identities, m.kind, id), 'Identity overlaps a stock slot or exceeds capacity');
-    // Sample engines and effects share stock pages; a synth's own page is unique.
-    for (const kind of m.kind === 'synth' ? ['engine', 'page'] : [m.kind === 'effect' ? 'effect' : 'engine']) {
+    check(validIdentity(kit.profile.identities, m.kind, id, Boolean(m.asset)), 'Identity overlaps a stock slot or exceeds capacity');
+    // Stock-page sample engines and effects share stock pages; an own page is unique.
+    for (const kind of m.asset || m.kind === 'synth' ? ['engine', 'page'] : [m.kind === 'effect' ? 'effect' : 'engine']) {
       check(!seen[kind].has(id[kind]), 'Conflicting ' + kind + ' assignment'); seen[kind].add(id[kind]);
     }
     result[m.id] = {...id};

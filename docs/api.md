@@ -6,7 +6,7 @@ A machine is a folder under `machines/` named after the machine. Every kind has
 | Kind | C++ the machine supplies | Example |
 | --- | --- | --- |
 | `synth` | `engine.cpp` with `Voice`/`Shared` state, `display.cpp` and `panel.svg.fragment` | [2op FM](../machines/fm2op/engine.cpp), [Macro Osc](../machines/macroosc/engine.cpp) |
-| `sample` | `sample.cpp` with `Voice` state; the stock sample page is its screen | [Timestretch](../machines/timestretch/sample.cpp) |
+| `sample` | `sample.cpp` with `Voice` state; the stock sample page is its screen, or its own `display.cpp` and `panel.svg.fragment` when it declares a display | [Timestretch](../machines/timestretch/sample.cpp), [Granular](../machines/granular/sample.cpp) |
 | `effect` | `fx.cpp` with `State`; the stock FX page is its screen | [Ring Mod](../machines/ringmod/fx.cpp) |
 
 The [first-machine walkthrough](first-machine.md) creates a standalone synth
@@ -107,7 +107,11 @@ place; amounts omit the percent suffix. A machine's text controls can override t
 use the slower Shift rate for continuous controls, with stock FX captions.
 
 A sample engine declares `voiceCapacity` (1..256) and the optional
-[sample services](#sample-engines) it uses. An effect declares no resources (`{}`).
+[sample services](#sample-engines) it uses. It may also declare `display`
+(see the [display API](display.md)): it then draws its own page like a synth,
+with four encoder positions and [alternate controls](#alternate-controls), in
+place of the stock sample page; `padSettings` and `drumControls` need the stock
+drum page and exclude a display. An effect declares no resources (`{}`).
 A synth declares:
 
 | Field | Required value or meaning |
@@ -199,6 +203,7 @@ means 0. Callbacks are functions in the machine's namespace.
 | `padSettings` | 0 or 1; page 7 | The SDK saves 16 machine-defined bits with each pad | `sample_defaults`, `sample_assign` |
 | `drumControls` | 0 or 1; needs `padSettings` | The drum page's machine encoders and panel | `drum_control`, `drum_panel` |
 | `sampleAnalysis` | Budget in bytes, 4096..2 MiB, whole words | Prepared per-sample data | `analysis_words`, `prepare_begin`, `prepare_step`, `prepared` |
+| `singleSample` | 0 or 1 | The stock GUI assigns one sample to the whole track, as for the sampler, instead of multisampler key zones | |
 
 ### Audio block
 
@@ -354,7 +359,7 @@ source dry mixer, as described under [effects](#effects).
 | Kind | ID | Page |
 | --- | --- | --- |
 | `synth` | 1..62, except the stock sentinel 33 and the IDs stock registers (2–4, 6, 7, 18–20, 22, 29–32) | Its own screen: 82..127 |
-| `sample` | 34..62 | Stock sample page 2 or 7; `padSettings` requires 7 |
+| `sample` | 34..62 | Stock sample page 2 or 7, `padSettings` requires 7; or its own screen 82..127 when it declares a display |
 | `effect` | A free stock FX ID: 1–4, 6–8 or 11 | Stock FX page 21 |
 
 IDs above 32 and pages above 81 exist only in the relocated stock tables.

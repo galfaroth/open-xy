@@ -133,7 +133,8 @@ device can supply its own platform template and backend. The browser authenticat
 the embedded template, while native packaging records it in source provenance.
 Template validation checks structure, not actual device text rendering.
 
-See [2op display.cpp](../machines/fm2op/display.cpp) and
-[Macro display.cpp](../machines/macroosc/display.cpp) for implementations;
+See [2op display.cpp](../machines/fm2op/display.cpp),
+[Macro display.cpp](../machines/macroosc/display.cpp) and, for a sample engine
+with its own page, [Granular display.cpp](../machines/granular/display.cpp);
 [Macro Osc's artwork](../machines/macroosc/panel.svg.fragment) uses glow and dials.
 How screens reach stock is described in the [firmware ABI](abi-1.2.0.md#screens).

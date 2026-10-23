@@ -6,9 +6,14 @@ import unittest
 from dataclasses import replace
 
 from tooling import adapters
-from tooling.machines import check_analysis_budgets, machine
+from tooling.machines import check_analysis_budgets, check_identity, machine
 from tooling.definitions import validate_definition
 from tooling import firmware
+from tooling.native import plan
+from tooling.pipeline import config
+from tooling.startup import render
+
+RULES = config()['identities']
 
 
 class Generation(unittest.TestCase):
@@ -75,6 +80,28 @@ class Generation(unittest.TestCase):
         self.assertIn('timestretch_engine_id, timestretch_page_id, 1};', text)
         self.assertIn('int timestretch_ready() { return sdk_engine_ready(&record, nullptr); }', text)
         self.assertNotIn('screen', text)
+
+    def test_sample_engine_with_a_display_registers_its_own_page(self):
+        m = machine('granular')
+        self.assertEqual((m.kind, m.display), ('sample', 'drawing'))
+        self.assertGreater(m.identity['page'], 81)
+        with self.assertRaises(ValueError):
+            check_identity(RULES, 'sample', dict(engine=36, page=84))
+        check_identity(RULES, 'sample', dict(engine=36, page=84), screen=True)
+        with self.assertRaises(ValueError):
+            check_identity(RULES, 'sample', dict(engine=36, page=2), screen=True)
+        with tempfile.TemporaryDirectory() as directory:
+            text = adapters.generate_registration(directory, m).read_text(encoding='utf-8')
+            self.assertIn('granular_screen_register()', text)
+            self.assertIn('sdk_engine_ready(&record, &screen)', text)
+            controls = adapters.generate_synth_controls(directory, [m, machine('timestretch')]).read_text(encoding='utf-8')
+            # Each encoder cycles between its own parameter and the Shift-row alternate.
+            self.assertIn('{36, granular_ready, {4, 5, 6, 7, 0, 1, 2, 3}, ', controls)
+            self.assertNotIn('timestretch_ready', controls)
+        self.assertEqual([s for s in plan([m]) if s[2] in ('display', 'screen')][0][2], 'display')
+        startup = render(['timestretch', 'granular'], [], ['timestretch'])
+        self.assertIn('if (granular_screen_register() == 1) granular_register();', startup)
+        self.assertIn('    timestretch_register();', startup)
 
     def test_catalog_entry_and_stock_page_startup(self):
         entry = json.loads(adapters.catalog_entry(machine('timestretch')).strip().lstrip(','))

@@ -159,11 +159,21 @@ declarations retain 64-word output.
 The stock stereo PCM reader consumes packed left/right 16-bit pairs, while
 its output writes alternating 32-bit left/right words.
 
-Requirements: flag 1, an engine ID of 34–62, and page 2 or 7. The engine never
-touches the sample cache or its lock.
+Requirements: flag 1, an engine ID of 34–62, and page 2 or 7, or an owned
+relocated page (82–127) when the machine declares a display: it then registers
+and paints like a synth, and notes still route through the nearest-region path
+below. The engine never touches the sample cache or its lock.
 
-Stock's sample predicate and note-region dispatcher also have explicit engine
-ID checks. One generated table describes the collection's sample machines
+Stock's sample predicate, note-region dispatcher, recorder and instrument
+controller also have explicit engine ID checks: owned engines answer them as
+the multisampler (30), or as the sampler (2) when the machine declares
+`singleSample`, so the GUI assigns one sample to the whole track. The
+instrument controller's encoder query (`sdk_sample_controller_engine`) instead
+sees the real engine of a machine drawing its own page, so its encoders edit
+the parameter vector like a synth's rather than the sample region; the
+parameter editor's own predicate query (identified by its return address in
+`sdk_sample_classify_engine`) sees the real engine too, because its sample
+branch stores controls where neither the screen nor audio reads them. One generated table describes the collection's sample machines
 ([`sample_callbacks.cpp.in`](../sdk/platform/opxy-1.2.0/sample_callbacks.cpp.in));
 [`sample_machines.cpp`](../sdk/platform/opxy-1.2.0/sample_machines.cpp)
 admits an ID only while its registration is still ours, and an owned engine

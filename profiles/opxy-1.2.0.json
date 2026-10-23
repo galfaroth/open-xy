@@ -377,7 +377,7 @@
       "file_offset": "0xe9236",
       "length": 8,
       "before": "00de588db45e0000",
-      "symbol": "sdk_sample_ui_engine",
+      "symbol": "sdk_sample_controller_engine",
       "service": "samples",
       "call": true
     },

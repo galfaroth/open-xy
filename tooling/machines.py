@@ -10,7 +10,7 @@ from dataclasses import dataclass
 import json
 import re
 
-from .definitions import ANALYSIS_HEAP_LIMIT, ROOT, stock_name, validate_definition
+from .definitions import ANALYSIS_HEAP_LIMIT, ROOT, own_screen, stock_name, validate_definition
 from .formats import require
 from .pipeline import config
 
@@ -58,12 +58,13 @@ def _relative(machine_root, value):
     return value
 
 
-def check_identity(rules, kind, value):
+def check_identity(rules, kind, value, screen=False):
     """IDs a machine may claim under the profile's identity rules (the browser builder applies the same rules).
 
     Engines take a free entry of the relocated table, never the stock "none" value; a
     synth draws its own page above the stock "none" page, a sample engine an ID only
-    the relocated table holds and a stock sample page, an effect a free FX ID on the FX page.
+    the relocated table holds and a stock sample page, or its own relocated page when
+    it declares a display (`screen`), an effect a free FX ID on the FX page.
     """
     require(isinstance(value, dict), 'machine.json needs an identity')
     slot = 'effect' if kind == 'effect' else 'engine'
@@ -77,8 +78,11 @@ def check_identity(rules, kind, value):
     require(0 < number < rules['engines'] and number != rules['engine_none'] and number not in rules['stock_engines'],
             'Engine ID outside the relocated table, the stock "none" value or registered by stock')
     if kind == 'sample':
-        require(rules['engine_none'] < number and page in rules['sample_pages'],
-                'Sample engines need a relocated-table engine ID and a stock sample page')
+        require(rules['engine_none'] < number, 'Sample engines need a relocated-table engine ID')
+        if screen:
+            require(rules['page_none'] < page < rules['pages'], 'A sample engine with a display needs a relocated page')
+        else:
+            require(page in rules['sample_pages'], 'Sample engines without a display use a stock sample page')
     else:
         require(rules['page_none'] < page < rules['pages'], 'A machine with its own screen needs a relocated page')
     return {slot: number, 'page': page}
@@ -113,8 +117,10 @@ def machine(identity):
         dry_parameter = matches[0]
         require(definition['parameters'][dry_parameter]['mapping'] ==
                 dict(kind='linear', minimum=0, maximum=1), 'dryParameter must map linearly from 0 to 1')
-    # A synth draws its own screen; sample engines and effects use a stock page.
-    display = definition['resources']['display']['kind'] if kind == 'synth' else 'stock'
+    # A synth draws its own screen, as does a sample engine declaring a display;
+    # other sample engines and effects use a stock page.
+    screen = own_screen(definition, kind)
+    display = definition['resources']['display']['kind'] if screen else 'stock'
     # The native plan compiles extra translation units only into synths.
     if kind != 'synth':
         require(not sources and not includes, 'Sample engines and effects compile one fx.cpp or sample.cpp')
@@ -129,7 +135,8 @@ def machine(identity):
     return Machine(id=identity, kind=kind, name=definition['name'], description=value['description'],
                    display=display, sources=sources, includes=includes,
                    definition=definition,
-                   identity=check_identity(config()['identities'], kind, value['identity']), preset_defaults=defaults,
+                   identity=check_identity(config()['identities'], kind, value['identity'], screen),
+                   preset_defaults=defaults,
                    icon=icon, dry_parameter=dry_parameter)
 
 

@@ -24,6 +24,9 @@ struct SampleMachine {
     u32 (*prepare_begin)(const SampleView*, u32*, u32);
     u32 (*prepare_step)(u32, u32*);
     u32 (*prepared)(SampleAnalysis*);
+    // singleSample: the GUI treats the track like the stock sampler (one
+    // sample for the whole keyboard) instead of the multisampler's key zones.
+    u32 single;
 };
 }}
 
@@ -43,6 +46,15 @@ namespace opxy { namespace platform {
 inline u32 sample_page(u32 engine) {
     const SampleMachine* m = sdk_sample_machine(engine);
     return m ? m->page : 0;
+}
+inline bool single_sample(u32 engine) {
+    const SampleMachine* m = sdk_sample_machine(engine);
+    return m && m->single;
+}
+// An owned sample machine drawing its own page rather than a stock sample page.
+inline bool own_sample_page(u32 engine) {
+    const u32 page = sample_page(engine);
+    return page != 2 && page != 7 && page != 0;
 }
 inline bool pad_settings(u32 engine) {
     const SampleMachine* m = sdk_sample_machine(engine);
