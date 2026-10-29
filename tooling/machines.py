@@ -439,6 +439,8 @@ def machine_at(root, identity=None):
     definition = validate_definition(json.loads((root / 'definition.json').read_text(encoding='utf-8')), kind)
     if definition['resources'].get('sliceTiming'):
         require_sdk(version, (1, 7), 'A sample slicing clock (sliceTiming)')
+    if definition['resources'].get('noteStart') or definition.get('press') == 'action':
+        require_sdk(version, (1, 7), 'Synth note identity and control actions')
     if 'bufferBytes' in definition['resources']:
         require_sdk(version, (1, 2), 'An effect buffer (bufferBytes)')
     if definition['resources'].get('transport'):

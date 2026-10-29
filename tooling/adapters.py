@@ -48,7 +48,13 @@ def voice_values(definition):
     resources = definition['resources']
     return dict(NAMESPACE=definition['id'], VOICE_BYTES=resources['voiceBytes'],
                 VOICE_ALIGNMENT=resources['voiceAlignment'], SHARED_BYTES=resources['sharedBytes'],
-                PEAK=resources['outputPeakQ31'])
+                PEAK=resources['outputPeakQ31'],
+                START_KEY=', opxy::u32 key' if resources.get('noteStart') else '',
+                CAPTURE_KEY='handle->key = key < 128 ? static_cast<opxy::u8>(key) : 128;' if resources.get('noteStart') else '',
+                NOTE_ARGUMENT=', handle->key' if resources.get('noteStart') else '',
+                PREVIEW_NOTE_ARGUMENT=', key' if resources.get('noteStart') else '',
+                PRESS_BODY=(definition['id'] + '::control_press(encoder, parameters);')
+                    if definition.get('press') == 'action' else '(void)encoder; (void)parameters;')
 
 
 def generate_voice(directory, m, sweep=False):
@@ -450,6 +456,11 @@ def generate_synth_controls(directory, machines):
             # Shift gives these encoders to the stock sampler page (drum_controls_stock.cpp).
             codes = ', '.join(map(str, stock_shift_codes(m.definition)))
             extra = f', 0, {{1, 1, 1, 1}}, nullptr, {{{codes}}}'
+        if m.definition.get('press') == 'action':
+            # A synth's saved encoder-press action, the row's last field.
+            press = m.prefix + '_control_press'
+            declarations.append(f'void {press}(opxy::u32, opxy::i32*) __asm__("{press}");')
+            extra = (extra or ', 0, {1, 1, 1, 1}, nullptr') + ('' if extra.endswith('}') else ', {0, 0, 0, 0}') + ', ' + press
         rows.append(f"    {{{id_symbol}, {m.prefix}_ready, {{{', '.join(map(str, following))}}}, {continuous}, "
                     f"{{{', '.join(map(str, steps))}}}, {m.prefix}_format, "
                     f"{'true' if effect else 'false'}, {'true' if page else 'false'}, {hidden_pages(m.definition)}, {absent}{extra}}},")
