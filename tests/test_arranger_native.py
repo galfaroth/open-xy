@@ -12,7 +12,9 @@ from test_sample_services import HOST_CXX
 class ArrangerNativeTests(unittest.TestCase):
     def test_screen_registration_uses_linked_table(self):
         source = (ROOT / 'sdk/platform/opxy-1.2.1/arranger_ui.cpp').read_text()
-        self.assertIn('__asm__("__stock_screen_slots")', source)
+        from tooling.stock_tables import SCREEN_SLOTS
+        # A constant the browser linker needs no linker-script symbol for, equal to the table's.
+        self.assertIn('kStockScreenSlots = %#x;' % SCREEN_SLOTS, source)
         self.assertNotIn('0x8d4cf380', source)
         self.assertIn('!= slots_address()', source)
         self.assertIn('reinterpret_cast<Base* volatile*>(slots_address())', source)
@@ -24,7 +26,7 @@ class ArrangerNativeTests(unittest.TestCase):
         from tooling.stock_tables import SCREEN_SLOTS
         package = Path(os.environ['OPXY_TEST_NATIVE_PACKAGE'])
         _, undefined = object_symbols((package / 'analysis/sdk/arranger_ui.o').read_bytes())
-        self.assertIn('__stock_screen_slots', undefined)
+        self.assertNotIn('__stock_screen_slots', undefined)
         _, symbols = elf32((package / 'analysis/module.elf').read_bytes())
         self.assertEqual(symbols['__stock_screen_slots']['value'], SCREEN_SLOTS)
 

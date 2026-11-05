@@ -18,7 +18,9 @@
 #include "arranger_song_import.hpp"
 
 extern "C" {
-extern const char arranger_screen_slots[] __asm__("__stock_screen_slots");
+// The relocated screen slot table (linker/opxy-1.2.1.ld __stock_screen_slots). A constant,
+// not the linker-script symbol: the browser linker resolves no linker-script symbols.
+const opxy::u32 kStockScreenSlots = 0x8d4cff50;
 opxy::u32 stock_gui_role() __asm__("stock_gui_role");
 void sdk_arranger_screen_startup() __asm__("sdk_arranger_screen_startup");
 int sdk_arranger_screen_owned(opxy::u32) __asm__("sdk_arranger_screen_owned");
@@ -51,7 +53,7 @@ using namespace opxy;
 using namespace opxy::screen;
 using platform::stock;
 // Follow the relocated table even when the SDK grows its engine capacity.
-u32 slots_address() { return reinterpret_cast<platform::Address>(arranger_screen_slots); }
+u32 slots_address() { return kStockScreenSlots; }
 const u32 visible_clips = 64;
 u32 window_ticks = 15360;
 u32 view_start;
