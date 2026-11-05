@@ -15,8 +15,19 @@ const linkedMask = kit.machines.reduce((mask, m, i) => kit.linked.includes(m.id)
 const destination = resolve(dirname(kitFile), 'reference'); mkdirSync(destination);
 const layout = resolve('linker/opxy-1.2.1.ld');
 const results = [];
-for (const mask of checkedSelections(kit.machines, kit.linked)) {
-  const selected = kit.machines.filter((_, i) => mask & selectionBit(i)).map(m => m.id);
+const official = new Set(kit.machines.filter(m => m.origin === 'official').map(m => m.id));
+for (const checked of checkedSelections(kit.machines, kit.linked)) {
+  let mask = checked, selected = kit.machines.filter((_, i) => mask & selectionBit(i)).map(m => m.id);
+  // Veff fork: beside Linear by Veff a large machine may not fit with every official
+  // machine (tooling.native.linked_machines); it is then checked on its own.
+  const others = selected.filter(id => !official.has(id));
+  if (others.length === 1 && selected.length > 1) {
+    try { for (const choice of extensionChoices(kit)) linkKit(kit, selected, null, choice); } catch (error) {
+      if (!/need more than/.test(error.message)) throw error;
+      selected = others;
+      mask = kit.machines.reduce((bits, m, i) => m.id === others[0] ? bits | selectionBit(i) : bits, 0n);
+    }
+  }
   // A mask runs to 78 digits: a short digest names the selection stably and keeps paths short.
   const digest = (await sha256(new TextEncoder().encode(mask.toString()))).slice(0, 16);
   for (const [choice, extensions] of extensionChoices(kit).entries())
