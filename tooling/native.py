@@ -408,7 +408,14 @@ def linked_machines(directory, tools, profile, machines, definitions, runtime_me
         if m not in core:
             beside = link(directory, tools, profile, definitions, machines,
                           [x for x in machines if x in core or x is m], 'fit', runtime_members)
-            require(beside is None, f'{m.id} does not fit beside the official machines, ' + str(beside))
+            if beside is None:
+                continue
+            # Veff fork: Linear by Veff's arranger shares the module, so a large machine may
+            # not fit beside every official one. It is still offered when it fits on its
+            # own; the builder's memory meter then limits what it is chosen with.
+            alone = link(directory, tools, profile, definitions, machines, [m], 'fit', runtime_members)
+            require(alone is None, f'{m.id} does not fit even on its own, ' + str(alone))
+            print(f'Note: {m.id} fits on its own but not beside every official machine, {beside}')
     for leftover in ('fit.elf', 'fit.map'):
         (directory / leftover).unlink(missing_ok=True)
     overflow = link(directory, tools, profile, definitions, machines, core, runtime_members=runtime_members)

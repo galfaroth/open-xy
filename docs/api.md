@@ -47,7 +47,7 @@ adds 12 bytes per stock voice index (3 KiB) and 16 per voice.
 
 The limit applies to what someone installs, not to the whole catalog. When a
 collection doesn't fit at once, `sdk.py compile` links Open-XY's own machines
-and requires each other machine to fit beside them, as the builder offers it.
+and requires each other machine to fit beside them, as the builder offers it. (Veff fork: a machine that fits only on its own, beside Linear by Veff, is still offered; the memory meter limits its company.)
 
 | Limit | Value | Why |
 | --- | --- | --- |
