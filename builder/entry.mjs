@@ -10,8 +10,8 @@ try {
   console.error('open-xy: configure OPEN_XY_KIT with a verified export for a complete preview.', error);
 }
 try {
-  const {createBuilder} = await import('./app.mjs');
-  await createBuilder({audition:Audition});
+  const [{createBuilder}, {createCatalogView}] = await Promise.all([import('./app.mjs'), import('./catalog-view.mjs')]);
+  await createBuilder({audition:Audition, catalogView:createCatalogView});
 } catch (error) {
   console.error('open-xy failed to load.', error);
   const notice = document.createElement('div');

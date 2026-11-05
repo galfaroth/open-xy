@@ -3,23 +3,36 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="color-scheme" content="dark">
-<meta name="theme-color" content="#111111">
+<meta name="theme-color" content="#0d0d0e">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline' data: 'wasm-unsafe-eval'; style-src 'unsafe-inline'; img-src data: blob:; connect-src 'none'; base-uri 'none'; form-action 'none'">
-<title>open-xy · OS builder</title>
+<title>Veff Experimental · Open-XY installer</title>
+<meta name="description" content="Veff Experimental: an Open-XY installer for the OP–XY with Linear by Veff and a few exclusive machines. Your firmware never leaves your browser.">
 <!-- styles -->
 <body>
 <main>
   <aside class="sidebar">
-  <header class="masthead"><div class="brand">open-xy <span>OS builder</span><span id="builder-version" class="brand-version"></span></div></header>
+  <header class="masthead"><div class="brand"><span class="brand-mark" aria-hidden="true"></span><span class="brand-words"><strong class="brand-name">Veff Experimental</strong><span class="brand-product">Open-XY installer<span id="builder-version" class="brand-version"></span></span><span class="brand-base" data-veff-base></span></span></div></header>
   <nav class="steps" id="phase-nav" hidden aria-label="Build progress">
     <button data-step="1" aria-current="step"><span class="nav-icon" data-icon="firmware"></span><span><b>01</b>OS</span></button>
     <button data-step="2" disabled><span class="nav-icon" data-icon="machines"></span><span><b>02</b>Machines</span></button>
     <button data-step="3" disabled><span class="nav-icon" data-icon="controls"></span><span><b>03</b>Extensions</span></button>
     <button data-step="4" disabled><span class="nav-icon" data-icon="install"></span><span><b>04</b>Install</span></button>
   </nav>
-  <a class="source-link" href="https://github.com/etcetc000/open-xy" target="_blank" rel="noopener noreferrer">Source</a>
+  <nav class="source-links" aria-label="Projects"><a class="source-link" href="https://github.com/galfaroth/open-xy" target="_blank" rel="noopener noreferrer">This fork</a><a class="source-link" href="https://github.com/etcetc000/open-xy" target="_blank" rel="noopener noreferrer">Open-XY</a></nav>
   </aside>
   <div class="main-stage">
+  <section id="veff-intro" class="veff-intro" aria-labelledby="veff-intro-title" hidden>
+    <span class="veff-kicker">Veff Experimental · Open-XY installer</span>
+    <h2 id="veff-intro-title" class="veff-title">Everything in Open-XY. <span class="veff-hl">Plus Linear.</span></h2>
+    <p class="veff-lead">This installer offers everything the Open-XY beta offers, plus <strong>Linear by Veff</strong> and a few machines you’ll only find here.</p>
+    <ul class="veff-facts">
+      <li><b>Open-XY beta</b>Every machine, extension and install step the Open-XY beta offers.</li>
+      <li><b>Veff exclusives</b>A few machines that only this installer offers, marked with a pink badge.<ul id="veff-exclusive-list" class="veff-exclusive-list" aria-label="Veff exclusives in this collection" hidden></ul></li>
+      <li><b>Stays with you</b>All firmware comes from your own OP–XY and never leaves this browser. Nothing is uploaded.</li>
+    </ul>
+    <div class="veff-feature-row" data-veff-features="full"></div>
+    <p class="veff-credit"><span data-veff-base></span>. Open-XY is made by the <a href="https://github.com/etcetc000/open-xy/graphs/contributors" target="_blank" rel="noopener noreferrer">Open-XY contributors</a> (<a href="https://open-xy.com" target="_blank" rel="noopener noreferrer">open-xy.com</a>); this fork lives at <a href="https://github.com/galfaroth/open-xy" target="_blank" rel="noopener noreferrer">github.com/galfaroth/open-xy</a>.</p>
+  </section>
   <section id="browser-gate" class="panel browser-notice" aria-labelledby="browser-notice-title">
     <span class="eyebrow">Before you start</span>
     <h1 id="browser-notice-title" tabindex="-1">Use a compatible desktop browser.</h1>
@@ -102,20 +115,27 @@
           <p class="presets-note">Kept in this browser only.</p>
         </div>
       </details></div></div>
-    <div class="workspace">
-      <div><div class="browse" role="search" aria-label="Find machines">
+    <aside id="veff-featured" class="veff-featured" aria-label="Built into this firmware" hidden><div data-veff-features></div></aside>
+    <div id="machine-workspace" class="workspace machine-workspace">
+      <div class="browse-column"><div class="browse" role="search" aria-label="Find machines">
         <div class="browse-row"><input id="machine-search" type="search" placeholder="Search by name, author or keyword" aria-label="Search machines" autocomplete="off" spellcheck="false">
           <label class="browse-sort"><span>Sort</span><select id="machine-sort" aria-label="Sort machines"><option value="featured">Open-XY first</option><option value="name">Name</option><option value="author">Author</option><option value="kind">Kind</option></select></label></div>
         <div class="filters" role="group" aria-label="Filter machines by kind"><button data-filter="all" aria-pressed="true">All</button><button data-filter="synth" aria-pressed="false">Synths</button><button data-filter="drum" aria-pressed="false">Drums</button><button data-filter="sample" aria-pressed="false">Samplers</button><button data-filter="effect" aria-pressed="false">Effects</button><button data-filter="player" aria-pressed="false">Players</button><button id="favorites-filter" class="favorites-filter" aria-pressed="false"><span aria-hidden="true">★</span> Favorites</button></div>
         <div id="keyword-filters" class="keyword-filters" role="group" aria-label="Filter machines by keyword" hidden></div>
         <p id="browse-result" class="browse-result" role="status" aria-live="polite"></p>
       </div><div id="machines" class="machine-list"></div><div id="machine-capacity-host"><section id="selection-capacity" class="capacity" aria-label="Memory"><div class="capacity-heading"><h2>Memory usage</h2><strong id="room-value">Choose a machine</strong></div><div class="memory-bar" tabindex="0" aria-describedby="memory-breakdown"><div id="memory-map" class="memory-map" role="img" aria-label="Memory used by each machine"></div><div id="memory-breakdown" class="memory-breakdown" role="tooltip"><div id="memory-legend" class="memory-legend"></div><dl id="capacity-details" class="machine-facts"></dl><p id="capacity-foot" class="capacity-foot">CPU load is not measured</p></div></div></section></div></div>
-      <aside class="inspector" aria-label="Machine details"><div class="summary-space"><div id="machine-summary"><div class="inspector-top"><span id="detail-kind" class="eyebrow detail-kind">Synth</span><span class="tag">Experimental</span></div><h2 id="detail-name" class="detail-name"></h2><p id="detail-description" class="detail-description"></p><p id="detail-keywords" class="detail-keywords"></p><p id="detail-source" class="detail-source"></p><p id="community-notice" class="community-notice" hidden>Community machines aren’t officially supported by the Open-XY SDK. Use at your own risk; instability or unexpected audio may occur.</p></div></div><div class="preview-space"><div id="art-preview" class="art-preview"></div></div><p id="art-caption" class="caption"></p>
+      <aside class="inspector machine-inspector" aria-label="Machine details">
+        <div class="detail-bar"><button id="detail-back" type="button" class="secondary detail-back">← All machines</button><button id="detail-select" type="button" class="primary detail-select" aria-pressed="false">Add to install</button></div>
+        <div class="detail-media"><div class="preview-space"><div id="art-preview" class="art-preview"></div></div><p id="art-caption" class="caption"></p>
         <details id="preview-controls-panel" class="preview-options">
-          <summary>Preview controls</summary>
+          <summary>Play it in the browser</summary>
           <div class="preview-options-body"><div id="controls" class="controls"></div><div id="audition-controls" class="audition-controls" aria-label="Sound preview"></div></div>
-        </details>
-        <details><summary>Machine details</summary><dl class="machine-facts" id="machine-facts"></dl></details>
+        </details></div>
+        <div class="detail-info"><div class="summary-space"><div id="machine-summary"><div class="inspector-top"><span id="detail-kind" class="eyebrow detail-kind">Synth</span><span class="tag">Experimental</span></div><h2 id="detail-name" class="detail-name"></h2><p id="detail-description" class="detail-description"></p><p id="detail-keywords" class="detail-keywords"></p><p id="detail-source" class="detail-source"></p><p id="community-notice" class="community-notice" hidden>Community machines aren’t officially supported by the Open-XY SDK. Use at your own risk; instability or unexpected audio may occur.</p></div></div>
+        <div id="detail-veff" class="detail-veff" hidden></div>
+        <section class="detail-section" aria-labelledby="detail-controls-title"><h3 id="detail-controls-title">Controls</h3><div id="detail-controls-list"></div></section>
+        <section class="detail-section" aria-labelledby="detail-help-title"><h3 id="detail-help-title">How to use it</h3><div id="detail-help-text" class="detail-help"></div></section>
+        <details class="detail-facts"><summary>Machine details</summary><dl class="machine-facts" id="machine-facts"></dl></details></div>
       </aside>
     </div>
 
@@ -172,6 +192,10 @@
   </section>
   </div>
   <footer>
+      <div class="footer-credit">
+        <p><strong>Veff Experimental</strong> is a fork of <a href="https://open-xy.com" target="_blank" rel="noopener noreferrer">Open-XY</a>, made in agreement with its maintainers. Open-XY, its SDK, builder and core machines are the work of the <a href="https://github.com/etcetc000/open-xy/graphs/contributors" target="_blank" rel="noopener noreferrer">Open-XY contributors</a>. <span data-veff-base></span>.</p>
+        <p><a href="https://github.com/galfaroth/open-xy" target="_blank" rel="noopener noreferrer">This fork on GitHub</a> · <a href="https://github.com/etcetc000/open-xy" target="_blank" rel="noopener noreferrer">Open-XY on GitHub</a></p>
+      </div>
       <div class="footer-copy">
         <p>This is an independent community project. It is not affiliated with, endorsed, sponsored, or supported by teenage engineering. Product and company names are used solely to identify the hardware this project works with.</p>
         <p>Provided as is, without warranty. Modified firmware can cause data loss, permanent damage, or an unusable device. Hardware testing and automated checks do not guarantee safe operation or recovery.</p>

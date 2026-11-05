@@ -1,0 +1,35 @@
+{
+  "format": "veff-installer/1",
+  "about": "Veff Experimental installer data. 'exclusives' maps a machine ID from the kit to how this fork presents it: 'name' (a label for this file only), 'maintainer' (shown when the kit names none; defaults to fork.maintainer), 'summary' (one line in the machine's detail view) and 'help' (paragraphs under How to use it, replacing the text generated from the machine's controls). Exclusive machines get the pink Veff exclusive badge instead of the Yours/Community label. IDs the kit does not contain are ignored. 'features' are firmware features of this fork, shown on the landing and above the machines.",
+  "fork": {
+    "name": "Veff Experimental",
+    "product": "Open-XY installer",
+    "maintainer": "Veff (galfaroth)",
+    "repository": "https://github.com/galfaroth/open-xy"
+  },
+  "upstream": {
+    "name": "Open-XY",
+    "site": "https://open-xy.com",
+    "repository": "https://github.com/etcetc000/open-xy"
+  },
+  "features": [
+    {
+      "id": "linear",
+      "name": "Linear by Veff",
+      "summary": "A linear song arranger, built into this fork's firmware.",
+      "help": [
+        "Linear by Veff adds a linear song arranger to your OP–XY: lay out a song from start to finish instead of only chaining patterns.",
+        "It is part of every firmware this installer builds. There is nothing to select."
+      ]
+    }
+  ],
+  "exclusives": {
+    "granular": {"name": "Granular", "summary": "A granular sample engine with its own animated page."},
+    "seedsynth": {"name": "Seed Synth"},
+    "veffchord": {"name": "Chords by Veff"},
+    "formantdist": {"name": "Formant by Veff"},
+    "graindelay": {"name": "Granular Delay by Veff"},
+    "spectralsmear": {"name": "Spectral Smear by Veff"},
+    "transient": {"name": "Transient by Veff"}
+  }
+}
