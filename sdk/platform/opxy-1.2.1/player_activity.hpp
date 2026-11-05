@@ -36,8 +36,10 @@ inline bool player_black(u32 note) {
     return pc == 1 || pc == 3 || pc == 6 || pc == 8 || pc == 10;
 }
 inline u32 player_white(u32 note) {
-    static const u8 positions[12] = {0, 0, 1, 1, 2, 3, 3, 4, 4, 5, 5, 6};
-    return 7 * (note / 12) + positions[note % 12];
+    // No function-local table: every player object includes this header, and the
+    // module linker refuses a duplicated local static (two players in one collection).
+    const u32 pc = note % 12;
+    return 7 * (note / 12) + (pc + (pc >= 5 ? 1 : 0)) / 2;
 }
 struct PlayerRange { u32 low, high, whites; };
 inline PlayerRange player_range(const u32 (&played)[4], u32 lowest) {
