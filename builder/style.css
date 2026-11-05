@@ -97,34 +97,40 @@ main { max-width:1440px; margin:0 auto; padding:0 var(--gutter) 28px; }
 .text-button:not(:disabled):hover { color:var(--ink); }
 .mtp-help-button { margin-top:12px; max-width:100%; }
 
-/* ── landing: the fork in one screen ── */
-.veff-intro { position:relative; margin:0 0 36px; padding-bottom:32px; border-bottom:1px solid var(--line); }
-.veff-intro:has(~#builder-workspace:not([hidden])) { display:none; }
-.veff-intro::before { content:''; position:absolute; inset:-44px -44px auto auto; width:min(560px,80%); height:360px; pointer-events:none;
-  background:radial-gradient(55% 60% at 80% 20%,#ec80bd30,transparent 70%); }
-.veff-title { position:relative; max-width:16ch; font-size:clamp(36px,6.4vw,76px); line-height:.95; letter-spacing:-.055em; margin-bottom:22px; }
+/* ── landing: the catalog opens with the fork's intro and its ways in ── */
+.veff-intro { position:relative; margin:0 0 32px; padding-bottom:28px; border-bottom:1px solid var(--line); }
+#builder-workspace:not([data-browse=true]) .veff-intro { display:none; }
+.veff-intro::before { content:''; position:absolute; top:-40px; right:0; width:min(560px,80%); height:360px; pointer-events:none;
+  background:radial-gradient(closest-side,#ec80bd2a,transparent); }
+.veff-title { position:relative; max-width:18ch; font-size:clamp(34px,5.6vw,68px); line-height:.98; letter-spacing:-.055em; margin-bottom:20px; }
 .veff-hl { color:var(--ink); background:linear-gradient(transparent 60%,#ec80bd66 60%,#ec80bd66 92%,transparent 92%); -webkit-box-decoration-break:clone; box-decoration-break:clone; }
-.veff-lead { position:relative; max-width:720px; font-size:clamp(17px,1.8vw,21px); line-height:1.45; color:var(--ink-2); }
+.veff-lead { position:relative; max-width:760px; font-size:clamp(17px,1.7vw,20px); line-height:1.5; color:var(--ink-2); }
 .veff-lead strong { color:var(--ink); }
-.veff-facts { position:relative; display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; margin:30px 0 0; padding:0; list-style:none; }
-.veff-facts>li { padding:18px; border-radius:20px; background:var(--card); border:1px solid var(--line); color:var(--muted); font-size:14px; line-height:1.45; }
-.veff-facts b { display:block; margin-bottom:8px; font-size:20px; letter-spacing:-.03em; line-height:1.1; color:var(--ink); }
-.veff-facts .veff-fact-accent { background:var(--pink); border-color:var(--pink); color:var(--pink-ink); }
-.veff-facts .veff-fact-accent b { color:var(--pink-ink); }
-.veff-exclusive-list { display:flex; flex-wrap:wrap; gap:6px; margin:12px 0 0; padding:0; list-style:none; }
-.veff-exclusive-list li { font:11px var(--mono); padding:3px 8px; border-radius:8px; background:var(--pink-soft); color:var(--pink-text); }
-.veff-feature-row { margin-top:12px; }
+.veff-paths { position:relative; display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:14px; margin:28px 0 0; }
+.path-card { display:flex; flex-direction:column; align-items:flex-start; gap:8px; min-width:0; padding:20px; border-radius:22px; background:var(--card); border:1px solid var(--line); }
+.path-card h3 { margin:0; font-size:22px; letter-spacing:-.03em; }
+.path-card p { margin:0 0 6px; font-size:14.5px; line-height:1.5; }
+.path-card>button { margin-top:auto; }
+.path-tag { font:11px var(--mono); letter-spacing:.08em; text-transform:uppercase; color:var(--pink-text); }
+.path-card.path-feature { padding:0; border:0; background:none; }
+.path-feature .veff-feature { height:100%; }
 .veff-feature { position:relative; padding:20px 22px; border-radius:20px; background:linear-gradient(120deg,#ec80bd1c,transparent 55%),var(--card); border:1px solid var(--pink-line); }
 .veff-feature .veff-kicker { margin-bottom:8px; }
-.veff-feature h3 { font-size:24px; margin-bottom:6px; }
-.veff-feature p { margin:0; color:var(--ink-2); font-size:15px; }
+.veff-feature h3 { font-size:22px; margin-bottom:6px; }
+.veff-feature p { margin:0; color:var(--ink-2); font-size:14.5px; }
 .veff-feature .veff-feature-help { margin-top:8px; color:var(--muted); font-size:14px; max-width:780px; }
+.veff-feature .veff-feature-note { margin-top:8px; color:var(--pink-text); font-size:13.5px; }
 .veff-credit { margin:20px 0 0; font-size:13px; color:var(--muted); }
 .veff-credit a,.footer-credit a { color:var(--ink-2); }
+/* While browsing, the page-2 header introduces the catalog and one button starts installing. */
+#builder-workspace[data-browse=true] [data-page="2"]>.page-header .eyebrow,#builder-workspace[data-browse=true] .veff-featured { display:none; }
+#builder-workspace:not([data-browse=true]) .browse-install,#builder-workspace[data-browse=true] [data-page="2"] .actions>:not(.browse-install) { display:none; }
+#builder-workspace[data-browse=true] [data-page="2"] .actions { justify-content:flex-end; }
+.gate-browse { display:block; margin:24px auto 0; }
+@media(max-width:1000px) { .veff-paths { grid-template-columns:repeat(2,minmax(0,1fr)); } .path-feature { grid-column:1 / -1; } }
+@media(max-width:640px) { .veff-paths { grid-template-columns:1fr; } }
 .veff-badge { display:inline-flex; align-items:center; gap:5px; font:700 10px/1 var(--mono); letter-spacing:.06em; text-transform:uppercase; padding:5px 8px; border-radius:999px; background:var(--pink); color:var(--pink-ink); white-space:nowrap; }
 .veff-badge::before { content:''; width:6px; height:6px; border-radius:50%; background:var(--pink-ink); }
-@media(max-width:1000px) { .veff-facts { grid-template-columns:repeat(2,minmax(0,1fr)); } }
-@media(max-width:560px) { .veff-facts { grid-template-columns:1fr; } }
 
 /* ── gates ── */
 .risk-notice { max-width:720px; margin:auto; padding:8px 0; }
@@ -349,7 +355,7 @@ details input { max-width:100%; }
 .machine.card { position:relative; display:block; padding:10px 10px 16px; border-radius:22px; }
 .machine.card:hover { border-color:var(--line-strong); background:var(--raised); }
 .machine.card.selected { border-color:var(--pink); box-shadow:0 0 0 1px var(--pink),0 16px 40px -22px #ec80bd99; background:linear-gradient(160deg,#ec80bd1f,transparent 45%),var(--card); }
-.machine.card[data-veff=exclusive]:not(.selected) { background:linear-gradient(160deg,#ec80bd12,transparent 40%),var(--card); }
+.machine.card[data-veff]:not(.selected) { background:linear-gradient(160deg,#ec80bd12,transparent 40%),var(--card); }
 .machine.card:has(>button:focus-visible) { outline:3px solid var(--pink); outline-offset:3px; }
 .machine.card>button:focus-visible { outline:none; }
 .machine.card>.machine-icon { display:none; }

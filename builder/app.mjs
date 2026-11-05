@@ -10,15 +10,20 @@ import {supportsDeviceApis} from './browser.mjs';
 
 // The entry point supplies audition's bundled worker sources and the optional catalog
 // presentation (catalog-view.mjs); the controller can also be mounted with explicit
-// adapters by firmware-free integration tests.
+// adapters by firmware-free integration tests. With browseFirst, the page opens on the
+// machine catalog, as #preview/machines does: browsing and choosing machines need no
+// notice, OS file or compatible browser; starting the installation shows the notice.
 export async function createBuilder({core = Core, wizardApi = Wizard, retained = Retained, visuals = Visuals,
-  audition, catalogView = null, supportsBrowser = supportsDeviceApis} = {}) {
+  audition, catalogView = null, browseFirst = false, supportsBrowser = supportsDeviceApis} = {}) {
   const $ = id => document.getElementById(id);
   document.querySelectorAll('[data-icon]').forEach(el => el.append(visuals.icon(el.dataset.icon)));
   document.querySelectorAll('[data-device-art]').forEach(el => el.append(visuals.device()));
   // Preview links can show the guide immediately; using the builder still needs acknowledgement.
   let acknowledged = false;
   let builderPreview = false, loadCollection;
+  // The catalog landing (browseFirst) until installation starts; whether machines were
+  // chosen there, which an Open-XY OS file then keeps instead of its own selection.
+  let catalogLanding = browseFirst, pickedInCatalog = false;
   const browserAllowed = supportsBrowser();
   $('browser-blocked').hidden = browserAllowed;
   $('risk-acknowledgement').checked = false;
@@ -81,7 +86,8 @@ export async function createBuilder({core = Core, wizardApi = Wizard, retained =
     stopAudio();
     if ($('selected-previews').open) $('selected-previews').close();
     if (builderPreview && ![2, 3].includes(step)) {
-      builderPreview = false;
+      builderPreview = false; catalogLanding = false;
+      $('builder-workspace').dataset.browse = 'false';
       history.replaceState(null, '', location.pathname + location.search);
       ready();
       if (!acknowledged) { showEntryGate(); return; }
@@ -125,7 +131,10 @@ export async function createBuilder({core = Core, wizardApi = Wizard, retained =
     $('builder-workspace').inert = true;
   }
   function openPreviewLink() {
-    const match = /^#preview\/(machines|extensions|settings)(?:\/([a-z0-9_-]+))?$/.exec(location.hash);
+    const link = /^#preview\/(machines|extensions|settings)(?:\/([a-z0-9_-]+))?$/.exec(location.hash);
+    // The catalog landing is the machines preview, opened without a link.
+    const landing = !link && catalogLanding && !acknowledged && !location.hash;
+    const match = link ?? (landing ? [location.hash, 'machines', undefined] : null);
     const leavingMachines = builderPreview && !match;
     builderPreview = !!match;
     if (builderPreview || wizard.previewLink(location.hash)) {
@@ -134,9 +143,10 @@ export async function createBuilder({core = Core, wizardApi = Wizard, retained =
       $('builder-workspace').hidden = false;
       $('builder-workspace').inert = false;
       if (!acknowledged) $('status').textContent = '';
+      $('builder-workspace').dataset.browse = String(builderPreview);
       if (builderPreview) {
         loadCollection?.();
-        $('phase-nav').hidden = false;
+        $('phase-nav').hidden = landing;
         navigate(match[1] === 'machines' ? 2 : 3);
         if (kit) {
           if (match[1] !== 'machines') inspectExtension(kit.extensions?.find(e => e.id === match[2])?.id ?? kit.extensions?.[0]?.id);
@@ -151,6 +161,14 @@ export async function createBuilder({core = Core, wizardApi = Wizard, retained =
     } else if (!acknowledged) showEntryGate();
     else if (leavingMachines) navigate(1);
     if (builderPreview || leavingMachines) ready();
+  }
+  if (browseFirst) {
+    // Every way into the installation goes through navigate(1), and so through the notice.
+    for (const id of ['path-install', 'path-rebuild', 'browse-install']) $(id).onclick = () => navigate(1);
+    document.querySelectorAll('[data-browse]').forEach(button => {
+      button.hidden = false;
+      button.onclick = () => { catalogLanding = true; openPreviewLink(); };
+    });
   }
   window.addEventListener('hashchange', openPreviewLink);
   openPreviewLink();
@@ -225,10 +243,13 @@ export async function createBuilder({core = Core, wizardApi = Wizard, retained =
       if (current !== ticket || !isCurrent()) return false;
       stock = recovered.stock;
       if (recovered.selected) {
-        selected = recovered.selected; selectedExtensions = recovered.extensions ?? [];
+        // Machines chosen in the catalog before the OS step stay chosen.
+        const installed = kit.machines.filter(m => recovered.selected.includes(m.id)).map(m => m.name);
+        if (!pickedInCatalog) selected = recovered.selected;
+        selectedExtensions = recovered.extensions ?? [];
         renderMachines(); renderExtensions(); recalculate();
-        $('firmware-result').textContent = '✓ open-xy OS with ' +
-          selectionNames().join(' + ');
+        $('firmware-result').textContent = pickedInCatalog ? '✓ open-xy OS with ' + installed.join(' + ') +
+          ' · keeping the machines you chose' : '✓ open-xy OS with ' + selectionNames().join(' + ');
       } else if (recovered.earlier) {
         $('firmware-result').textContent = '✓ OP–XY OS 1.2.1 recovered from an earlier open-xy OS · choose your machines and extensions again';
       } else $('firmware-result').textContent = '✓ OP–XY OS 1.2.1 verified · ' + file.name;
@@ -540,6 +561,7 @@ export async function createBuilder({core = Core, wizardApi = Wizard, retained =
       meta.append(node('span', originLabel, 'machine-origin'));
       button.append(meta); button.onclick = () => inspect(m.id);
       input.onchange = () => {
+        if (builderPreview) pickedInCatalog = true;
         selected = input.checked ? [...selected, m.id] : selected.filter(id => id !== m.id);
         row.classList.toggle('selected', input.checked); invalidate(); recalculate();
       };
@@ -563,6 +585,7 @@ export async function createBuilder({core = Core, wizardApi = Wizard, retained =
   // Selecting or deselecting one machine from outside its row (the catalog's detail view).
   function chooseMachine(id, include) {
     if (include === selected.includes(id)) return;
+    if (builderPreview) pickedInCatalog = true;
     selected = include ? [...selected, id] : selected.filter(other => other !== id);
     invalidate(); renderMachines(); recalculate();
   }
@@ -750,6 +773,7 @@ export async function createBuilder({core = Core, wizardApi = Wizard, retained =
   function choosePreset(preset) {
     const {selected: chosen, missing} = core.applyPreset(kit, preset);
     selected = chosen;
+    if (builderPreview) pickedInCatalog = true;
     invalidate(); renderMachines(); recalculate();
     $('machine-presets').open = false;
     status('Preset “' + preset.name + '”: ' + chosen.length + (chosen.length === 1 ? ' machine' : ' machines') + ' selected.' +
@@ -805,7 +829,7 @@ export async function createBuilder({core = Core, wizardApi = Wizard, retained =
     $('builder-version').textContent = 'v' + kit.version;
     view?.loaded(kit);
     $('capacity-foot').textContent = kib(core.moduleBytes(kit.profile)) + ' for machines; CPU load is not measured';
-    selected = kit.machines.filter(core.chosenByDefault).map(machine => machine.id);
+    selected = kit.machines.filter(m => core.chosenByDefault(m) && (view?.chosenByDefault?.(m) ?? true)).map(machine => machine.id);
     try {
       const remembered = JSON.parse(localStorage.getItem(NUMBERS_KEY) ?? 'null');
       if (remembered) numbers = core.readLayout(kit, {format: 'opxy-layout/1', ...remembered}).machines;

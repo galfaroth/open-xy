@@ -1,7 +1,7 @@
 import VEFF from './veff.json' with { type: 'json' };
 
 // The Veff Experimental presentation of the machine collection: a browsable grid of
-// machine cards, a detail view per machine, the fork's own features and exclusive
+// machine cards, a detail view per machine, the fork's own features and its own
 // machines (builder/veff.json), and the Open-XY revision this installer is based on.
 // It only presents: selection, numbers, linking and installation stay in app.mjs,
 // which calls these hooks when it has rendered a card, inspected a machine or
@@ -17,8 +17,8 @@ const WHERE = {synth: 'an instrument track’s engine', effect: 'a send effect',
 export function createCatalogView({core, visuals, snapshots, modeFor, getKit, isSelected, setSelected,
   data = VEFF, base = BUILT_FROM, doc = document} = {}) {
   const $ = id => doc.getElementById(id);
-  const exclusives = data.exclusives ?? {};
-  const exclusive = id => Object.hasOwn(exclusives, id) ? exclusives[id] : null;
+  const veffMachines = data.machines ?? {};
+  const veffMachine = id => Object.hasOwn(veffMachines, id) ? veffMachines[id] : null;
   let current = null, returnScroll = 0;
 
   function node(tag, text, className) {
@@ -32,8 +32,8 @@ export function createCatalogView({core, visuals, snapshots, modeFor, getKit, is
     return a;
   }
   function badge() {
-    const b = node('span', 'Veff exclusive', 'veff-badge');
-    b.title = 'Only in this installer';
+    const b = node('span', 'by Veff', 'veff-badge');
+    b.title = 'A Veff machine';
     return b;
   }
 
@@ -55,19 +55,11 @@ export function createCatalogView({core, visuals, snapshots, modeFor, getKit, is
         card.append(node('span', 'Built into this firmware', 'veff-kicker'), node('h3', feature.name),
           node('p', feature.summary ?? ''));
         if (target.dataset.veffFeatures === 'full') for (const text of feature.help ?? []) card.append(node('p', text, 'veff-feature-help'));
+        if (feature.note) card.append(node('p', feature.note, 'veff-feature-note'));
         return card;
       }));
     }
   }
-  // The exclusives this collection actually carries, by their kit names.
-  function renderExclusives(kit) {
-    const target = $('veff-exclusive-list');
-    if (!target) return;
-    const present = (kit?.machines ?? []).filter(m => exclusive(m.id));
-    target.replaceChildren(...present.map(m => node('li', m.name)));
-    target.hidden = !present.length;
-  }
-
   // A card's screen: the machine's default frame, its static artwork, or its kind's glyph.
   const thumbnails = new WeakMap();
   function thumbnail(m) {
@@ -97,26 +89,26 @@ export function createCatalogView({core, visuals, snapshots, modeFor, getKit, is
     return frame;
   }
 
-  // Who maintains it: the catalog's maintainer, else (for an exclusive built into a
+  // Who maintains it: the catalog's maintainer, else (for a Veff machine built into a
   // personal kit) the one veff.json names.
   function maintainer(m) {
-    const ex = exclusive(m.id);
+    const ex = veffMachine(m.id);
     return m.source?.maintainer ?? (ex ? ex.maintainer ?? data.fork?.maintainer ?? '' : '');
   }
   function card(row, m, button) {
     row.classList.add('card');
-    const ex = exclusive(m.id);
+    const ex = veffMachine(m.id);
     const author = maintainer(m);
     if (ex) {
-      row.dataset.veff = 'exclusive';
-      // The badge replaces the Yours/Community label; a locally built exclusive names its maintainer.
+      row.dataset.veff = 'machine';
+      // The badge replaces the Yours/Community label; a locally built Veff machine names its maintainer.
       button.querySelector('.machine-origin')?.remove();
       const name = button.querySelector('.machine-name');
       if (name && !name.querySelector('.machine-author')) name.append(' ', node('span', '', 'machine-author'));
     }
     // A card names its maintainer on its own line.
     const credit = button.querySelector('.machine-author');
-    if (credit && author) credit.textContent = 'by ' + author;
+    if (credit && author) credit.textContent = (/\bby \S+$/i.test(m.name) ? '' : 'by ') + author;
     button.prepend(screen(m));
     const tags = node('span', undefined, 'card-tags');
     tags.append(node('span', KINDS[m.kind] ?? m.kind, 'card-kind'));
@@ -124,7 +116,7 @@ export function createCatalogView({core, visuals, snapshots, modeFor, getKit, is
     button.querySelector('.machine-desc')?.before(tags);
     if (m.keywords?.length) button.append(node('span', m.keywords.join(' · '), 'card-keywords'));
     button.setAttribute('aria-label', m.name + (author ? ' by ' + author : '') + ', ' +
-      (KINDS[m.kind] ?? m.kind) + (ex ? ', Veff exclusive' : '') + '. Show details');
+      (KINDS[m.kind] ?? m.kind) + (ex ? ', a Veff machine' : '') + '. Show details');
     button.addEventListener('click', () => open());
   }
 
@@ -155,7 +147,7 @@ export function createCatalogView({core, visuals, snapshots, modeFor, getKit, is
     return [list, note];
   }
   function help(m) {
-    const ex = exclusive(m.id);
+    const ex = veffMachine(m.id);
     if (ex?.help?.length) return ex.help.map(text => node('p', text));
     const paragraphs = ['After installing, choose ' + m.name + ' on your OP–XY as ' + (WHERE[m.kind] ?? 'a machine') + '.',
       m.controls.length + (m.controls.length === 1 ? ' control sits' : ' controls sit') + ' on the four encoders, as listed above.'];
@@ -173,13 +165,13 @@ export function createCatalogView({core, visuals, snapshots, modeFor, getKit, is
   }
   function detail(m) {
     current = m;
-    const ex = exclusive(m.id);
+    const ex = veffMachine(m.id);
     const block = $('detail-veff');
     block.hidden = !ex;
     if (ex) {
       block.replaceChildren(badge());
       if (ex.summary) block.append(node('p', ex.summary));
-      // A locally built exclusive has no catalog source; credit its maintainer and this fork.
+      // A locally built Veff machine has no catalog source; credit its maintainer and this fork.
       if (m.origin === 'personal') {
         $('detail-source').replaceChildren('Maintained by ' + maintainer(m) + ' · ',
           link(data.fork?.name ?? 'Veff Experimental', data.fork?.repository ?? 'https://github.com/galfaroth/open-xy'));
@@ -234,7 +226,9 @@ export function createCatalogView({core, visuals, snapshots, modeFor, getKit, is
   renderBase(); renderFeatures();
 
   return {
-    loaded(kit) { renderBase(kit.version); renderExclusives(kit); },
+    loaded(kit) { renderBase(kit.version); },
+    // Veff machines start unselected, like community machines.
+    chosenByDefault: m => !veffMachine(m.id),
     card, detail, open, close,
     selected: showSelection,
   };
