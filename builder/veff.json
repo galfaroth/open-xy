@@ -1,6 +1,6 @@
 {
-  "format": "veff-installer/1",
-  "about": "Veff Experimental installer data. 'exclusives' maps a machine ID from the kit to how this fork presents it: 'name' (a label for this file only), 'maintainer' (shown when the kit names none; defaults to fork.maintainer), 'summary' (one line in the machine's detail view) and 'help' (paragraphs under How to use it, replacing the text generated from the machine's controls). Exclusive machines get the pink Veff exclusive badge instead of the Yours/Community label. IDs the kit does not contain are ignored. 'features' are firmware features of this fork, shown on the landing and above the machines.",
+  "format": "veff-installer/2",
+  "about": "Veff Experimental installer data. 'machines' maps a machine ID from the kit to how this installer presents a Veff machine: 'name' (a label for this file only), 'maintainer' (shown when the kit names none; defaults to fork.maintainer), 'summary' (one line in the machine's detail view) and 'help' (paragraphs under How to use it, replacing the text generated from the machine's controls). Listed machines get a pink 'by Veff' badge and start unselected, like community machines. IDs the kit does not contain are ignored. 'features' are firmware changes this fork carries, shown on the landing and above the machines: 'summary' and 'note' everywhere, 'help' on the landing.",
   "fork": {
     "name": "Veff Experimental",
     "product": "Open-XY installer",
@@ -16,20 +16,35 @@
     {
       "id": "linear",
       "name": "Linear by Veff",
-      "summary": "A linear song arranger, built into this fork's firmware.",
+      "summary": "A linear song arranger, built into this installer's firmware.",
       "help": [
-        "Linear by Veff adds a linear song arranger to your OP–XY: lay out a song from start to finish instead of only chaining patterns.",
-        "It is part of every firmware this installer builds. There is nothing to select."
-      ]
+        "Lay out a song on your OP–XY from start to finish instead of only chaining patterns. It is part of every firmware built here; there is nothing to select."
+      ],
+      "note": "Linear by Veff lives here for now. Once the Open-XY SDK has grown the pieces it needs, we want to bring it to Open-XY properly — not rushed."
     }
   ],
-  "exclusives": {
-    "granular": {"name": "Granular", "summary": "A granular sample engine with its own animated page."},
-    "seedsynth": {"name": "Seed Synth"},
-    "veffchord": {"name": "Chords by Veff"},
-    "formantdist": {"name": "Formant by Veff"},
-    "graindelay": {"name": "Granular Delay by Veff"},
-    "spectralsmear": {"name": "Spectral Smear by Veff"},
-    "transient": {"name": "Transient by Veff"}
+  "machines": {
+    "granular": {
+      "name": "Granular",
+      "summary": "A granular sample engine with its own animated page."
+    },
+    "seedsynth": {
+      "name": "Seed Synth"
+    },
+    "veffchord": {
+      "name": "Chords by Veff"
+    },
+    "formantdist": {
+      "name": "Formant by Veff"
+    },
+    "graindelay": {
+      "name": "Granular Delay by Veff"
+    },
+    "spectralsmear": {
+      "name": "Spectral Smear by Veff"
+    },
+    "transient": {
+      "name": "Transient by Veff"
+    }
   }
 }

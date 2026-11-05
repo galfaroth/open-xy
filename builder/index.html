@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#0d0d0e">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline' data: 'wasm-unsafe-eval'; style-src 'unsafe-inline'; img-src data: blob:; connect-src 'none'; base-uri 'none'; form-action 'none'">
 <title>Veff Experimental · Open-XY installer</title>
-<meta name="description" content="Veff Experimental: an Open-XY installer for the OP–XY with Linear by Veff and a few exclusive machines. Your firmware never leaves your browser.">
+<meta name="description" content="Veff Experimental: an Open-XY installer for the OP–XY with everything Open-XY offers, plus Linear by Veff and other experimental changes. Your firmware never leaves your browser.">
 <!-- styles -->
 <body>
 <main>
@@ -21,24 +21,13 @@
   <nav class="source-links" aria-label="Projects"><a class="source-link" href="https://github.com/galfaroth/open-xy" target="_blank" rel="noopener noreferrer">This fork</a><a class="source-link" href="https://github.com/etcetc000/open-xy" target="_blank" rel="noopener noreferrer">Open-XY</a></nav>
   </aside>
   <div class="main-stage">
-  <section id="veff-intro" class="veff-intro" aria-labelledby="veff-intro-title" hidden>
-    <span class="veff-kicker">Veff Experimental · Open-XY installer</span>
-    <h2 id="veff-intro-title" class="veff-title">Everything in Open-XY. <span class="veff-hl">Plus Linear.</span></h2>
-    <p class="veff-lead">This installer offers everything the Open-XY beta offers, plus <strong>Linear by Veff</strong> and a few machines you’ll only find here.</p>
-    <ul class="veff-facts">
-      <li><b>Open-XY beta</b>Every machine, extension and install step the Open-XY beta offers.</li>
-      <li><b>Veff exclusives</b>A few machines that only this installer offers, marked with a pink badge.<ul id="veff-exclusive-list" class="veff-exclusive-list" aria-label="Veff exclusives in this collection" hidden></ul></li>
-      <li><b>Stays with you</b>All firmware comes from your own OP–XY and never leaves this browser. Nothing is uploaded.</li>
-    </ul>
-    <div class="veff-feature-row" data-veff-features="full"></div>
-    <p class="veff-credit"><span data-veff-base></span>. Open-XY is made by the <a href="https://github.com/etcetc000/open-xy/graphs/contributors" target="_blank" rel="noopener noreferrer">Open-XY contributors</a> (<a href="https://open-xy.com" target="_blank" rel="noopener noreferrer">open-xy.com</a>); this fork lives at <a href="https://github.com/galfaroth/open-xy" target="_blank" rel="noopener noreferrer">github.com/galfaroth/open-xy</a>.</p>
-  </section>
   <section id="browser-gate" class="panel browser-notice" aria-labelledby="browser-notice-title">
     <span class="eyebrow">Before you start</span>
     <h1 id="browser-notice-title" tabindex="-1">Use a compatible desktop browser.</h1>
     <p>This guide needs Web MIDI for device setup and WebUSB for file transfers on Mac. Desktop Chrome, Edge and Opera support both.</p>
     <p id="browser-blocked" role="alert" hidden>This browser doesn’t expose both required features, or you’re using a mobile device. Open this page in a compatible browser on your computer. <a href="https://www.google.com/chrome/" target="_blank" rel="noopener noreferrer">Get Chrome</a></p>
     <noscript><p>JavaScript is required to check your browser and use the builder.</p></noscript>
+    <button type="button" class="text-button gate-browse" data-browse hidden>← Back to the machines</button>
   </section>
   <section id="risk-gate" class="panel risk-notice" aria-labelledby="risk-title" hidden>
     <span class="eyebrow">Before you start</span>
@@ -52,6 +41,7 @@
       <button id="risk-continue" class="primary" type="submit" disabled>Continue to builder</button>
     </form>
     <noscript><p>JavaScript is required to acknowledge this notice and use the builder.</p></noscript>
+    <button type="button" class="text-button gate-browse" data-browse hidden>← Back to the machines</button>
   </section>
   <div id="builder-workspace" hidden inert>
   <p id="status" role="status" aria-live="polite">Loading machines…</p>
@@ -105,6 +95,17 @@
     <div id="file-actions" class="actions flow-shell" hidden><button id="files-back" class="secondary">← Back</button><button id="choose" class="primary" disabled>Choose machines <span aria-hidden="true">→</span></button></div>
   </section>
   <section data-page="2" hidden aria-labelledby="machines-title">
+    <section id="veff-intro" class="veff-intro" aria-labelledby="veff-intro-title" hidden>
+      <span class="veff-kicker">Veff Experimental · Open-XY installer</span>
+      <h2 id="veff-intro-title" class="veff-title">Your OP–XY, <span class="veff-hl">a little further out.</span></h2>
+      <p class="veff-lead">Everything <a href="https://beta.open-xy.com" target="_blank" rel="noopener noreferrer">Open-XY</a> offers, plus <strong>Linear by Veff</strong> and other experimental firmware changes. Browse the machines below, tick the ones you want, then install. Your OS file comes from your own OP–XY and never leaves this browser.</p>
+      <div class="veff-paths">
+        <article class="path-card"><span class="path-tag">Install</span><h3>Install on your OP–XY</h3><p>First time, or still on teenage engineering’s OS 1.2.1. Read the notice, copy the OS file from your OP–XY, and the firmware is built here, in your browser.</p><button type="button" id="path-install" class="primary">Start installing <span aria-hidden="true">→</span></button></article>
+        <article class="path-card"><span class="path-tag">Rebuild</span><h3>Already on Open-XY or Veff?</h3><p>Change the machines on a modified OP–XY. The original OS 1.2.1 is recovered from its OS file; load your layout.json too so your machines keep their numbers.</p><button type="button" id="path-rebuild" class="secondary">Rebuild my firmware <span aria-hidden="true">→</span></button></article>
+        <div class="path-card path-feature" data-veff-features="full"></div>
+      </div>
+      <p class="veff-credit"><span data-veff-base></span>. Open-XY is made by the <a href="https://github.com/etcetc000/open-xy/graphs/contributors" target="_blank" rel="noopener noreferrer">Open-XY contributors</a> (<a href="https://open-xy.com" target="_blank" rel="noopener noreferrer">open-xy.com</a>); this fork lives at <a href="https://github.com/galfaroth/open-xy" target="_blank" rel="noopener noreferrer">github.com/galfaroth/open-xy</a>.</p>
+    </section>
     <div class="page-header"><div><span class="eyebrow">Step 2 of 4 · Choose machines</span><h1 id="machines-title" tabindex="-1">Choose machines</h1><p>Select the instruments and effects to install.</p></div><div class="selection-tools"><span id="selection-count" class="counter">0 selected</span>
       <details id="machine-presets" class="presets"><summary>Presets</summary>
         <div class="presets-panel">
@@ -139,7 +140,7 @@
       </aside>
     </div>
 
-    <div class="actions"><button data-step="1" class="secondary">← OS</button><button id="choose-extensions" class="primary" disabled>Choose extensions <span aria-hidden="true">→</span></button></div>
+    <div class="actions"><button data-step="1" class="secondary">← OS</button><button id="choose-extensions" class="primary" disabled>Choose extensions <span aria-hidden="true">→</span></button><button type="button" id="browse-install" class="primary browse-install">Install the selected machines <span aria-hidden="true">→</span></button></div>
   </section>
   <section data-page="3" hidden aria-labelledby="extensions-title">
     <div class="page-header"><div><span class="eyebrow">Step 3 of 4 · Extensions</span><h1 id="extensions-title" tabindex="-1">Choose extensions</h1><p>Choose optional changes to your OP–XY’s look and workflow.</p></div><span id="extension-count" class="counter">None selected</span></div>

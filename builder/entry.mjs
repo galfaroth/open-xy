@@ -11,7 +11,7 @@ try {
 }
 try {
   const [{createBuilder}, {createCatalogView}] = await Promise.all([import('./app.mjs'), import('./catalog-view.mjs')]);
-  await createBuilder({audition:Audition, catalogView:createCatalogView});
+  await createBuilder({audition:Audition, catalogView:createCatalogView, browseFirst:true});
 } catch (error) {
   console.error('open-xy failed to load.', error);
   const notice = document.createElement('div');
