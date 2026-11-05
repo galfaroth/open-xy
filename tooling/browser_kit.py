@@ -158,7 +158,8 @@ def export(package, output, tools, preview_cxx='clang++', *, stock_catalog, pers
                extensions=extensions.metadata(native.extensions_of(machines),
                                               extension_origins(native.extensions_of(machines), personal)),
                stockCatalog=base64.b64encode(stock_catalog).decode('ascii'),
-               screenTemplate=screen.template().decode('utf-8'))
+               screenTemplate=screen.template().decode('utf-8'),
+               arrangerSvg=read(ROOT / native.TEMPLATES / 'arranger.svg').decode('utf-8'))
     services = native.active_services(profile, native.service_users(machines))
     # Track control: startup's calls into the saved data, while a selection does not use the service.
     if 'control' in services:

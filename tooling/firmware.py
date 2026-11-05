@@ -57,8 +57,17 @@ def absolute_target(data):
 
 
 def hook_instruction(patch, target):
-    """Reviewed absolute/relative call or branch, with zero NOP padding."""
+    """Reviewed function pointer, absolute call or jump, or relative branch, with zero NOP padding."""
     site, length, call = int(patch['address'], 16), patch['length'], patch['call']
+    require(patch.get('encoding') in (None, 'pointer', 'absolute_jump'), 'Unknown hook encoding')
+    if patch.get('encoding') == 'pointer':
+        require(length == 4 and site % 4 == 0 and call is False, 'Invalid pointer hook')
+        require(0 <= target <= 0xffffffff and target % 2 == 0, 'Invalid pointer destination')
+        return struct.pack('<I', target)
+    if patch.get('encoding') == 'absolute_jump':
+        require(length in (8, 10, 12) and site % 2 == 0 and call is False, 'Invalid absolute jump hook')
+        require(0 <= target <= 0xffffffff and target % 2 == 0, 'Invalid jump destination')
+        return struct.pack('<4H', 0xdc00, target >> 16, target & 65535, 0) + bytes(length - 8)
     if length in (8, 12):
         require(type(call) is bool and (call or length == 8), 'Invalid absolute hook policy')
         return (absolute_call(target) if call else startup_label.jump(target)[:8]) + bytes(length - 8)
@@ -68,6 +77,21 @@ def hook_instruction(patch, target):
 
 def hook_target(patch, instruction):
     """(destination, call) of hook bytes produced by hook_instruction."""
+    require(patch.get('encoding') in (None, 'pointer', 'absolute_jump'), 'Unknown hook encoding')
+    if patch.get('encoding') == 'pointer':
+        require(patch['length'] == len(instruction) == 4 and int(patch['address'], 16) % 4 == 0
+                and patch['call'] is False, 'Invalid pointer hook')
+        target, = struct.unpack('<I', instruction)
+        require(target % 2 == 0, 'Invalid pointer destination')
+        return target, False
+    if patch.get('encoding') == 'absolute_jump':
+        require(patch['length'] == len(instruction) and len(instruction) in (8, 10, 12)
+                and int(patch['address'], 16) % 2 == 0
+                and patch['call'] is False, 'Invalid absolute jump hook')
+        opcode, high, low, zero = struct.unpack('<4H', instruction[:8])
+        require(opcode == 0xdc00 and zero == 0 and low % 2 == 0
+                and instruction[8:] == bytes(len(instruction) - 8), 'Invalid absolute jump encoding')
+        return high << 16 | low, False
     if patch['length'] in (8, 12):
         require(len(instruction) == patch['length'] and instruction[8:] == bytes(patch['length'] - 8),
                 'Changed absolute-hook padding')
@@ -90,7 +114,7 @@ def assemble(stock, module, profile, original_profile, edits, services, profilin
         require(all(patch[k] == original[k] for k in ('kind', 'address', 'before', 'file_offset', 'length')),
                 'Changed patch boundary')
         after = bytes.fromhex(patch['after'])
-        require(all(patch.get(k) == original.get(k) for k in ('service', 'profiling', 'symbol', 'call')),
+        require(all(patch.get(k) == original.get(k) for k in ('service', 'profiling', 'symbol', 'call', 'encoding', 'trampoline', 'edit_index', 'general_rows')),
                 'Changed patch policy')
         if not patch_active(original, services, profiling):
             require(patch['after'] == original['before'], 'An inactive hook changed stock')

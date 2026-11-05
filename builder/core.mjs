@@ -10,7 +10,7 @@ export const selectArtwork = Graphics.selectArtwork;
 // The init preset's authored settings, shared with tooling.adapters.default_preset
 // (write_builder inlines this same file's content for the offline export).
 import DEFAULT_PRESET_TEMPLATE from '../tooling/default_preset.json' with { type: 'json' };
-export const PROFILE_SHA256 = '7aed83c5d2be2126bad81451a2d9658bde268e160f999e4a1bc2026f5c53424c';
+export const PROFILE_SHA256 = '75bcd59442f36a58c48426e3d86daef61c6a5224a2cb4a549426651345f11220';
 export function requireThat(ok, message) { if (!ok) throw new Error(message); }
 const check = requireThat;
 const utf8 = new TextEncoder();
@@ -726,6 +726,20 @@ export function redirect(edit, destination) {
     return words(0xdc00, destination >>> 16, destination & 0xffff, 0, 0);
   }
   check(edit.kind === 'hook' && typeof edit.call === 'boolean', 'Not a hook');
+  check(edit.encoding === undefined || ['pointer', 'absolute_jump'].includes(edit.encoding), 'Unknown hook encoding');
+  if (edit.encoding === 'pointer') {
+    check(edit.length === 4 && Number(edit.address) % 4 === 0 && edit.call === false, 'Invalid pointer hook');
+    const after = new Uint8Array(4);
+    view(after).setUint32(0, destination, true);
+    return after;
+  }
+  if (edit.encoding === 'absolute_jump') {
+    check([8, 10, 12].includes(edit.length) && Number(edit.address) % 2 === 0 && edit.call === false,
+      'Invalid absolute jump hook');
+    const after = new Uint8Array(edit.length);
+    after.set(words(0xdc00, destination >>> 16, destination & 0xffff, 0));
+    return after;
+  }
   if (edit.length === 8 || edit.length === 12) {
     check(edit.call || edit.length === 8, 'Invalid absolute hook policy');
     const after = new Uint8Array(edit.length);
@@ -992,6 +1006,13 @@ export async function buildAssets(kit, selection, catalog, numbers, options = {}
     expected[key] = [...base[key], ...group.map(m => JSON.parse(catalogEntry(m, numbers).trim().replace(/^,/, '')))];
   check(JSON.stringify(JSON.parse(text)) === JSON.stringify(expected), 'Unexpected catalog modification');
   const files = {'content/op1_factory.json': extended};
+  // Linear by Veff's timeline artwork, reviewed by the profile.
+  if (kit.profile.arranger_svg_sha256) {
+    check(typeof kit.arrangerSvg === 'string' &&
+      await sha256(utf8.encode(kit.arrangerSvg)) === kit.profile.arranger_svg_sha256,
+      'Arranger artwork differs from reviewed asset');
+    files['content/display/open-xy-arranger.svg'] = utf8.encode(kit.arrangerSvg);
+  }
   for(const id of extensionSelection(kit,extensionIds)) {
     const filter=processorOf(kit.extensions.find(e => e.id===id));
     if(!filter)continue;

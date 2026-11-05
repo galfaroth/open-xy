@@ -49,6 +49,8 @@ u32 stock_gui_role() { calls += "role "; return gui; }
 u32 sdk_control_kept_write(void* file) { calls += "kept "; return file ? 2 : 0; }
 void sdk_control_kept_load(const char* path) { calls += path; }
 u32 stock_catalog_insert(void*, const void*, u32 id) { inserted = id; return 7; }
+void sdk_arranger_screen_startup() { calls += "arranger-page "; }
+int sdk_arranger_screen_owned(u32 page) { return page == 127; }
 int sdk_stock_engine_known(const void*) { return named && std::string(named) == "prism"; }
 
 static u32 catalog(const char* name, u32 id) {
@@ -74,11 +76,11 @@ int main() {
     // GUI role: each own page guards only its own engine; stock pages need none.
     calls.clear();
     sdk_startup_screen();
-    require(calls == "effect-page first-page first second-page second sampled drawn-page drawn player-page ");
+    require(calls == "effect-page first-page first second-page second sampled drawn-page drawn player-page arranger-page ");
     // A sample engine plays without its own screen: the screen never holds it back.
     calls.clear(); screens = false; drawn_screen = 0;
     sdk_startup_screen();
-    require(calls == "effect-page first-page second-page second sampled drawn-page drawn player-page ");
+    require(calls == "effect-page first-page second-page second sampled drawn-page drawn player-page arranger-page ");
     drawn_screen = 1;
 
     const u32 first = value(first_engine_id), second = value(second_engine_id);

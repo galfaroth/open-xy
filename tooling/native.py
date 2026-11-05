@@ -18,7 +18,7 @@ import sys
 import tempfile
 import xml.etree.ElementTree as ET
 
-from . import benchmark, extensions, runtime, screen, startup_label, stock_tables
+from . import arranger, benchmark, extensions, runtime, screen, startup_label, stock_tables
 from .adapters import (aux_preset_files, catalog_entry, check_aux_presets, generate_control, generate_display, generate_fx_object,
                        generate_player_object, generate_player_table, generate_registration,
                        generate_registration_stock, generate_sample_voice,
@@ -218,7 +218,11 @@ SDK_UNITS = ('divide', 'memory', 'registration', 'registration_stock', 'startup'
              'synth_pages', 'aux_tracks', 'aux_hooks', 'presets',
              'master_filter_state', 'master_filter_collection', 'master_filter_stock', 'master_filter_hooks', 'master_filter_panel',
              'players', 'player_hooks', 'player_table', 'keyboard_octaves', 'sample_overview', 'sample_overview_stock',
-             'drum_machines', 'drum_callbacks', 'drum_values_stock', 'drum_synthesis_stock', 'drum_hooks')
+             'drum_machines', 'drum_callbacks', 'drum_values_stock', 'drum_synthesis_stock', 'drum_hooks',
+             # Linear by Veff (docs/arranger.md): the arranger and the shared module event dispatch.
+             'arranger_state', 'arranger_ui', 'arranger_transport', 'arranger_stock', 'arranger_project',
+             'arranger_bounce', 'arranger_bounce_remote', 'arranger_bounce_job', 'arranger_bounce_destination',
+             'module_events')
 # SDK units that exist only for a profile service, linked when a machine needs it.
 UNIT_SERVICES = dict.fromkeys(('sample_machines', 'sample_hooks', 'sample_callbacks', 'sample_cache',
                                'sample_cache_stock', 'sample_cache_hooks', 'sample_progress',
@@ -473,6 +477,8 @@ def compile_collection(directory, toolchain, compiler, profile, machines, defini
                 return assemble_unit(ROOT / RUNTIME_ASM, obj)
             if step == 'memory':
                 return cxx(RUNTIME_CXX, obj)
+            if step == 'arranger_stock':
+                return assemble_unit(arranger.generate(folder, profile), obj)
             if step == 'startup_label':
                 return assemble_unit(startup_label.generate(folder, version), obj)
             if step == 'startup':
@@ -681,7 +687,10 @@ def check_module(directory, tools, profile, machines, profiling=True, runtime_me
     label = symbols[startup_label.SYMBOL]
     undecoded = [int(line.split(':')[0], 16) for line in disassembly.splitlines()
                  if 'ILLEGAL' in line and re.match(r'\s*[0-9a-f]+:', line)]
-    require(all(label['value'] <= at < label['value'] + label['size'] for at in undecoded) and
+    # So do the arranger's stock continuations, checked byte for byte too.
+    verified_ranges = arranger.checked_ranges(profile, module, symbols, allocated['.text'])
+    verified_ranges.append((label['value'], label['value'] + label['size']))
+    require(all(any(begin <= at < end for begin, end in verified_ranges) for at in undecoded) and
             'R_BFIN_' not in disassembly, 'Invalid or unresolved instructions')
     require(startup_label.thunk_ok(read(directory / 'module.bin'), label['value'] - profile['module_base'],
                                    label['size'], symbols['kit_startup_label_text']['value']),
@@ -884,6 +893,9 @@ def prepare_assets(catalog, profile, machines):
     check_aux_presets(machines)
     for m in machines:
         outputs.update(aux_preset_files(m))
+    artwork = read(ROOT / TEMPLATES / 'arranger.svg')
+    require(sha(artwork) == profile['arranger_svg_sha256'], 'Arranger artwork differs from reviewed asset')
+    outputs['content/display/open-xy-arranger.svg'] = artwork
     for e in extensions_of(machines):
         if e.master_processor is not None:
             path = e.root / e.master_processor['artwork']
