@@ -113,7 +113,7 @@ def main():
                     'Selection numbers differ: ' + machine['id'])
         services = active_services(kit['profile'], [m['kind'] for m in kit['machines'] if m['id'] in result['selected']] +
                                    (['extension'] if result['extensions'] else []) +
-                                   (['master_filter'] if any(e.get('master_filter') and e['id'] in result['extensions']
+                                   (['master_filter'] if any((e.get('master_processor') or e.get('master_filter')) and e['id'] in result['extensions']
                                                             for e in kit.get('extensions', [])) else []))
         modes = {}
         for profiling in (True, False):
