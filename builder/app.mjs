@@ -8,10 +8,11 @@ import * as Visuals from './visuals.mjs';
 import {editedShown, shownControls} from '../sdk/browser/controls.mjs';
 import {supportsDeviceApis} from './browser.mjs';
 
-// The entry point supplies audition's bundled worker sources; the controller
-// can also be mounted with explicit adapters by firmware-free integration tests.
+// The entry point supplies audition's bundled worker sources and the optional catalog
+// presentation (catalog-view.mjs); the controller can also be mounted with explicit
+// adapters by firmware-free integration tests.
 export async function createBuilder({core = Core, wizardApi = Wizard, retained = Retained, visuals = Visuals,
-  audition, supportsBrowser = supportsDeviceApis} = {}) {
+  audition, catalogView = null, supportsBrowser = supportsDeviceApis} = {}) {
   const $ = id => document.getElementById(id);
   document.querySelectorAll('[data-icon]').forEach(el => el.append(visuals.icon(el.dataset.icon)));
   document.querySelectorAll('[data-device-art]').forEach(el => el.append(visuals.device()));
@@ -110,6 +111,9 @@ export async function createBuilder({core = Core, wizardApi = Wizard, retained =
       if (acknowledged) navigate(1); else showEntryGate();
     },
   });
+  // Machine cards, their detail view and the fork's notes; it only presents what this controller decides.
+  const view = catalogView?.({core, visuals, snapshots:createSnapshotService(), modeFor:m => graphicsConfiguration.modeFor(m),
+    getKit:() => kit, isSelected:id => selected.includes(id), setSelected:chooseMachine});
   function showEntryGate() {
     stopPreview();
     ++previewRevision;
@@ -137,6 +141,7 @@ export async function createBuilder({core = Core, wizardApi = Wizard, retained =
         if (kit) {
           if (match[1] !== 'machines') inspectExtension(kit.extensions?.find(e => e.id === match[2])?.id ?? kit.extensions?.[0]?.id);
           else inspect(kit.machines.find(m => m.id === match[2])?.id ?? kit.machines[0].id);
+          if (match[1] === 'machines' && kit.machines.some(m => m.id === match[2])) view?.open();
           recalculate();
         }
       } else {
@@ -303,6 +308,7 @@ export async function createBuilder({core = Core, wizardApi = Wizard, retained =
     const ticket = ++previewRevision;
     inspected = id; const m = kit.machines.find(x => x.id === id);
     describeMachine($('machine-summary'), m);
+    view?.detail(m);
     $('art-preview').replaceChildren();
     $('audition-controls').replaceChildren();
     stopAudio = () => {};
@@ -551,7 +557,14 @@ export async function createBuilder({core = Core, wizardApi = Wizard, retained =
       showFavorite();
       star.onclick = () => { toggleFavorite(m.id); showFavorite(); };
       row.append(label, glyph, button, star); $('machines').append(row);
+      view?.card(row, m, button);
     });
+  }
+  // Selecting or deselecting one machine from outside its row (the catalog's detail view).
+  function chooseMachine(id, include) {
+    if (include === selected.includes(id)) return;
+    selected = include ? [...selected, id] : selected.filter(other => other !== id);
+    invalidate(); renderMachines(); recalculate();
   }
   function selectionNames() {
     return [...kit.machines.filter(m => selected.includes(m.id)),
@@ -612,6 +625,7 @@ export async function createBuilder({core = Core, wizardApi = Wizard, retained =
   function recalculate() {
     updateOverrideCount();
     linked = null; $('selection-count').textContent = selected.length + ' selected';
+    view?.selected();
     $('extension-memory').textContent = '';
     $('memory-map').replaceChildren(); $('memory-legend').replaceChildren();
     try {
@@ -789,6 +803,7 @@ export async function createBuilder({core = Core, wizardApi = Wizard, retained =
     invalidate(); stock = null; kit = next;
     // A tap opens the memory breakdown on screens without hover.
     $('builder-version').textContent = 'v' + kit.version;
+    view?.loaded(kit);
     $('capacity-foot').textContent = kib(core.moduleBytes(kit.profile)) + ' for machines; CPU load is not measured';
     selected = kit.machines.filter(core.chosenByDefault).map(machine => machine.id);
     try {

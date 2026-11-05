@@ -1,3 +1,4 @@
+import {execFileSync} from 'node:child_process';
 import {existsSync, readFileSync, readdirSync, realpathSync} from 'node:fs';
 import {basename, dirname, posix, resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
@@ -9,7 +10,19 @@ const browserRoot = resolve(root, 'builder');
 const renderers = ['controls.mjs', 'display.mjs', 'engine.mjs', 'processor.mjs', 'graphics.mjs'].map(name => resolve(root, 'sdk/browser', name));
 // Data core.mjs shares with the tooling: the init preset template (tooling.adapters.default_preset).
 const sharedData = [resolve(root, 'tooling/default_preset.json')];
-const browserFiles = ['index.html', 'entry.mjs', 'style.css', 'app.mjs', 'graphics-configuration.mjs', 'machine-snapshots.mjs', 'graphics-dialog.mjs', 'core.mjs', 'browser.mjs', 'wizard.mjs', 'ferret.mjs', 'mtp.mjs', 'visuals.mjs', 'audition.mjs'];
+const browserFiles = ['index.html', 'entry.mjs', 'style.css', 'app.mjs', 'graphics-configuration.mjs', 'machine-snapshots.mjs', 'graphics-dialog.mjs', 'core.mjs', 'browser.mjs', 'wizard.mjs', 'ferret.mjs', 'mtp.mjs', 'visuals.mjs', 'audition.mjs', 'catalog-view.mjs', 'veff.json'];
+// The Open-XY revision this site is based on, for the installer to name
+// (builder/catalog-view.mjs): the release in VERSION and the upstream staging commit
+// this checkout contains, when that branch is known locally.
+export function upstreamBase(upstream = process.env.OPEN_XY_UPSTREAM || 'origin/staging') {
+  const version = readFileSync(resolve(root, 'VERSION'), 'utf8').trim();
+  let commit = '';
+  try {
+    commit = execFileSync('git', ['merge-base', 'HEAD', upstream], {cwd:root, encoding:'utf8', stdio:['ignore', 'pipe', 'ignore']}).trim();
+  } catch {}
+  const known = /^[0-9a-f]{40}$/.test(commit);
+  return {version, branch:known ? upstream.replace(/^origin\//, '') : null, commit:known ? commit : null};
+}
 // Vite's /@fs/ URLs: C:/x becomes /@fs/C:/x and /x becomes /@fs/x.
 const fsUrl = path => posix.join('/@fs/', normalizePath(path));
 const fsFile = url => { const path = url.slice(5); return /^[A-Za-z]:\//.test(path) ? path : '/' + path; };
@@ -66,6 +79,7 @@ export default defineConfig(async ({command, mode}) => {
     ...allowedFs.map(fsUrl)]);
   return {
     root: browserRoot,
+    define: {__VEFF_BASE__: JSON.stringify(upstreamBase())},
     publicDir: false,
     base: './',
     server: {
