@@ -238,6 +238,7 @@ details input { max-width:100%; }
 .speaker-hole { fill:#77777d; }
 .device-knob { fill:#333; stroke:#999; }
 .knob-ring { fill:none; stroke:#b4b4b4; stroke-width:.7; }
+.device-knob.encoder { stroke:#8a8a8f; stroke-width:.8; }
 .device-key rect { fill:#242426; stroke:#545458; stroke-width:.7; }
 .device-key circle { fill:none; stroke:#777; stroke-width:.7; }
 .device-key text { font:10px Arial,sans-serif; fill:#bbb; text-anchor:middle; }

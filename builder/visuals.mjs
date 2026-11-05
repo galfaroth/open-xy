@@ -71,7 +71,8 @@ export function device({com = false, track = null, screen = null, cable = false,
   if (screen) drawing += `<svg x="234" y="118" width="164" height="76" viewBox="0 0 480 222">${screenMarkup(screen, track, devMenu)}</svg>`;
   for (let i = 0; i < 4; i++) {
     const x = 449 + i * 88;
-    drawing += `<circle class="device-knob" cx="${x}" cy="157" r="25" style="fill:${['#343434', '#696969', '#a1a1a1', '#dfdfdf'][i]}"/><circle class="knob-ring" cx="${x}" cy="157" r="17"/><path d="M${x} 132v9" stroke="#111" stroke-width="2"/>`;
+    // Slim encoders as on the instrument: a small coloured cap, a thin rim and pointer.
+    drawing += `<circle class="device-knob encoder" cx="${x}" cy="157" r="15" style="fill:${['#343434', '#696969', '#a1a1a1', '#dfdfdf'][i]}"/><path d="M${x} 143v7" stroke="${i < 2 ? '#ddd' : '#222'}" stroke-width="1.2" stroke-linecap="round"/>`;
   }
   drawing += key(757, 113, '≋') + key(757, 157, 'com', com);
   // Four modes, four modules, eight tracks, then PLAYERS.
