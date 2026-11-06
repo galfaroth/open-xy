@@ -891,6 +891,17 @@ export async function recoverFirmware(kit, input, layout = null) {
         if (await rebuilds(present, extensions)) return {stock, selected: present, extensions};
       } catch {}  // a guess that cannot link is not this kit's build
     }
+    // Two machines can share their largest code section byte for byte (one author's
+    // related machines), so one absent machine may look present: try the present
+    // machines without each one in turn, one link per machine.
+    for (const absent of present.length > 1 ? present : []) {
+      const selected = present.filter(id => id !== absent);
+      for (const extensions of [guess, ...choices]) {
+        try {
+          if (await rebuilds(selected, extensions)) return {stock, selected, extensions};
+        } catch {}
+      }
+    }
     // Small kits also try every selection: at most 1,023 deterministic links per
     // extension choice, each under a millisecond. Yield between candidates so file
     // changes and navigation remain responsive; the caller discards stale results.
