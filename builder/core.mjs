@@ -10,7 +10,7 @@ export const selectArtwork = Graphics.selectArtwork;
 // The init preset's authored settings, shared with tooling.adapters.default_preset
 // (write_builder inlines this same file's content for the offline export).
 import DEFAULT_PRESET_TEMPLATE from '../tooling/default_preset.json' with { type: 'json' };
-export const PROFILE_SHA256 = '75bcd59442f36a58c48426e3d86daef61c6a5224a2cb4a549426651345f11220';
+export const PROFILE_SHA256 = '6d9b31a670bba7013d9379b39a9452565020faf798d58558f4094700930d7924';
 export function requireThat(ok, message) { if (!ok) throw new Error(message); }
 const check = requireThat;
 const utf8 = new TextEncoder();
@@ -890,6 +890,17 @@ export async function recoverFirmware(kit, input, layout = null) {
       try {
         if (await rebuilds(present, extensions)) return {stock, selected: present, extensions};
       } catch {}  // a guess that cannot link is not this kit's build
+    }
+    // Two machines can share their largest code section byte for byte (one author's
+    // related machines), so one absent machine may look present: try the present
+    // machines without each one in turn, one link per machine.
+    for (const absent of present.length > 1 ? present : []) {
+      const selected = present.filter(id => id !== absent);
+      for (const extensions of [guess, ...choices]) {
+        try {
+          if (await rebuilds(selected, extensions)) return {stock, selected, extensions};
+        } catch {}
+      }
     }
     // Small kits also try every selection: at most 1,023 deterministic links per
     // extension choice, each under a millisecond. Yield between candidates so file
