@@ -128,6 +128,14 @@ main { max-width:1440px; margin:0 auto; padding:0 var(--gutter) 28px; }
 .veff-feature .veff-feature-help { margin-top:8px; color:var(--muted); font-size:14px; max-width:780px; }
 .veff-feature .veff-feature-note { margin-top:8px; color:var(--pink-text); font-size:13.5px; }
 .veff-credit { margin:20px 0 0; font-size:13px; color:var(--muted); }
+.veff-sync { margin:22px 0 0; }
+.veff-sync-state { margin:0 0 4px; font-size:14px; color:var(--ink-2); }
+.veff-sync-state .sync-detail { color:var(--muted); }
+.veff-sync-how { margin:0; max-width:880px; font-size:13px; color:var(--muted); }
+.sync-dot { display:inline-block; width:8px; height:8px; margin-right:7px; border-radius:50%; vertical-align:1px; background:#5fd38a; box-shadow:0 0 0 3px #5fd38a26; }
+.sync-dot[data-state=testing] { background:#ffd45c; box-shadow:0 0 0 3px #ffd45c26; }
+.brand-sync { cursor:help; }
+.brand-sync .sync-dot { width:6px; height:6px; margin:0 4px 0 6px; box-shadow:none; }
 .veff-credit a,.footer-credit a { color:var(--ink-2); }
 /* While browsing, the page-2 header introduces the catalog and one button starts installing. */
 #builder-workspace[data-browse=true] [data-page="2"]>.page-header .eyebrow,#builder-workspace[data-browse=true] .veff-featured { display:none; }

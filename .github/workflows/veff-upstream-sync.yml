@@ -1,0 +1,40 @@
+# Open-XY Mods by Veff: follow Open-XY's staging branch every hour.
+# Catalog-only changes (machines, extensions) are merged into veff/staging at once;
+# SDK changes go to veff/upstream-candidate and wait for a hardware test of Linear
+# by Veff (tools/veff_sync.py). No firmware is involved: kits are built where the
+# OP-XY OS file is, never here.
+name: Veff upstream sync
+
+on:
+  schedule:
+    - cron: '17 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  issues: write
+
+concurrency:
+  group: veff-upstream-sync
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    if: github.repository == 'galfaroth/open-xy'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: veff/staging
+          fetch-depth: 0
+      - name: Fetch Open-XY staging
+        run: |
+          git remote add upstream https://github.com/etcetc000/open-xy.git
+          git fetch --no-tags upstream staging
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+      - name: Sync
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tools/veff_sync.py --upstream upstream/staging --remote origin

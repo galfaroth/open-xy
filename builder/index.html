@@ -11,7 +11,7 @@
 <body>
 <main>
   <aside class="sidebar">
-  <header class="masthead"><div class="brand"><span class="brand-mark" aria-hidden="true"></span><span class="brand-words"><strong class="brand-name">Open-XY Mods by Veff</strong><span class="brand-product">installer<span id="builder-version" class="brand-version"></span></span><span class="brand-base" data-veff-base></span></span></div></header>
+  <header class="masthead"><div class="brand"><span class="brand-mark" aria-hidden="true"></span><span class="brand-words"><strong class="brand-name">Open-XY Mods by Veff</strong><span class="brand-product">installer<span id="builder-version" class="brand-version"></span></span><span class="brand-base"><span data-veff-base></span> <span class="brand-sync" data-veff-sync="short"></span></span></span></div></header>
   <nav class="steps" id="phase-nav" hidden aria-label="Build progress">
     <button data-step="1" aria-current="step"><span class="nav-icon" data-icon="firmware"></span><span><b>01</b>OS</span></button>
     <button data-step="2" disabled><span class="nav-icon" data-icon="machines"></span><span><b>02</b>Machines</span></button>
@@ -104,6 +104,8 @@
         <article class="path-card"><span class="path-tag">Install</span><h3>Install on your OP–XY</h3><p>First time, or still on teenage engineering’s OS 1.2.1. Read the notice, copy the OS file from your OP–XY, and the firmware is built here, in your browser.</p><button type="button" id="path-install" class="primary">Start installing <span aria-hidden="true">→</span></button></article>
         <article class="path-card"><span class="path-tag">Rebuild</span><h3>Already on Open-XY or Veff?</h3><p>Change the machines on a modified OP–XY. The original OS 1.2.1 is recovered from its OS file; load your layout.json too so your machines keep their numbers.</p><button type="button" id="path-rebuild" class="secondary">Rebuild my firmware <span aria-hidden="true">→</span></button></article>
       </div>
+      <div class="veff-sync"><p class="veff-sync-state" data-veff-sync></p>
+        <p class="veff-sync-how">How it keeps up: this installer follows Open-XY’s staging branch every hour. New and updated synths, effects, players and extensions from Open-XY are released here right away. When Open-XY changes its SDK, Linear by Veff is first tested on an OP–XY with it, so that release can follow a few days later.</p></div>
       <p class="veff-credit"><span data-veff-base></span>. Open-XY is made by the <a href="https://github.com/etcetc000/open-xy/graphs/contributors" target="_blank" rel="noopener noreferrer">Open-XY contributors</a> (<a href="https://open-xy.com" target="_blank" rel="noopener noreferrer">open-xy.com</a>); this fork lives at <a href="https://github.com/galfaroth/open-xy" target="_blank" rel="noopener noreferrer">github.com/galfaroth/open-xy</a>.</p>
     </section>
     <div class="page-header"><div><span class="eyebrow">Step 2 of 4 · Choose machines</span><h1 id="machines-title" tabindex="-1">Choose machines</h1><p>Select the instruments and effects to install.</p></div><div class="selection-tools"><span id="selection-count" class="counter">0 selected</span>

@@ -1,5 +1,6 @@
 import VEFF from './veff.json' with { type: 'json' };
 import LINEAR_PREVIEW from './linear-preview.json' with { type: 'json' };
+import SYNC from './sync-status.json' with { type: 'json' };
 
 // The Open-XY Mods by Veff presentation of the machine collection: a browsable grid of
 // machine cards, a detail view per machine, the fork's own features and its own
@@ -39,7 +40,28 @@ export function createCatalogView({core, visuals, snapshots, modeFor, getKit, is
   }
 
   // "Based on Open-XY 0.0.5 · staging a2893dd", linked to that upstream commit.
+  // Green when this installer carries Open-XY's latest staging; yellow while an Open-XY
+  // SDK change waits for its hardware test with Linear by Veff (tools/veff_sync.py).
+  function renderSync() {
+    const repository = data.upstream?.repository ?? 'https://github.com/etcetc000/open-xy';
+    const testing = SYNC.state === 'in-testing';
+    const title = testing
+      ? 'Open-XY changed its SDK' + (SYNC.pending?.since ? ' on ' + SYNC.pending.since : '') +
+        '. Linear by Veff is being tested on an OP–XY with it; until then this installer stays on the last tested Open-XY, and that release follows, usually within a few days.'
+      : 'Every synth, effect, player and extension on Open-XY staging is here.';
+    for (const target of doc.querySelectorAll('[data-veff-sync]')) {
+      const dot = node('span', undefined, 'sync-dot'); dot.dataset.state = testing ? 'testing' : 'current';
+      dot.setAttribute('aria-hidden', 'true');
+      const label = testing ? 'Open-XY SDK update in testing' : 'Up to date with Open-XY';
+      target.replaceChildren(dot, node('span', label, 'sync-label'));
+      if (testing && SYNC.pending?.commit)
+        target.append(' · ', link('staging ' + SYNC.pending.commit.slice(0, 7), repository + '/commit/' + SYNC.pending.commit));
+      target.title = title;
+      if (target.dataset.veffSync !== 'short') target.append(node('span', ' — ' + title, 'sync-detail'));
+    }
+  }
   function renderBase(version = base?.version) {
+    renderSync();
     for (const target of doc.querySelectorAll('[data-veff-base]')) {
       const parts = [(data.upstream?.name ?? 'Open-XY') + (version ? ' ' + version : '')];
       target.replaceChildren('Based on ', link(parts[0], data.upstream?.site ?? 'https://open-xy.com'));
