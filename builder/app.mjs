@@ -251,7 +251,6 @@ export async function createBuilder({core = Core, wizardApi = Wizard, retained =
     for (const id of ['path-install', 'browse-install']) $(id).onclick = () => {
       installFromCatalog = pickedInCatalog = true; navigate(1); ready();
     };
-    $('path-rebuild').onclick = () => { installFromCatalog = false; navigate(1); ready(); };
     $('install-change').onclick = () => { catalogLanding = true; acknowledged = false; openPreviewLink(); };
     document.querySelectorAll('[data-browse]').forEach(button => {
       button.hidden = false;
