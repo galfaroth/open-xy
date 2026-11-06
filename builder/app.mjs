@@ -630,15 +630,16 @@ export async function createBuilder({core = Core, wizardApi = Wizard, retained =
   function catalogExtensions() {
     const veffOnly = browsing.keywords.includes(VEFF_KEYWORD);
     if (!view || !builderPreview || !['all', 'extension'].includes(browsing.kind) ||
-        browsing.keywords.some(k => k !== VEFF_KEYWORD) || browsing.favoritesOnly) return [];
+        browsing.keywords.some(k => k !== VEFF_KEYWORD)) return [];
     const query = browsing.query.trim().toLowerCase();
     const matches = (...texts) => !query || texts.some(t => (t ?? '').toLowerCase().includes(query));
-    const entries = (kit.extensions ?? []).filter(e => matches(e.name, e.description));
+    const starred = id => !browsing.favoritesOnly || favorites.has(id);
+    const entries = (kit.extensions ?? []).filter(e => matches(e.name, e.description) && starred(e.id));
     // Built into every firmware here: always included, never deselectable.
-    const builtIn = (view.builtIn?.() ?? []).filter(f => matches(f.name, f.summary)).map(f => () =>
+    const builtIn = (view.builtIn?.() ?? []).filter(f => matches(f.name, f.summary) && starred('feature:' + f.name)).map(f => () =>
       extensionCard(f.name, f.summary, ['Extension', 'Always included'], true, null, () => {}, {
         locked: 'The whole firmware is built on ' + f.name + ': every build here includes it, so it cannot be deselected.',
-        screen: f.screen}));
+        screen: f.screen, favorite: 'feature:' + f.name}));
     if (veffOnly) return builtIn;
     const cards = [...builtIn, ...entries.map(extension => () => {
       const included = selectedExtensions.includes(extension.id);
@@ -656,16 +657,16 @@ export async function createBuilder({core = Core, wizardApi = Wizard, retained =
           selectedExtensions = core.extensionSelection(kit, include ? [...selectedExtensions, extension.id]
             : selectedExtensions.filter(id => id !== extension.id));
           invalidate(); renderExtensions(); renderMachines(); recalculate();
-        }, {id: extension.id});
+        }, {id: extension.id, favorite: extension.id});
     })];
-    if (matches('Grayscale machine graphics', $('graphics-note').textContent))
+    if (matches('Grayscale machine graphics', $('graphics-note').textContent) && starred('setting:grayscale'))
       cards.push(() => extensionCard('Grayscale machine graphics', $('graphics-note').textContent,
         ['Extension', 'Builder setting'], $('grayscale-graphics').checked, null, include => {
           $('grayscale-graphics').checked = include; $('grayscale-graphics').onchange(); renderMachines();
-        }));
+        }, {favorite: 'setting:grayscale'}));
     return cards;
   }
-  function extensionCard(name, description, facts, included, blocked, toggle, {locked = null, screen: art = null, id = null} = {}) {
+  function extensionCard(name, description, facts, included, blocked, toggle, {locked = null, screen: art = null, id = null, favorite = null} = {}) {
     const row = node('article', undefined, 'machine card' + (included ? ' selected' : ''));
     row.dataset.kind = 'extension';
     if (locked) { row.dataset.locked = 'true'; row.title = locked; }
@@ -690,6 +691,13 @@ export async function createBuilder({core = Core, wizardApi = Wizard, retained =
     button.setAttribute('aria-label', name + ', extension. ' + (locked ? locked : (included ? 'Remove from' : 'Add to') + ' the install'));
     button.onclick = () => { if (!input.disabled) toggle(!included); };
     row.append(label, button);
+    if (favorite) {
+      const star = node('button', undefined, 'machine-favorite'); star.type = 'button';
+      star.setAttribute('aria-label', 'Favorite ' + name);
+      const show = () => { star.textContent = favorites.has(favorite) ? '★' : '☆'; star.setAttribute('aria-pressed', String(favorites.has(favorite))); };
+      show(); star.onclick = () => { toggleFavorite(favorite); show(); };
+      row.append(star);
+    }
     return row;
   }
   // Selecting or deselecting one machine from outside its row (the catalog's detail view).
