@@ -115,6 +115,7 @@ export async function createBuilder({core = Core, wizardApi = Wizard, retained =
       if (!acknowledged) { showEntryGate(); return; }
     }
     wizard.navigate(step);
+    showInstallFlow();
     if ([2, 3].includes(step)) $(step === 2 ? 'machine-capacity-host' : 'extension-capacity-host').append($('selection-capacity'));
     document.querySelectorAll('[data-page]').forEach(p => p.hidden = Number(p.dataset.page) !== step);
     document.querySelectorAll('.steps button').forEach(b => {
@@ -122,6 +123,29 @@ export async function createBuilder({core = Core, wizardApi = Wizard, retained =
     });
     document.querySelector(`[data-page="${step}"] h1`).focus();
     visuals.reveal(document.querySelector(`[data-page="${step}"]`));
+  }
+  // Installing from the catalog: the bar names what is being installed and shows only
+  // the OS and Install steps; Change selection returns to the catalog.
+  function showInstallFlow() {
+    if (!browseFirst) return;
+    const flow = installFromCatalog && !builderPreview;
+    if (flow) document.documentElement.dataset.flow = 'catalog'; else delete document.documentElement.dataset.flow;
+    $('install-summary').hidden = !flow;
+    const label = (step, text) => { const b = document.querySelector(`.steps [data-step="${step}"] b`); if (b) b.textContent = text; };
+    label(4, flow ? '02' : '04');
+    if (!flow || !kit) return;
+    const chosen = kit.machines.filter(m => selected.includes(m.id));
+    const count = (n, one, many) => n ? n + ' ' + (n === 1 ? one : many) : null;
+    const parts = [
+      count(chosen.filter(m => m.kind === 'synth').length, 'synth', 'synths'),
+      count(chosen.filter(m => m.kind === 'drum').length, 'drum kit', 'drum kits'),
+      count(chosen.filter(m => m.kind === 'sample').length, 'sample engine', 'sample engines'),
+      count(chosen.filter(m => m.kind === 'effect').length, 'effect', 'effects'),
+      count(chosen.filter(m => m.kind === 'player').length, 'player', 'players'),
+      count(selectedExtensions.length, 'extension', 'extensions'),
+    ].filter(Boolean);
+    $('install-summary-text').textContent = 'Installing ' + parts.join(', ') + ' + Linear by Veff';
+    $('install-summary-text').title = [...chosen.map(m => m.name), ...(kit.extensions ?? []).filter(e => selectedExtensions.includes(e.id)).map(e => e.name)].join(', ');
   }
   function ready() {
     if (browseFirst) $('choose').firstChild.nodeValue = installFromCatalog ? 'Build firmware ' : 'Choose machines ';
@@ -212,6 +236,7 @@ export async function createBuilder({core = Core, wizardApi = Wizard, retained =
       installFromCatalog = pickedInCatalog = true; navigate(1); ready();
     };
     $('path-rebuild').onclick = () => { installFromCatalog = false; navigate(1); ready(); };
+    $('install-change').onclick = () => { catalogLanding = true; acknowledged = false; openPreviewLink(); };
     document.querySelectorAll('[data-browse]').forEach(button => {
       button.hidden = false;
       button.onclick = () => { catalogLanding = true; openPreviewLink(); };

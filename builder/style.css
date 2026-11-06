@@ -72,6 +72,13 @@ main { max-width:1440px; margin:0 auto; padding:0 var(--gutter) 28px; }
 .nav-icon svg { width:100%; }
 .source-links { display:flex; gap:4px; margin-left:auto; }
 .steps:not([hidden])~.source-links { margin-left:0; }
+/* Installing from the catalog: the name, what is installed, and only the OS and Install steps. */
+[data-veff] .brand-mark,[data-veff] .brand-product { display:none; }
+[data-veff] .brand-name { font-size:16px; letter-spacing:0; }
+[data-flow=catalog] .steps [data-step="2"],[data-flow=catalog] .steps [data-step="3"],[data-flow=catalog] .source-links { display:none; }
+.install-summary { display:flex; flex-wrap:wrap; align-items:baseline; gap:4px 14px; margin-left:auto; font-size:14px; color:var(--ink-2); }
+.install-summary[hidden] { display:none; }
+.install-summary .text-button { min-height:0; padding:0; color:var(--ink); text-decoration:underline; text-decoration-color:var(--pink); text-underline-offset:3px; }
 .source-link { padding:8px 12px; font-size:13px; font-weight:500; color:var(--muted); text-decoration:none; border-radius:0; }
 .source-link:hover { color:var(--ink); background:var(--soft); }
 .main-stage { min-width:0; margin-top:20px; padding:clamp(20px,3vw,44px); background:var(--panel); border:1px solid var(--line); border-radius:0; }
