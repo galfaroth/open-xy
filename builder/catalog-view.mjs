@@ -1,6 +1,7 @@
 import VEFF from './veff.json' with { type: 'json' };
+import LINEAR_PREVIEW from './linear-preview.json' with { type: 'json' };
 
-// The Veff Experimental presentation of the machine collection: a browsable grid of
+// The Open-XY Mods by Veff presentation of the machine collection: a browsable grid of
 // machine cards, a detail view per machine, the fork's own features and its own
 // machines (builder/veff.json), and the Open-XY revision this installer is based on.
 // It only presents: selection, numbers, linking and installation stay in app.mjs,
@@ -52,8 +53,16 @@ export function createCatalogView({core, visuals, snapshots, modeFor, getKit, is
     for (const target of doc.querySelectorAll('[data-veff-features]')) {
       target.replaceChildren(...(data.features ?? []).map(feature => {
         const card = node('article', undefined, 'veff-feature');
-        card.append(node('span', 'Built into this firmware', 'veff-kicker'), node('h3', feature.name),
-          node('p', feature.summary ?? ''));
+        card.append(node('span', 'Built into this firmware', 'veff-kicker'), node('h3', feature.name));
+        if (feature.preview === 'linear' && LINEAR_PREVIEW.gif) {
+          const screen = node('figure', undefined, 'veff-feature-screen');
+          const img = doc.createElement('img');
+          img.src = LINEAR_PREVIEW.gif; img.width = 720; img.height = 330; img.loading = 'lazy';
+          img.alt = 'Linear by Veff on the OP–XY screen: playing an arrangement, adding and stretching a clip, the actions menu, bouncing a clip to a sampler, the piano roll and muting a clip.';
+          screen.append(img);
+          card.append(screen);
+        }
+        card.append(node('p', feature.summary ?? ''));
         if (target.dataset.veffFeatures === 'full') for (const text of feature.help ?? []) card.append(node('p', text, 'veff-feature-help'));
         if (feature.note) card.append(node('p', feature.note, 'veff-feature-note'));
         return card;
@@ -174,7 +183,7 @@ export function createCatalogView({core, visuals, snapshots, modeFor, getKit, is
       // A locally built Veff machine has no catalog source; credit its maintainer and this fork.
       if (m.origin === 'personal') {
         $('detail-source').replaceChildren('Maintained by ' + maintainer(m) + ' · ',
-          link(data.fork?.name ?? 'Veff Experimental', data.fork?.repository ?? 'https://github.com/galfaroth/open-xy'));
+          link(data.fork?.name ?? 'Open-XY Mods by Veff', data.fork?.repository ?? 'https://github.com/galfaroth/open-xy'));
       }
     }
     // The Controls section already lists a machine's controls when there is nothing to play.
@@ -230,6 +239,9 @@ export function createCatalogView({core, visuals, snapshots, modeFor, getKit, is
     // Veff machines start unselected, like community machines.
     chosenByDefault: m => !veffMachine(m.id),
     card, detail, open, close,
+    // Firmware features every build carries (Linear by Veff), shown as fixed extension cards.
+    builtIn: () => (data.features ?? []).map(f => ({name: f.name, summary: f.summary ?? '',
+      screen: f.preview === 'linear' ? LINEAR_PREVIEW.gif : null})),
     selected: showSelection,
   };
 }

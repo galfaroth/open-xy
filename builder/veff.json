@@ -1,8 +1,8 @@
 {
   "format": "veff-installer/2",
-  "about": "Veff Experimental installer data. 'machines' maps a machine ID from the kit to how this installer presents a Veff machine: 'name' (a label for this file only), 'maintainer' (shown when the kit names none; defaults to fork.maintainer), 'summary' (one line in the machine's detail view) and 'help' (paragraphs under How to use it, replacing the text generated from the machine's controls). Listed machines get a pink 'by Veff' badge and start unselected, like community machines. IDs the kit does not contain are ignored. 'features' are firmware changes this fork carries, shown on the landing and above the machines: 'summary' and 'note' everywhere, 'help' on the landing.",
+  "about": "Open-XY Mods by Veff installer data. 'machines' maps a machine ID from the kit to how this installer presents a Veff machine: 'name' (a label for this file only), 'maintainer' (shown when the kit names none; defaults to fork.maintainer), 'summary' (one line in the machine's detail view) and 'help' (paragraphs under How to use it, replacing the text generated from the machine's controls). Listed machines get a pink 'by Veff' badge and start unselected, like community machines. IDs the kit does not contain are ignored. 'features' are firmware changes this fork carries, shown on the landing and above the machines: 'summary' and 'note' everywhere, 'help' on the landing.",
   "fork": {
-    "name": "Veff Experimental",
+    "name": "Open-XY Mods by Veff",
     "product": "Open-XY installer",
     "maintainer": "Veff (galfaroth)",
     "repository": "https://github.com/galfaroth/open-xy"
@@ -16,6 +16,7 @@
     {
       "id": "linear",
       "name": "Linear by Veff",
+      "preview": "linear",
       "summary": "A linear song arranger, built into this installer's firmware.",
       "help": [
         "Lay out a song on your OP–XY from start to finish instead of only chaining patterns. It is part of every firmware built here; there is nothing to select."

@@ -24,6 +24,9 @@ export async function createBuilder({core = Core, wizardApi = Wizard, retained =
   // The catalog landing (browseFirst) until installation starts; whether machines were
   // chosen there, which an Open-XY OS file then keeps instead of its own selection.
   let catalogLanding = browseFirst, pickedInCatalog = false;
+  // Installing from the catalog keeps its machines and extensions: after the OS file the
+  // firmware is built directly. Rebuilding an installed OS reviews what it recovers instead.
+  let installFromCatalog = false;
   const browserAllowed = supportsBrowser();
   $('browser-blocked').hidden = browserAllowed;
   $('risk-acknowledgement').checked = false;
@@ -102,11 +105,13 @@ export async function createBuilder({core = Core, wizardApi = Wizard, retained =
     visuals.reveal(document.querySelector(`[data-page="${step}"]`));
   }
   function ready() {
+    if (browseFirst) $('choose').firstChild.nodeValue = installFromCatalog ? 'Build firmware ' : 'Choose machines ';
     $('choose').disabled = !(kit && stock);
     document.querySelector('.steps [data-step="2"]').disabled = !(kit && (stock || builderPreview));
     $('choose-extensions').disabled = !(kit && selected.length && (stock || builderPreview));
     document.querySelector('.steps [data-step="3"]').disabled = $('choose-extensions').disabled;
     $('build').disabled = builderPreview || !(stock && linked);
+    if (installFromCatalog) $('choose').disabled = $('build').disabled;
     $('preview-selected').disabled = !(kit && selected.length);
   }
 
@@ -164,7 +169,10 @@ export async function createBuilder({core = Core, wizardApi = Wizard, retained =
   }
   if (browseFirst) {
     // Every way into the installation goes through navigate(1), and so through the notice.
-    for (const id of ['path-install', 'path-rebuild', 'browse-install']) $(id).onclick = () => navigate(1);
+    for (const id of ['path-install', 'browse-install']) $(id).onclick = () => {
+      installFromCatalog = pickedInCatalog = true; navigate(1); ready();
+    };
+    $('path-rebuild').onclick = () => { installFromCatalog = false; navigate(1); ready(); };
     document.querySelectorAll('[data-browse]').forEach(button => {
       button.hidden = false;
       button.onclick = () => { catalogLanding = true; openPreviewLink(); };
@@ -246,7 +254,7 @@ export async function createBuilder({core = Core, wizardApi = Wizard, retained =
         // Machines chosen in the catalog before the OS step stay chosen.
         const installed = kit.machines.filter(m => recovered.selected.includes(m.id)).map(m => m.name);
         if (!pickedInCatalog) selected = recovered.selected;
-        selectedExtensions = recovered.extensions ?? [];
+        if (!pickedInCatalog) selectedExtensions = recovered.extensions ?? [];
         renderMachines(); renderExtensions(); recalculate();
         $('firmware-result').textContent = pickedInCatalog ? '✓ open-xy OS with ' + installed.join(' + ') +
           ' · keeping the machines you chose' : '✓ open-xy OS with ' + selectionNames().join(' + ');
@@ -502,8 +510,9 @@ export async function createBuilder({core = Core, wizardApi = Wizard, retained =
   // Kinds and keywords this kit has: the others are not offered as filters.
   function renderBrowsing() {
     document.querySelectorAll('[data-filter]').forEach(b =>
-      b.hidden = b.dataset.filter !== 'all' && !kit.machines.some(m => m.kind === b.dataset.filter));
-    if (!kit.machines.some(m => m.kind === browsing.kind)) browsing.kind = 'all';
+      b.hidden = b.dataset.filter === 'extension' ? !(view && browseFirst) :
+        b.dataset.filter !== 'all' && !kit.machines.some(m => m.kind === b.dataset.filter));
+    if (browsing.kind !== 'extension' && !kit.machines.some(m => m.kind === browsing.kind)) browsing.kind = 'all';
     const counts = new Map(core.MACHINE_KEYWORDS.map(keyword => [keyword, kit.machines.filter(m => m.keywords?.includes(keyword)).length]));
     const offered = core.MACHINE_KEYWORDS.filter(keyword => counts.get(keyword));
     browsing.keywords = browsing.keywords.filter(keyword => offered.includes(keyword));
@@ -527,12 +536,15 @@ export async function createBuilder({core = Core, wizardApi = Wizard, retained =
     $('machines').style.setProperty('--machine-count', kit.machines.length);
     $('machines').replaceChildren();
     // Each row keeps its collection index, and so its memory-map colour, in any order.
-    const rows = core.browseMachines(kit.machines, {...browsing, favorites: browsing.favoritesOnly ? favorites : null});
+    if (!builderPreview && browsing.kind === 'extension') browsing.kind = 'all';
+    const rows = browsing.kind === 'extension' ? [] :
+      core.browseMachines(kit.machines, {...browsing, favorites: browsing.favoritesOnly ? favorites : null});
+    const extensionCards = catalogExtensions();
     const filtered = Boolean(browsing.query.trim() || browsing.kind !== 'all' || browsing.keywords.length || browsing.favoritesOnly);
     const hiddenSelected = selected.filter(id => !rows.some(({m}) => m.id === id)).length;
     $('browse-result').textContent = !filtered ? '' : rows.length + ' of ' + kit.machines.length + ' machines' +
       (hiddenSelected ? ' · ' + hiddenSelected + ' selected not shown' : '');
-    if (!rows.length) {
+    if (!rows.length && !extensionCards.length) {
       const empty = node('p', browsing.favoritesOnly && !favorites.size ? 'No favorites yet. Star a machine to keep it here.'
         : 'No machines match.', 'machine-empty');
       const clear = node('button', 'Clear filters', 'text-button'); clear.type = 'button';
@@ -581,6 +593,70 @@ export async function createBuilder({core = Core, wizardApi = Wizard, retained =
       row.append(label, glyph, button, star); $('machines').append(row);
       view?.card(row, m, button);
     });
+    for (const card of extensionCards) $('machines').append(card());
+  }
+  // In the catalog an extension is a card like a machine's, listed under All and Extensions;
+  // searching matches its name and description. Keyword and favorite filters list machines only.
+  function catalogExtensions() {
+    if (!view || !builderPreview || !['all', 'extension'].includes(browsing.kind) ||
+        browsing.keywords.length || browsing.favoritesOnly) return [];
+    const query = browsing.query.trim().toLowerCase();
+    const matches = (...texts) => !query || texts.some(t => (t ?? '').toLowerCase().includes(query));
+    const entries = (kit.extensions ?? []).filter(e => matches(e.name, e.description));
+    // Built into every firmware here: always included, never deselectable.
+    const builtIn = (view.builtIn?.() ?? []).filter(f => matches(f.name, f.summary)).map(f => () =>
+      extensionCard(f.name, f.summary, ['Extension', 'Always included'], true, null, () => {}, {
+        locked: 'The whole firmware is built on ' + f.name + ': every build here includes it, so it cannot be deselected.',
+        screen: f.screen}));
+    const cards = [...builtIn, ...entries.map(extension => () => {
+      const included = selectedExtensions.includes(extension.id);
+      const others = selectedExtensions.some(id => id !== extension.id);
+      const ownBytes = kit.objects.filter(o => o.extension === extension.id || (!others && o.service === 'extensions'))
+        .flatMap(o => o.sections.filter(s => s.group)).reduce((total, s) => total + s.size, 0);
+      const conflict = (kit.extensions ?? []).find(e => e.id !== extension.id && selectedExtensions.includes(e.id) &&
+        core.sharedClaim([e, extension]));
+      const origin = {official: 'Core', catalog: 'Community', personal: 'Yours'}[extension.origin];
+      return extensionCard(extension.name, extension.description, ['Extension', kib(ownBytes), origin], included,
+        conflict && !included ? 'Uses ' + core.claimLabel([conflict, extension], core.sharedClaim([conflict, extension])) +
+          ', like ' + conflict.name + '. Deselect it first.' : null,
+        include => {
+          pickedInCatalog = true;
+          selectedExtensions = core.extensionSelection(kit, include ? [...selectedExtensions, extension.id]
+            : selectedExtensions.filter(id => id !== extension.id));
+          invalidate(); renderExtensions(); renderMachines(); recalculate();
+        });
+    })];
+    if (matches('Grayscale machine graphics', $('graphics-note').textContent))
+      cards.push(() => extensionCard('Grayscale machine graphics', $('graphics-note').textContent,
+        ['Extension', 'Builder setting'], $('grayscale-graphics').checked, null, include => {
+          $('grayscale-graphics').checked = include; $('grayscale-graphics').onchange(); renderMachines();
+        }));
+    return cards;
+  }
+  function extensionCard(name, description, facts, included, blocked, toggle, {locked = null, screen: art = null} = {}) {
+    const row = node('article', undefined, 'machine card' + (included ? ' selected' : ''));
+    row.dataset.kind = 'extension';
+    if (locked) { row.dataset.locked = 'true'; row.title = locked; }
+    row.style.setProperty('--machine', 'var(--machine-2)');
+    const label = node('label'), input = node('input'); input.type = 'checkbox'; input.checked = included;
+    input.disabled = !!(blocked || locked); input.setAttribute('aria-label', 'Include ' + name); label.append(input);
+    input.onchange = () => toggle(input.checked);
+    const button = node('button'); button.type = 'button';
+    const screen = node('span', undefined, 'card-screen'); screen.setAttribute('aria-hidden', 'true');
+    if (art) { const image = node('img'); image.alt = ''; image.src = art; image.decoding = 'async'; screen.append(image); screen.dataset.art = 'true'; }
+    else { const glyph = node('span', undefined, 'card-glyph'); glyph.append(visuals.icon('settings')); screen.append(glyph); }
+    const name_ = node('span', name, 'machine-name');
+    const tags = node('span', undefined, 'card-tags'); tags.append(node('span', 'Extension', 'card-kind'));
+    if (locked) tags.append(node('span', 'by Veff', 'veff-badge'));
+    const meta = node('span', undefined, 'machine-meta');
+    for (const fact of facts) meta.append(node('span', fact));
+    button.append(screen, name_, tags, node('span', description, 'machine-desc'), meta);
+    if (blocked) button.append(node('span', blocked, 'card-keywords'));
+    if (locked) { button.append(node('span', 'Built into every firmware', 'card-keywords')); button.title = locked; label.title = locked; }
+    button.setAttribute('aria-label', name + ', extension. ' + (locked ? locked : (included ? 'Remove from' : 'Add to') + ' the install'));
+    button.onclick = () => { if (!input.disabled) toggle(!included); };
+    row.append(label, button);
+    return row;
   }
   // Selecting or deselecting one machine from outside its row (the catalog's detail view).
   function chooseMachine(id, include) {
@@ -612,7 +688,7 @@ export async function createBuilder({core = Core, wizardApi = Wizard, retained =
       const meta = node('span', undefined, 'machine-meta');
       meta.append(node('span', 'Extension'), node('span', kib(ownBytes), 'machine-memory'),
         node('span', {official: 'Core', catalog: 'Community', personal: 'Yours'}[extension.origin], 'machine-origin'));
-      button.append(node('span', extension.name, 'machine-name'), meta);
+      button.append(node('span', extension.name, 'machine-name'), node('span', extension.description ?? '', 'extension-desc'), meta);
       button.onclick = () => inspectExtension(extension.id);
       const conflict = entries.find(e => e.id !== extension.id && selectedExtensions.includes(e.id) &&
         core.sharedClaim([e, extension]));
@@ -657,6 +733,18 @@ export async function createBuilder({core = Core, wizardApi = Wizard, retained =
       const allocations = kit.machines.filter(m => selected.includes(m.id)).map(m => ({name: m.name,
         size: linked.segments.filter(s => s.owner === m.id).reduce((n, s) => n + s.size, 0),
         color: colors[kit.machines.indexOf(m) % colors.length]}));
+      // Linear by Veff (the arranger objects every build here links) and each selected
+      // extension get their own share, instead of disappearing into Shared.
+      const objectBytes = test => kit.objects.filter(test).flatMap(o => o.sections.filter(s => s.group))
+        .reduce((total, s) => total + s.size, 0);
+      if (browseFirst) {
+        const linear = objectBytes(o => o.owner === null && /^sdk\/(arranger_|module_events\.o$)/.test(o.name));
+        if (linear) allocations.push({name: 'Linear by Veff', size: linear, color: 'var(--linear-share)'});
+        for (const extension of (kit.extensions ?? []).filter(e => selectedExtensions.includes(e.id))) {
+          const size = objectBytes(o => o.extension === extension.id);
+          if (size) allocations.push({name: extension.name, size, color: 'var(--extension-share)'});
+        }
+      }
       allocations.push({name: 'Shared', size: linked.sizes.allocated - allocations.reduce((n, a) => n + a.size, 0), color: 'var(--shared)'},
         {name: 'Available', size: linked.sizes.available, color: 'var(--paper)'}, {name: 'System', size: kit.profile.table_bytes, color: 'var(--tables)'});
       for (const a of allocations) {
@@ -705,7 +793,7 @@ export async function createBuilder({core = Core, wizardApi = Wizard, retained =
     } catch (error) { if (ticket === revision) fail(error); } finally { ready(); }
   }
   document.querySelectorAll('[data-step]').forEach(b => b.onclick = () => navigate(Number(b.dataset.step)));
-  $('choose').onclick = () => { navigate(2); recalculate(); };
+  $('choose').onclick = () => { if (installFromCatalog) build(); else { navigate(2); recalculate(); } };
   const graphicsInput = $('grayscale-graphics');
   graphicsInput.checked = false;
   graphicsInput.onchange = () => {

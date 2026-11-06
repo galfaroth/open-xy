@@ -1,0 +1,211 @@
+<!doctype html>
+<!-- Linear by Veff preview frames (builder/linear-preview.json).
+  Replace SVG_SOURCE with sdk/platform/opxy-1.2.1/arranger.svg and COLS with 4, add
+  `#from,count` slicing at the end, render 3840x2200 sheets with headless Chrome,
+  crop 960x440 frames and join them at 10 fps:
+  ffmpeg -framerate 10 -i f/%04d.png -vf "scale=720:-1:flags=lanczos,split[a][b];[a]palettegen=max_colors=32[p];[b][p]paletteuse=dither=none" -loop 0 linear-by-veff.gif -->
+<html><head><meta charset="utf-8">
+<style>
+html,body{margin:0;background:#000}
+#grid{display:grid;grid-template-columns:repeat(COLS,960px);}
+#grid svg{width:960px;height:440px;display:block}
+svg text{font-family:'Univers Next Pro','UniversNextPro-Light','Helvetica Neue',sans-serif;font-weight:300}
+</style></head><body>
+<div id="grid"></div>
+<template id="screen">SVG_SOURCE</template>
+<script>
+// Replays Linear by Veff's own renderer (sdk/platform/opxy-1.2.1/arranger_ui.cpp,
+// Renderer::frame / render_menu / render_piano) over its shipped artwork.
+const BAR = 7680, STEP = 480;
+const MENU = ["Split at cursor (Shift + 1)", "Make unique (Shift + 2)", "Undo (Shift + 3)", "Redo (Shift + 4)",
+  "Loop selected clip (Shift + 5)", "Loop on/off (Shift + 6)", "Set loop start (Shift + 7)", "Set loop end (Shift + 8)",
+  "Trim left (Stop + E4)", "Trim right at cursor (Stop + -)", "Slip contents (Shift + Stop + E3)", "Move to track (Stop + E3)",
+  "Edit notes (click E4)", "Piano roll (Shift + click E4)", "Bounce to Sampler", "Bounce to Drum Sampler",
+  "Add clip (+)", "Paste (Shift + +)", "Duplicate (Stop + +)", "Cut (Shift + -)", "Delete (-)",
+  "Add existing clip", "Import Song at cursor", "Toggle Mute Clip (Stop + click E1)"];
+
+function mat(el, a, d, e, f) { el.setAttribute('transform', `matrix(${a} 0 0 ${d} ${e} ${f})`); }
+function rect(svg, id, x, y, w, h) { mat(svg.getElementById(id), w, h, x, y); }
+function hide(svg, id) { mat(svg.getElementById(id), 0, 0, 0, 0); }
+function textAt(svg, id, x, y, visible) { mat(svg.getElementById(id), 1, 1, visible ? x : 640, visible ? y : 320); }
+function txt(svg, id, value) { svg.getElementById(id).textContent = value; }
+
+function base() {
+  const svg = document.getElementById('screen').content.firstElementChild.cloneNode(true);
+  svg.setAttribute('width', 960); svg.setAttribute('height', 440);
+  for (let i = 0; i < 24; ++i) hide(svg, 'pianokey' + i);
+  hide(svg, 'menubackground'); hide(svg, 'menuhighlight'); textAt(svg, 'menuselected', 0, 0, false);
+  for (let i = 0; i < 8; ++i) { textAt(svg, 'menurow' + i, 0, 0, false); textAt(svg, 'menudisabled' + i, 0, 0, false); }
+  return svg;
+}
+
+function timeline(s) {
+  const svg = base(), window = s.window, start = s.start || 0;
+  txt(svg, 'title', 'Linear by Veff');
+  for (let i = 0; i < 8; ++i) { txt(svg, 'lane' + i, String(i + 1)); textAt(svg, 'lane' + i, 3, 43 + i * 21, true); }
+  rect(svg, 'lanehighlight', 6, 28 + s.track * 21, 468, 20); hide(svg, 'selection');
+  let spacing = 7680; while (window / spacing > 16) spacing *= 2;
+  const rem = start % spacing; let off = rem ? spacing - rem : 0;
+  for (let i = 0; i < 17; ++i, off += spacing) {
+    const v = off < window; textAt(svg, 'bargrid' + i, v ? 36 + Math.floor(off * 432 / window) : 0, 27, v);
+  }
+  let shown = 0;
+  s.clips.forEach((c, slot) => {
+    if (c.start + c.length <= start) return;
+    const left = c.start > start ? c.start - start : 0; if (left >= window) return;
+    const end = c.start + c.length - start, right = end < window ? end : window;
+    const x = Math.floor(left * 432 / window), w = Math.floor(right * 432 / window) - x;
+    if (slot === s.selected) rect(svg, 'selection', 35 + x, 30 + c.track * 21, (w || 1) + 2, 17);
+    const node = svg.getElementById('clip' + shown);
+    node.setAttribute('fill', c.muted ? '#666666' : '#999999');
+    rect(svg, 'clip' + shown, 36 + x, 31 + c.track * 21, w || 1, 15);
+    txt(svg, 'cliplabel' + shown, String.fromCharCode(65 + c.pattern));
+    textAt(svg, 'cliplabel' + shown, 36 + x + (w >= 10 ? w - 9 : 0), 42 + c.track * 21, w >= 10);
+    ++shown;
+  });
+  for (; shown < 64; ++shown) { hide(svg, 'clip' + shown); textAt(svg, 'cliplabel' + shown, 0, 0, false); }
+  rect(svg, 'cursor', 36 + Math.floor((s.cursor - start) * 432 / window), 27, 1, 169);
+  if (s.playhead != null && s.playhead >= start && s.playhead - start < window)
+    rect(svg, 'playhead', 36 + Math.floor((s.playhead - start) * 432 / window), 27, 2, 169);
+  else hide(svg, 'playhead');
+  if (s.loop) {
+    const l = Math.max(s.loop[0] - start, 0), r = Math.min(s.loop[1] - start, window);
+    rect(svg, 'loopband', 36 + Math.floor(l * 432 / window), 24, Math.floor((r - l) * 432 / window), 2);
+  } else hide(svg, 'loopband');
+  txt(svg, 'position', s.toast || '');
+  txt(svg, 'controls', s.controls || 'E1 TIME (GRID) / E2 ZOOM / E3 MOVE / E4 LENGTH');
+  txt(svg, 'feedback', s.feedback || '+ ADD / - DELETE / E4 CLICK EDIT / ARRANGE: ACTIONS');
+  if (s.shift) { txt(svg, 'controls', '1 SPLIT / 2 UNIQUE / 3 UNDO / 4 REDO'); txt(svg, 'feedback', '5 LOOP CLIP / 6 LOOP ON-OFF / 7 START / 8 END'); }
+  if (s.stop) { txt(svg, 'controls', 'E3 TRACK / E4 LEFT TRIM'); txt(svg, 'feedback', '+ DUPLICATE / - TRIM RIGHT / RELEASE STOP TO FINISH'); }
+  return svg;
+}
+
+function menu(s) {
+  const svg = timeline(s);
+  hide(svg, 'loopband');
+  rect(svg, 'menubackground', 0, 22, 480, 174);
+  const first = s.index < 7 ? 0 : s.index - 6;
+  rect(svg, 'menuhighlight', 8, 28 + (s.index - first) * 22, 464, 22);
+  txt(svg, 'menuselected', MENU[s.index]); textAt(svg, 'menuselected', 16, 44 + (s.index - first) * 22, true);
+  for (let row = 0; row < 8; ++row) {
+    const action = first + row, valid = row < 7 && action < MENU.length, dim = valid && s.disabled[action];
+    txt(svg, 'menurow' + row, valid && !dim && action !== s.index ? MENU[action] : '');
+    txt(svg, 'menudisabled' + row, dim && action !== s.index ? MENU[action] : '');
+    textAt(svg, 'menurow' + row, 16, 44 + row * 22, row < 7); textAt(svg, 'menudisabled' + row, 16, 44 + row * 22, row < 7);
+  }
+  const reason = s.disabled[s.index];
+  txt(svg, 'controls', reason || `TRACK ${s.track + 1} / CLIP ${s.clipLetter} / ${s.index + 1}/${MENU.length}`);
+  txt(svg, 'feedback', 'E1 SELECT / E2 ADJUST / CLICK E1 OR E2 / ARRANGE CLOSE');
+  txt(svg, 'position', s.toast || '');
+  return svg;
+}
+
+function piano(s) {
+  const svg = base(), rows = 8, low = s.low, window = 7680, start = 0;
+  txt(svg, 'title', 'PIANO ROLL');
+  const y = r => 28 + Math.floor(r * 168 / rows), black = p => [1, 3, 6, 8, 10].includes(p % 12);
+  for (let r = 0; r < 24; ++r) {
+    const isBlack = r < rows && black(low + rows - 1 - r);
+    rect(svg, 'pianokey' + r, 2, y(r), isBlack ? 472 : 0, isBlack ? y(r + 1) - y(r) : 0);
+  }
+  const names = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+  for (let i = 0; i < 8; ++i) {
+    textAt(svg, 'laneline' + i, 0, 0, false);
+    const p = low + rows - 1 - i;
+    txt(svg, 'lane' + i, names[p % 12] + (Math.floor(p / 12) - 1)); textAt(svg, 'lane' + i, 3, y(i) + 12, true);
+  }
+  const sel = rows - 1 - (s.pitch - low);
+  rect(svg, 'lanehighlight', 2, y(sel), 32, y(sel + 1) - y(sel)); hide(svg, 'selection'); hide(svg, 'loopband');
+  for (let i = 0; i < 17; ++i) textAt(svg, 'bargrid' + i, 36 + i * 7680 * 432 / window, 27, i * 7680 < window);
+  let shown = 0;
+  s.notes.forEach((n, index) => {
+    const row = rows - 1 - (n.pitch - low); if (row < 0 || row >= rows) return;
+    const x = 36 + Math.floor(n.at * 432 / window), w = Math.floor((n.at + n.len) * 432 / window) - Math.floor(n.at * 432 / window);
+    const ny = y(row) + 2, h = y(row + 1) - ny - 1;
+    svg.getElementById('clip' + shown).setAttribute('fill', '#999999');
+    rect(svg, 'clip' + shown, x, ny, w || 1, h);
+    if (index === s.selected) rect(svg, 'selection', x, ny, w || 1, h);
+    textAt(svg, 'cliplabel' + shown, 0, 0, false); ++shown;
+  });
+  for (; shown < 64; ++shown) { hide(svg, 'clip' + shown); textAt(svg, 'cliplabel' + shown, 0, 0, false); }
+  rect(svg, 'cursor', 36 + Math.floor(s.time * 432 / window), 27, 1, 169);
+  if (s.playhead != null) rect(svg, 'playhead', 36 + Math.floor(s.playhead * 432 / window), 27, 2, 169); else hide(svg, 'playhead');
+  const n = s.notes[s.selected];
+  txt(svg, 'controls', 'E1 CURSOR / E2 ZOOM / E3 NOTE UP-DOWN / E4 LENGTH');
+  txt(svg, 'feedback', `T${s.track + 1} ${s.letter} @${s.time} N${s.pitch} NOTES ${s.notes.length} ROWS 8` +
+    (n ? ` LEN ${n.len} VEL ${n.vel} GRID` : ' GRID / + ADD'));
+  txt(svg, 'position', s.toast || '');
+  return svg;
+}
+
+// ── the story ──
+const frames = [];
+const push = (svg, hold = 1) => { for (let i = 0; i < hold; ++i) frames.push(svg); };
+const W = 8 * BAR;
+const clips = [
+  {track: 0, start: 0, length: 4 * BAR, pattern: 0}, {track: 0, start: 4 * BAR, length: 4 * BAR, pattern: 0},
+  {track: 1, start: 0, length: 2 * BAR, pattern: 0}, {track: 1, start: 2 * BAR, length: 2 * BAR, pattern: 1}, {track: 1, start: 6 * BAR, length: 2 * BAR, pattern: 1},
+  {track: 3, start: 2 * BAR, length: 6 * BAR, pattern: 0},
+  {track: 4, start: BAR, length: BAR, pattern: 0}, {track: 4, start: 3 * BAR, length: BAR, pattern: 0}, {track: 4, start: 5 * BAR, length: 3 * BAR, pattern: 2},
+  {track: 5, start: 4 * BAR, length: 4 * BAR, pattern: 0},
+  {track: 6, start: 0, length: 8 * BAR, pattern: 0},
+];
+const copy = () => clips.map(c => ({...c}));
+const selectAt = (cl, track, cursor) => cl.findIndex(c => c.track === track && cursor >= c.start && cursor < c.start + c.length);
+
+// 1. Playback across the arrangement, loop band over bars 1-8.
+for (let t = 0; t <= 8 * BAR - 1; t += BAR / 4)
+  push(timeline({window: W, track: 0, cursor: 0, clips, selected: 0, playhead: t, loop: [0, 8 * BAR]}));
+// 2. Track keys and the edit cursor (E1 TIME).
+let cursor = 0;
+for (const track of [1, 2]) push(timeline({window: W, track, cursor, clips, selected: selectAt(clips, track, cursor), toast: 'LINEAR'}), 3);
+for (; cursor <= 2 * BAR; cursor += BAR / 2)
+  push(timeline({window: W, track: 2, cursor, clips, selected: selectAt(clips, 2, cursor)}), 2);
+cursor = 2 * BAR;
+// 3. + adds an empty clip at the cursor, E4 stretches it.
+const added = copy(); added.push({track: 2, start: cursor, length: BAR, pattern: 0});
+const slot = added.length - 1;
+push(timeline({window: W, track: 2, cursor, clips: added, selected: slot, toast: 'ADDED EMPTY CLIP'}), 8);
+for (let l = BAR; l <= 3 * BAR; l += BAR / 2) { added[slot].length = l; push(timeline({window: W, track: 2, cursor, clips: added, selected: slot, toast: 'ADDED EMPTY CLIP'}), 2); }
+push(timeline({window: W, track: 2, cursor, clips: added, selected: slot}), 4);
+// 4. Shift shows its shortcuts; Stop its editing chords.
+push(timeline({window: W, track: 2, cursor, clips: added, selected: slot, shift: true}), 10);
+push(timeline({window: W, track: 2, cursor, clips: added, selected: slot, stop: true}), 10);
+// 5. Arrange opens the actions menu; E1 browses to Bounce to Sampler.
+const disabled = {3: 'NOTHING TO REDO', 17: 'CLIPBOARD EMPTY'};
+const ms = i => ({window: W, track: 2, cursor, clips: added, selected: slot, index: i, disabled, clipLetter: 'A'});
+push(menu({...ms(0), toast: 'ACTIONS / SHORTCUT HELP'}), 8);
+for (let i = 1; i <= 14; ++i) push(menu(ms(i)), i === 3 ? 5 : 2);
+push(menu(ms(14)), 10);
+// 6. Bounce renders the clip into a sampler on the track below.
+const c = added[slot];
+for (let p = 0; p <= 100; p += 5) {
+  const frame = timeline({window: W, track: 2, cursor, clips: added, selected: slot, playhead: c.start + c.length * p / 100,
+    toast: p < 15 ? 'BOUNCE STARTING' : '', controls: p < 95 ? 'RENDERING CLIP' : 'ASSIGNING SAMPLE BELOW',
+    feedback: `BOUNCE ${p}% - STOP CANCEL`});
+  push(frame, 1);
+}
+push(timeline({window: W, track: 2, cursor, clips: added, selected: slot, toast: 'BOUNCE SAVED'}), 14);
+// 7. Shift + click E4: piano roll of the selected clip.
+const notes = [{at: 0, len: 960, pitch: 60, vel: 100}, {at: 1920, len: 960, pitch: 63, vel: 90}, {at: 3840, len: 480, pitch: 67, vel: 110},
+  {at: 4800, len: 1440, pitch: 65, vel: 96}, {at: 6720, len: 480, pitch: 62, vel: 80}];
+const ps = (o) => ({track: 2, letter: 'A', low: 58, pitch: 60, time: 0, notes, selected: 0, toast: 'E1 CURSOR E2 ZOOM E3 PITCH E4 LENGTH', ...o});
+push(piano(ps({})), 8);
+for (let t = 0; t <= 3840; t += 480) {
+  const sel = notes.findIndex(n => n.at === t);
+  push(piano(ps({time: t, pitch: sel >= 0 ? notes[sel].pitch : 60, selected: sel, toast: ''})), 2);
+}
+notes.push({at: 5760, len: 480, pitch: 60, vel: 100});
+push(piano(ps({time: 5760, pitch: 60, selected: 5, toast: ''})), 6);
+for (let n = 60; n <= 64; ++n) { notes[5].pitch = n; push(piano(ps({time: 5760, pitch: n, selected: 5, toast: ''})), 2); }
+for (let t = 0; t < 7680; t += 480) push(piano(ps({time: 5760, pitch: 64, selected: 5, playhead: t, toast: 'NOTES UPDATED (SHARED SOURCE)'})), 1);
+// 8. Back on the timeline: Stop + click E1 mutes the clip.
+push(timeline({window: W, track: 2, cursor, clips: added, selected: slot, toast: 'RETURNED FROM NOTE EDIT'}), 8);
+const muted = added.map(x => ({...x})); muted[slot].muted = true;
+push(timeline({window: W, track: 2, cursor, clips: muted, selected: slot, stop: true}), 6);
+push(timeline({window: W, track: 2, cursor, clips: muted, selected: slot}), 14);
+
+const grid = document.getElementById('grid');
+frames.forEach(f => grid.appendChild(f.cloneNode(true)));
+document.title = 'frames:' + frames.length;
+</script></body></html>

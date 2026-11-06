@@ -5,13 +5,13 @@
 <meta name="color-scheme" content="dark">
 <meta name="theme-color" content="#0d0d0e">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline' data: 'wasm-unsafe-eval'; style-src 'unsafe-inline'; img-src data: blob:; connect-src 'none'; base-uri 'none'; form-action 'none'">
-<title>Veff Experimental · Open-XY installer</title>
-<meta name="description" content="Veff Experimental: an Open-XY installer for the OP–XY with everything Open-XY offers, plus Linear by Veff and other experimental changes. Your firmware never leaves your browser.">
+<title>Open-XY Mods by Veff</title>
+<meta name="description" content="Open-XY Mods by Veff: an Open-XY installer for the OP–XY with everything Open-XY offers, plus Linear by Veff and other experimental changes. Your firmware never leaves your browser.">
 <!-- styles -->
 <body>
 <main>
   <aside class="sidebar">
-  <header class="masthead"><div class="brand"><span class="brand-mark" aria-hidden="true"></span><span class="brand-words"><strong class="brand-name">Veff Experimental</strong><span class="brand-product">Open-XY installer<span id="builder-version" class="brand-version"></span></span><span class="brand-base" data-veff-base></span></span></div></header>
+  <header class="masthead"><div class="brand"><span class="brand-mark" aria-hidden="true"></span><span class="brand-words"><strong class="brand-name">Open-XY Mods by Veff</strong><span class="brand-product">installer<span id="builder-version" class="brand-version"></span></span><span class="brand-base" data-veff-base></span></span></div></header>
   <nav class="steps" id="phase-nav" hidden aria-label="Build progress">
     <button data-step="1" aria-current="step"><span class="nav-icon" data-icon="firmware"></span><span><b>01</b>OS</span></button>
     <button data-step="2" disabled><span class="nav-icon" data-icon="machines"></span><span><b>02</b>Machines</span></button>
@@ -96,13 +96,13 @@
   </section>
   <section data-page="2" hidden aria-labelledby="machines-title">
     <section id="veff-intro" class="veff-intro" aria-labelledby="veff-intro-title" hidden>
-      <span class="veff-kicker">Veff Experimental · Open-XY installer</span>
+      <span class="veff-kicker">Open-XY Mods by Veff · installer</span>
       <h2 id="veff-intro-title" class="veff-title">Your OP–XY, <span class="veff-hl">a little further out.</span></h2>
       <p class="veff-lead">Everything <a href="https://beta.open-xy.com" target="_blank" rel="noopener noreferrer">Open-XY</a> offers, plus <strong>Linear by Veff</strong> and other experimental firmware changes. Browse the machines below, tick the ones you want, then install. Your OS file comes from your own OP–XY and never leaves this browser.</p>
       <div class="veff-paths">
+        <div class="path-card path-feature" data-veff-features="full"></div>
         <article class="path-card"><span class="path-tag">Install</span><h3>Install on your OP–XY</h3><p>First time, or still on teenage engineering’s OS 1.2.1. Read the notice, copy the OS file from your OP–XY, and the firmware is built here, in your browser.</p><button type="button" id="path-install" class="primary">Start installing <span aria-hidden="true">→</span></button></article>
         <article class="path-card"><span class="path-tag">Rebuild</span><h3>Already on Open-XY or Veff?</h3><p>Change the machines on a modified OP–XY. The original OS 1.2.1 is recovered from its OS file; load your layout.json too so your machines keep their numbers.</p><button type="button" id="path-rebuild" class="secondary">Rebuild my firmware <span aria-hidden="true">→</span></button></article>
-        <div class="path-card path-feature" data-veff-features="full"></div>
       </div>
       <p class="veff-credit"><span data-veff-base></span>. Open-XY is made by the <a href="https://github.com/etcetc000/open-xy/graphs/contributors" target="_blank" rel="noopener noreferrer">Open-XY contributors</a> (<a href="https://open-xy.com" target="_blank" rel="noopener noreferrer">open-xy.com</a>); this fork lives at <a href="https://github.com/galfaroth/open-xy" target="_blank" rel="noopener noreferrer">github.com/galfaroth/open-xy</a>.</p>
     </section>
@@ -121,7 +121,7 @@
       <div class="browse-column"><div class="browse" role="search" aria-label="Find machines">
         <div class="browse-row"><input id="machine-search" type="search" placeholder="Search by name, author or keyword" aria-label="Search machines" autocomplete="off" spellcheck="false">
           <label class="browse-sort"><span>Sort</span><select id="machine-sort" aria-label="Sort machines"><option value="featured">Open-XY first</option><option value="name">Name</option><option value="author">Author</option><option value="kind">Kind</option></select></label></div>
-        <div class="filters" role="group" aria-label="Filter machines by kind"><button data-filter="all" aria-pressed="true">All</button><button data-filter="synth" aria-pressed="false">Synths</button><button data-filter="drum" aria-pressed="false">Drums</button><button data-filter="sample" aria-pressed="false">Samplers</button><button data-filter="effect" aria-pressed="false">Effects</button><button data-filter="player" aria-pressed="false">Players</button><button id="favorites-filter" class="favorites-filter" aria-pressed="false"><span aria-hidden="true">★</span> Favorites</button></div>
+        <div class="filters" role="group" aria-label="Filter machines by kind"><button data-filter="all" aria-pressed="true">All</button><button data-filter="synth" aria-pressed="false">Synths</button><button data-filter="drum" aria-pressed="false">Drums</button><button data-filter="sample" aria-pressed="false">Samplers</button><button data-filter="effect" aria-pressed="false">Effects</button><button data-filter="player" aria-pressed="false">Players</button><button data-filter="extension" aria-pressed="false" data-catalog-only hidden>Extensions</button><button id="favorites-filter" class="favorites-filter" aria-pressed="false"><span aria-hidden="true">★</span> Favorites</button></div>
         <div id="keyword-filters" class="keyword-filters" role="group" aria-label="Filter machines by keyword" hidden></div>
         <p id="browse-result" class="browse-result" role="status" aria-live="polite"></p>
       </div><div id="machines" class="machine-list"></div><div id="machine-capacity-host"><section id="selection-capacity" class="capacity" aria-label="Memory"><div class="capacity-heading"><h2>Memory usage</h2><strong id="room-value">Choose a machine</strong></div><div class="memory-bar" tabindex="0" aria-describedby="memory-breakdown"><div id="memory-map" class="memory-map" role="img" aria-label="Memory used by each machine"></div><div id="memory-breakdown" class="memory-breakdown" role="tooltip"><div id="memory-legend" class="memory-legend"></div><dl id="capacity-details" class="machine-facts"></dl><p id="capacity-foot" class="capacity-foot">CPU load is not measured</p></div></div></section></div></div>
@@ -140,7 +140,7 @@
       </aside>
     </div>
 
-    <div class="actions"><button data-step="1" class="secondary">← OS</button><button id="choose-extensions" class="primary" disabled>Choose extensions <span aria-hidden="true">→</span></button><button type="button" id="browse-install" class="primary browse-install">Install the selected machines <span aria-hidden="true">→</span></button></div>
+    <div class="actions"><button data-step="1" class="secondary">← OS</button><button id="choose-extensions" class="primary" disabled>Choose extensions <span aria-hidden="true">→</span></button><button type="button" id="browse-install" class="primary browse-install">Install with these <span aria-hidden="true">→</span></button></div>
   </section>
   <section data-page="3" hidden aria-labelledby="extensions-title">
     <div class="page-header"><div><span class="eyebrow">Step 3 of 4 · Extensions</span><h1 id="extensions-title" tabindex="-1">Choose extensions</h1><p>Choose optional changes to your OP–XY’s look and workflow.</p></div><span id="extension-count" class="counter">None selected</span></div>
@@ -194,7 +194,7 @@
   </div>
   <footer>
       <div class="footer-credit">
-        <p><strong>Veff Experimental</strong> is a fork of <a href="https://open-xy.com" target="_blank" rel="noopener noreferrer">Open-XY</a>, made in agreement with its maintainers. Open-XY, its SDK, builder and core machines are the work of the <a href="https://github.com/etcetc000/open-xy/graphs/contributors" target="_blank" rel="noopener noreferrer">Open-XY contributors</a>. <span data-veff-base></span>.</p>
+        <p><strong>Open-XY Mods by Veff</strong> is a fork of <a href="https://open-xy.com" target="_blank" rel="noopener noreferrer">Open-XY</a>, made in agreement with its maintainers. Open-XY, its SDK, builder and core machines are the work of the <a href="https://github.com/etcetc000/open-xy/graphs/contributors" target="_blank" rel="noopener noreferrer">Open-XY contributors</a>. <span data-veff-base></span>.</p>
         <p><a href="https://github.com/galfaroth/open-xy" target="_blank" rel="noopener noreferrer">This fork on GitHub</a> · <a href="https://github.com/etcetc000/open-xy" target="_blank" rel="noopener noreferrer">Open-XY on GitHub</a></p>
       </div>
       <div class="footer-copy">
