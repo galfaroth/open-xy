@@ -1,7 +1,8 @@
 # Open-XY Mods by Veff: follow Open-XY's staging branch every hour.
-# Catalog-only changes (machines, extensions) are merged into veff/staging at once;
-# SDK changes go to veff/upstream-candidate and wait for a hardware test of Linear
-# by Veff (tools/veff_sync.py). No firmware is involved: kits are built where the
+# Catalog-only changes (machines, extensions) and SDK changes within an Open-XY version
+# already tested with Linear by Veff merge into veff/staging at once (SDK ones after
+# Open-XY's own source checks); a new Open-XY version waits on veff/upstream-candidate
+# for a hardware test (tools/veff_sync.py). No firmware is involved: kits are built where the
 # OP-XY OS file is, never here.
 name: Veff upstream sync
 
@@ -22,7 +23,7 @@ jobs:
   sync:
     if: github.repository == 'galfaroth/open-xy'
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
         with:
@@ -34,7 +35,14 @@ jobs:
           git fetch --no-tags upstream staging
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: python -m pip install numpy==2.3.5
       - name: Sync
         env:
           GH_TOKEN: ${{ github.token }}
-        run: python3 tools/veff_sync.py --upstream upstream/staging --remote origin
+        run: python tools/veff_sync.py --upstream upstream/staging --remote origin --check 'python sdk.py check'
