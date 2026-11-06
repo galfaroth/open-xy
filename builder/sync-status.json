@@ -1,10 +1,5 @@
 {
   "format": "veff-sync/1",
-  "state": "in-testing",
-  "upstream": "a2893dd2de337cef7b2113179e38da7e7a089597",
-  "pending": {
-    "commit": "7eac6a7467e80a2ed5a5ed1d3bb8c27804a72650",
-    "since": "2026-11-06",
-    "merges": false
-  }
+  "state": "up-to-date",
+  "upstream": "7eac6a7467e80a2ed5a5ed1d3bb8c27804a72650"
 }
