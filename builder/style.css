@@ -394,7 +394,7 @@ details input { max-width:100%; }
 
 /* Machine cards: the screen first, as in a catalog. */
 #machines:has(.card) { grid-template-columns:repeat(auto-fill,minmax(min(100%,232px),1fr)); gap:18px; }
-.machine.card { position:relative; display:block; padding:10px 10px 16px; border-radius:0; }
+.machine.card { position:relative; display:block; padding:10px 10px 40px; border-radius:0; }
 .machine.card:hover { border-color:var(--line-strong); background:var(--raised); }
 .machine.card.selected { border-color:var(--pink-line); background:var(--card); }
 .machine.card.selected:hover { background:var(--raised); }
@@ -411,7 +411,7 @@ details input { max-width:100%; }
 .machine.card[data-locked]>label input { opacity:1; }
 .machine.card>label:has(input:focus-visible) { outline:3px solid var(--pink); outline-offset:2px; }
 .machine.card>label input { width:15px; height:15px; accent-color:var(--pink); }
-.machine.card>.machine-favorite { position:absolute; z-index:2; top:14px; right:14px; width:36px; height:36px; padding:0; background:#0d0d0ed9; border:1px solid var(--line-strong); }
+.machine.card>.machine-favorite { position:absolute; z-index:2; top:18px; right:18px; display:grid; place-items:center; width:30px; height:30px; min-height:0; padding:0; line-height:1; font-size:15px; background:#0d0d0ed9; border:1px solid var(--line-strong); }
 .machine.card>.machine-favorite:hover { background:var(--soft); }
 .machine.card>button { display:flex; flex-direction:column; gap:6px; border-radius:0; }
 .card-screen { position:relative; display:grid; place-items:center; width:100%; aspect-ratio:480/220; margin-bottom:8px; overflow:hidden; border-radius:0; background:#000; border:1px solid #2a2a2e; }
