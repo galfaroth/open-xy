@@ -127,7 +127,7 @@ main { max-width:1440px; margin:0 auto; padding:0 var(--gutter) 28px; }
 .veff-hl { color:var(--pink-text); }
 .veff-lead { position:relative; max-width:760px; font-size:clamp(17px,1.7vw,20px); line-height:1.55; color:#d6d6da; }
 .veff-lead strong { color:var(--ink); }
-.veff-paths { position:relative; display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; margin:28px 0 0; }
+.veff-paths { position:relative; display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:14px; margin:28px 0 0; }
 .path-card { display:flex; flex-direction:column; align-items:flex-start; gap:8px; min-width:0; padding:20px; border-radius:0; background:var(--card); border:1px solid var(--line); }
 .path-card h3 { margin:0; font-size:22px; letter-spacing:-.03em; }
 .path-card p { margin:0 0 6px; font-size:14.5px; line-height:1.5; }

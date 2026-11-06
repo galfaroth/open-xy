@@ -519,6 +519,12 @@ export function createWizard({getKit, getSelected, hasDownload, getFiles, onFirm
   $('download').onclick = event => chooseRoute('windows', event);
   return {
     clearSourceBackup,
+    // Someone who already has an OS file goes straight to choosing it.
+    skipToFiles() {
+      versionChecked = true;
+      for (const id of ['os-version', 'os-update', 'computer-choice']) $(id).hidden = true;
+      showFiles();
+    },
     setFirmwareState,
     previewLink(hash) {
       const match = /^#preview\/(source\/)?(mac|windows)\/([a-z-]+)$/.exec(hash);

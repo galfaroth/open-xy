@@ -26,7 +26,7 @@ export async function createBuilder({core = Core, wizardApi = Wizard, retained =
   let catalogLanding = browseFirst, pickedInCatalog = false;
   // Installing from the catalog keeps its machines and extensions: after the OS file the
   // firmware is built directly. Rebuilding an installed OS reviews what it recovers instead.
-  let installFromCatalog = false;
+  let installFromCatalog = false, startAtFiles = false;
   const browserAllowed = supportsBrowser();
   $('browser-blocked').hidden = browserAllowed;
   $('risk-acknowledgement').checked = false;
@@ -116,6 +116,7 @@ export async function createBuilder({core = Core, wizardApi = Wizard, retained =
     }
     wizard.navigate(step);
     showInstallFlow();
+    if (step === 1 && startAtFiles && acknowledged) { startAtFiles = false; wizard.skipToFiles(); }
     if ([2, 3].includes(step)) $(step === 2 ? 'machine-capacity-host' : 'extension-capacity-host').append($('selection-capacity'));
     document.querySelectorAll('[data-page]').forEach(p => p.hidden = Number(p.dataset.page) !== step);
     document.querySelectorAll('.steps button').forEach(b => {
@@ -248,9 +249,11 @@ export async function createBuilder({core = Core, wizardApi = Wizard, retained =
       if (favorites.has('setting:grayscale') && !$('grayscale-graphics').checked) { $('grayscale-graphics').checked = true; $('grayscale-graphics').onchange(); }
       refreshSelection();
     };
-    for (const id of ['path-install', 'browse-install']) $(id).onclick = () => {
-      installFromCatalog = pickedInCatalog = true; navigate(1); ready();
-    };
+    // Fresh install walks through getting the OS file; Begin install goes straight to choosing it.
+    const startInstall = atFiles => { startAtFiles = atFiles; installFromCatalog = pickedInCatalog = true; navigate(1); ready(); };
+    $('path-install').onclick = () => startInstall(false);
+    $('browse-install').onclick = () => startInstall(false);
+    $('path-direct').onclick = () => startInstall(true);
     $('install-change').onclick = () => { catalogLanding = true; acknowledged = false; openPreviewLink(); };
     document.querySelectorAll('[data-browse]').forEach(button => {
       button.hidden = false;
@@ -835,7 +838,7 @@ export async function createBuilder({core = Core, wizardApi = Wizard, retained =
     if (!browseFirst) return;
     const over = !!kit && selected.length > 0 && !linked;
     const empty = !!kit && !selected.length;
-    for (const id of ['browse-install', 'path-install']) if ($(id)) $(id).disabled = over || empty;
+    for (const id of ['browse-install', 'path-install', 'path-direct']) if ($(id)) $(id).disabled = over || empty;
     let note = $('install-limit');
     if (!note) { note = node('p', '', 'install-limit'); note.id = 'install-limit'; note.setAttribute('role', 'status'); $('selection-capacity').append(note); }
     const message = 'Too much selected for the OP–XY’s ' + kib(core.moduleBytes(kit.profile)) + ' of machine memory. Deselect some machines or extensions to install.';
