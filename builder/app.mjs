@@ -135,7 +135,7 @@ export async function createBuilder({core = Core, wizardApi = Wizard, retained =
     label(4, flow ? '02' : '04');
     if (!flow || !kit) return;
     const chosen = kit.machines.filter(m => selected.includes(m.id));
-    const count = (n, one, many) => n ? n + ' ' + (n === 1 ? one : many) : null;
+    const count = (n, one, many) => n ? [n, n === 1 ? one : many] : null;
     const parts = [
       count(chosen.filter(m => m.kind === 'synth').length, 'synth', 'synths'),
       count(chosen.filter(m => m.kind === 'drum').length, 'drum kit', 'drum kits'),
@@ -144,7 +144,10 @@ export async function createBuilder({core = Core, wizardApi = Wizard, retained =
       count(chosen.filter(m => m.kind === 'player').length, 'player', 'players'),
       count(selectedExtensions.length, 'extension', 'extensions'),
     ].filter(Boolean);
-    $('install-summary-text').textContent = 'Installing ' + parts.join(', ') + ' + Linear by Veff';
+    const text = $('install-summary-text');
+    text.replaceChildren('Installing ');
+    parts.forEach(([n, word], i) => { if (i) text.append(', '); text.append(node('b', String(n), 'summary-count'), ' ' + word); });
+    text.append(' + Linear ', node('b', 'by Veff', 'summary-count'));
     $('install-summary-text').title = [...chosen.map(m => m.name), ...(kit.extensions ?? []).filter(e => selectedExtensions.includes(e.id)).map(e => e.name)].join(', ');
   }
   function ready() {

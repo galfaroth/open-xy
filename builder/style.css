@@ -76,8 +76,11 @@ main { max-width:1440px; margin:0 auto; padding:0 var(--gutter) 28px; }
 [data-veff] .brand-mark,[data-veff] .brand-product { display:none; }
 [data-veff] .brand-name { font-size:16px; letter-spacing:0; }
 [data-flow=catalog] .steps [data-step="2"],[data-flow=catalog] .steps [data-step="3"],[data-flow=catalog] .source-links,[data-flow=catalog] .masthead { display:none; }
-.install-summary { order:-1; display:flex; flex-wrap:wrap; align-items:baseline; gap:4px 14px; font-size:15px; color:var(--ink); }
+.install-summary { order:-1; display:flex; flex-wrap:wrap; align-items:center; gap:4px 14px; font-size:15px; color:var(--ink); }
 #install-summary-text { font-weight:500; }
+.summary-count { color:var(--pink-text); font-weight:500; }
+.install-summary #install-change { display:inline-flex; align-items:center; min-height:34px; padding:0 14px; border:1px solid var(--line-strong); color:var(--ink); font:500 13px var(--sans); text-decoration:none; }
+.install-summary #install-change:hover { border-color:var(--ink-2); background:var(--soft); }
 .install-summary[hidden] { display:none; }
 .install-summary .text-button { min-height:0; padding:0; color:var(--ink); text-decoration:underline; text-decoration-color:var(--pink); text-underline-offset:3px; }
 .source-link { padding:8px 12px; font-size:13px; font-weight:500; color:var(--muted); text-decoration:none; border-radius:0; }
