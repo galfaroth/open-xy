@@ -33,8 +33,10 @@ class LinkedMachines(unittest.TestCase):
         self.assertEqual(calls[1:], [(['fm2op', 'big', 'macroosc'], 'fit'), (['fm2op', 'macroosc', 'small'], 'fit'),
                                      (['fm2op', 'macroosc'], 'module')])
 
-    def test_a_machine_too_big_beside_the_official_ones_fails_by_name(self):
-        with self.assertRaisesRegex(ValueError, 'big does not fit beside the official machines, 2100.0 of 2032 KiB'):
+    def test_a_machine_too_big_even_on_its_own_fails_by_name(self):
+        # Fork policy (docs/api.md): a machine that fits only on its own is still offered;
+        # one that does not fit even alone is refused by name.
+        with self.assertRaisesRegex(ValueError, 'big does not fit even on its own, 2100.0 of 2032 KiB'):
             linked([FM, MACRO, BIG, SMALL], lambda ids: 'big' in ids)
 
     def test_a_collection_without_official_machines_must_fit_at_once(self):

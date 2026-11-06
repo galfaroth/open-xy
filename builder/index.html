@@ -111,7 +111,7 @@
         <p class="veff-sync-how">How it keeps up: this installer follows Open-XY’s staging branch every hour. New and updated synths, effects, players and extensions from Open-XY are released here right away. When Open-XY changes its SDK, Linear by Veff is first tested on an OP–XY with it, so that release can follow a few days later.</p></div>
       <p class="veff-credit"><span data-veff-base></span>. Open-XY is made by the <a href="https://github.com/etcetc000/open-xy/graphs/contributors" target="_blank" rel="noopener noreferrer">Open-XY contributors</a> (<a href="https://open-xy.com" target="_blank" rel="noopener noreferrer">open-xy.com</a>); this fork lives at <a href="https://github.com/galfaroth/open-xy" target="_blank" rel="noopener noreferrer">github.com/galfaroth/open-xy</a>.</p>
     </section>
-    <div class="page-header"><div><span class="eyebrow">Step 2 of 4 · Choose machines</span><h1 id="machines-title" tabindex="-1">Choose machines</h1><p>Select the instruments and effects to install.</p></div><div class="selection-tools"><span id="selection-count" class="counter">0 selected</span>
+    <div class="page-header"><div><span class="eyebrow">Step 2 of 4 · Choose machines</span><h1 id="machines-title" tabindex="-1">Choose machines</h1><p>Select the instruments and effects to install.</p></div><div class="selection-tools"><span id="selection-count" class="counter">0 selected</span><button type="button" id="select-favorites" class="secondary compact" data-catalog-tool hidden>Select favorites</button><button type="button" id="unselect-all" class="secondary compact" data-catalog-tool hidden>Unselect all</button>
       <details id="machine-presets" class="presets"><summary>Presets</summary>
         <div class="presets-panel">
           <p id="presets-empty" class="presets-note">Save the machines you’ve selected to choose them again in one step.</p>
@@ -165,6 +165,7 @@
     </div>
     <div class="actions"><button data-step="2" class="secondary">← Machines</button><button id="build" class="primary" disabled>Build firmware <span aria-hidden="true">→</span></button></div>
   </section>
+  <div id="capacity-toast" class="capacity-toast" role="alert" hidden></div>
   <dialog id="about-veff" class="about-veff" aria-labelledby="about-veff-title"></dialog>
   <dialog id="selected-previews" aria-labelledby="selected-previews-title" aria-describedby="selected-previews-note">
     <div class="selected-previews-heading"><div class="selected-previews-title-group"><h2 id="selected-previews-title">Machine graphics</h2><span id="selected-previews-count"></span></div><button id="close-selected-previews" type="button" class="secondary" autofocus>Done</button></div>
