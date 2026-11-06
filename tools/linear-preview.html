@@ -3,7 +3,7 @@
   Replace SVG_SOURCE with sdk/platform/opxy-1.2.1/arranger.svg and COLS with 4, add
   `#from,count` slicing at the end, render 3840x2200 sheets with headless Chrome,
   crop 960x440 frames and join them at 10 fps:
-  ffmpeg -framerate 10 -i f/%04d.png -vf "scale=720:-1:flags=lanczos,split[a][b];[a]palettegen=max_colors=32[p];[b][p]paletteuse=dither=none" -loop 0 linear-by-veff.gif -->
+  ffmpeg -framerate 10 -i f/%04d.png -vf "scale=480:-1:flags=lanczos,split[a][b];[a]palettegen=max_colors=32[p];[b][p]paletteuse=dither=none" -loop 0 linear-by-veff.gif -->
 <html><head><meta charset="utf-8">
 <style>
 html,body{margin:0;background:#000}

@@ -122,7 +122,7 @@ export function createCatalogView({core, visuals, snapshots, modeFor, getKit, is
         const src = GUIDE_MEDIA.images?.[image[2]];
         if (src) {
           const figure = node('figure', undefined, 'guide-figure'), picture = doc.createElement('img');
-          picture.src = src; picture.alt = image[1]; picture.loading = 'lazy'; picture.width = 720; picture.height = 330;
+          picture.src = src; picture.alt = image[1]; picture.loading = 'lazy'; picture.width = 480; picture.height = 220;
           figure.append(picture, node('figcaption', image[1])); blocks.push(figure);
         }
         ++i; continue;
@@ -185,7 +185,7 @@ export function createCatalogView({core, visuals, snapshots, modeFor, getKit, is
         if (feature.preview === 'linear' && LINEAR_PREVIEW.gif) {
           const screen = node('figure', undefined, 'veff-feature-screen');
           const img = doc.createElement('img');
-          img.src = LINEAR_PREVIEW.gif; img.width = 720; img.height = 330; img.loading = 'lazy';
+          img.src = LINEAR_PREVIEW.gif; img.width = 480; img.height = 220; img.loading = 'lazy';
           img.alt = 'Linear by Veff on the OP–XY screen: playing an arrangement, adding and stretching a clip, the actions menu, bouncing a clip to a sampler, the piano roll and muting a clip.';
           screen.append(img);
           screen.dataset.linearGuide = ''; screen.title = 'Read how Linear by Veff works';
