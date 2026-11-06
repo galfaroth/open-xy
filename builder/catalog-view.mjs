@@ -73,7 +73,17 @@ export function createCatalogView({core, visuals, snapshots, modeFor, getKit, is
     titles.append(node('span', 'open-xy mods by veff', 'eyebrow'), h, node('p', (about.roles ?? []).join(' · '), 'about-roles'));
     head.append(titles);
     const close = node('button', 'Close', 'secondary about-close'); close.type = 'button'; close.onclick = () => dialog.close();
-    dialog.replaceChildren(close, head, ...(about.bio ?? []).map(text => node('p', text, 'about-bio')));
+    // A bio paragraph may link inline with [text](https://…).
+    const paragraph = text => {
+      const p = node('p', undefined, 'about-bio');
+      let at = 0;
+      for (const m of text.matchAll(/\[([^\]]+)\]\((https:\/\/[^)\s]+)\)/g)) {
+        p.append(text.slice(at, m.index), link(m[1], m[2])); at = m.index + m[0].length;
+      }
+      p.append(text.slice(at));
+      return p;
+    };
+    dialog.replaceChildren(close, head, ...(about.bio ?? []).map(paragraph));
     if (links.length) dialog.append(linkRow('about-links'));
     dialog.onclick = event => { if (event.target === dialog) dialog.close(); };
     for (const button of doc.querySelectorAll('[data-about-open]')) { button.hidden = false; button.onclick = () => dialog.showModal(); }
