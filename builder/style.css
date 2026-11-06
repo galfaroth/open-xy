@@ -79,6 +79,12 @@ main { max-width:1440px; margin:0 auto; padding:0 var(--gutter) 28px; }
 .install-summary { order:-1; display:flex; flex-wrap:wrap; align-items:center; gap:4px 14px; font-size:15px; color:var(--ink); }
 #install-summary-text { font-weight:500; }
 .summary-count { color:var(--pink-text); font-weight:500; }
+#install-summary-text { position:relative; cursor:help; outline-offset:4px; }
+.summary-list { display:none; position:absolute; top:calc(100% + 10px); left:0; z-index:30; min-width:min(520px,calc(100vw - 32px)); padding:16px 18px; background:var(--paper); border:1px solid var(--line-strong); box-shadow:0 12px 32px #000c; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:14px 22px; font-weight:400; }
+#install-summary-text:hover .summary-list,#install-summary-text:focus .summary-list,#install-summary-text:focus-within .summary-list { display:grid; }
+.summary-group h3 { margin:0 0 6px; font-size:11px; font-weight:400; color:var(--pink-text); }
+.summary-group ul { margin:0; padding:0; list-style:none; }
+.summary-group li { font-size:13px; line-height:1.5; color:var(--ink-2); }
 .install-summary #install-change { display:inline-flex; align-items:center; min-height:34px; padding:0 14px; border:1px solid var(--line-strong); color:var(--ink); font:500 13px var(--sans); text-decoration:none; }
 .install-summary #install-change:hover { border-color:var(--ink-2); background:var(--soft); }
 .install-summary[hidden] { display:none; }

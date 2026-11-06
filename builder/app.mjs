@@ -148,7 +148,18 @@ export async function createBuilder({core = Core, wizardApi = Wizard, retained =
     text.replaceChildren('Installing ');
     parts.forEach(([n, word], i) => { if (i) text.append(', '); text.append(node('b', String(n), 'summary-count'), ' ' + word); });
     text.append(' + Linear ', node('b', 'by Veff', 'summary-count'));
-    $('install-summary-text').title = [...chosen.map(m => m.name), ...(kit.extensions ?? []).filter(e => selectedExtensions.includes(e.id)).map(e => e.name)].join(', ');
+    // Hovering (or focusing) the summary lists everything, grouped like the catalog.
+    text.removeAttribute('title'); text.tabIndex = 0;
+    const groups = [['Synths', 'synth'], ['Drum kits', 'drum'], ['Sample engines', 'sample'], ['Effects', 'effect'], ['Players', 'player']]
+      .map(([title, kind]) => [title, chosen.filter(m => m.kind === kind).map(m => m.name)]);
+    groups.push(['Extensions', [...(kit.extensions ?? []).filter(e => selectedExtensions.includes(e.id)).map(e => e.name), 'Linear by Veff']]);
+    const list = node('div', undefined, 'summary-list'); list.setAttribute('role', 'tooltip');
+    for (const [title, names] of groups) if (names.length) {
+      const group = node('div', undefined, 'summary-group'), items = node('ul');
+      for (const name of names) items.append(node('li', name));
+      group.append(node('h3', title), items); list.append(group);
+    }
+    text.append(list);
   }
   function ready() {
     if (browseFirst) $('choose').firstChild.nodeValue = installFromCatalog ? 'Build firmware ' : 'Choose machines ';
