@@ -40,6 +40,7 @@ export async function createBuilder({core = Core, wizardApi = Wizard, retained =
   // last build here, or a layout.json they load. Kept in this browser as a convenience;
   // the layout.json in every download is the record.
   const NUMBERS_KEY = 'open-xy-machine-numbers';
+  const VEFF_KEYWORD = 'by veff';
   // The catalog's last selection, and when each machine was first seen here (a machine
   // that appeared since the previous visit is marked NEW for a day). This browser only.
   const SELECTION_KEY = 'veff-catalog-selection', SEEN_KEY = 'veff-catalog-seen', NEW_FOR = 24 * 3600 * 1000;
@@ -532,7 +533,9 @@ export async function createBuilder({core = Core, wizardApi = Wizard, retained =
         b.dataset.filter !== 'all' && !kit.machines.some(m => m.kind === b.dataset.filter));
     if (browsing.kind !== 'extension' && !kit.machines.some(m => m.kind === browsing.kind)) browsing.kind = 'all';
     const counts = new Map(core.MACHINE_KEYWORDS.map(keyword => [keyword, kit.machines.filter(m => m.keywords?.includes(keyword)).length]));
-    const offered = core.MACHINE_KEYWORDS.filter(keyword => counts.get(keyword));
+    // 'by veff' sits among the keywords, in alphabetical order: the fork's own machines and Linear by Veff.
+    if (view?.isVeff && browseFirst) counts.set(VEFF_KEYWORD, kit.machines.filter(m => view.isVeff(m)).length + (view.builtIn?.().length ?? 0));
+    const offered = [...counts.keys()].filter(keyword => counts.get(keyword)).sort((a, b) => a.localeCompare(b));
     browsing.keywords = browsing.keywords.filter(keyword => offered.includes(keyword));
     $('keyword-filters').hidden = !offered.length;
     $('keyword-filters').replaceChildren(...offered.map(keyword => {
@@ -551,12 +554,15 @@ export async function createBuilder({core = Core, wizardApi = Wizard, retained =
     syncBrowsing();
   }
   function renderMachines() {
+    const veffOnly = browsing.keywords.includes(VEFF_KEYWORD);
+    const keywords = browsing.keywords.filter(k => k !== VEFF_KEYWORD);
     $('machines').style.setProperty('--machine-count', kit.machines.length);
     $('machines').replaceChildren();
     // Each row keeps its collection index, and so its memory-map colour, in any order.
     if (!builderPreview && browsing.kind === 'extension') browsing.kind = 'all';
     const rows = browsing.kind === 'extension' ? [] :
-      core.browseMachines(kit.machines, {...browsing, favorites: browsing.favoritesOnly ? favorites : null});
+      core.browseMachines(kit.machines, {...browsing, keywords, favorites: browsing.favoritesOnly ? favorites : null})
+        .filter(({m}) => !veffOnly || view?.isVeff?.(m));
     const extensionCards = catalogExtensions();
     const filtered = Boolean(browsing.query.trim() || browsing.kind !== 'all' || browsing.keywords.length || browsing.favoritesOnly);
     const hiddenSelected = selected.filter(id => !rows.some(({m}) => m.id === id)).length;
@@ -622,8 +628,9 @@ export async function createBuilder({core = Core, wizardApi = Wizard, retained =
   // In the catalog an extension is a card like a machine's, listed under All and Extensions;
   // searching matches its name and description. Keyword and favorite filters list machines only.
   function catalogExtensions() {
+    const veffOnly = browsing.keywords.includes(VEFF_KEYWORD);
     if (!view || !builderPreview || !['all', 'extension'].includes(browsing.kind) ||
-        browsing.keywords.length || browsing.favoritesOnly) return [];
+        browsing.keywords.some(k => k !== VEFF_KEYWORD) || browsing.favoritesOnly) return [];
     const query = browsing.query.trim().toLowerCase();
     const matches = (...texts) => !query || texts.some(t => (t ?? '').toLowerCase().includes(query));
     const entries = (kit.extensions ?? []).filter(e => matches(e.name, e.description));
@@ -632,6 +639,7 @@ export async function createBuilder({core = Core, wizardApi = Wizard, retained =
       extensionCard(f.name, f.summary, ['Extension', 'Always included'], true, null, () => {}, {
         locked: 'The whole firmware is built on ' + f.name + ': every build here includes it, so it cannot be deselected.',
         screen: f.screen}));
+    if (veffOnly) return builtIn;
     const cards = [...builtIn, ...entries.map(extension => () => {
       const included = selectedExtensions.includes(extension.id);
       const others = selectedExtensions.some(id => id !== extension.id);

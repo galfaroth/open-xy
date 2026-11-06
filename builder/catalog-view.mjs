@@ -300,6 +300,7 @@ export function createCatalogView({core, visuals, snapshots, modeFor, getKit, is
     // Veff machines start unselected, like community machines.
     chosenByDefault: m => !veffMachine(m.id),
     card, detail, open, close,
+    isVeff: m => !!veffMachine(m.id),
     // Firmware features every build carries (Linear by Veff), shown as fixed extension cards.
     builtIn: () => (data.features ?? []).map(f => ({name: f.name, summary: f.summary ?? '',
       screen: f.preview === 'linear' ? LINEAR_PREVIEW.gif : null})),
