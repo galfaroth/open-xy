@@ -3,6 +3,7 @@ import LINEAR_PREVIEW from './linear-preview.json' with { type: 'json' };
 import SYNC from './sync-status.json' with { type: 'json' };
 // Linear by Veff's user guide, shown at #/linear exactly as the repository documents it.
 import LINEAR_GUIDE from '../docs/arranger.md?raw';
+import GUIDE_MEDIA from './linear-guide-media.json' with { type: 'json' };
 
 // The Open-XY Mods by Veff presentation of the machine collection: a browsable grid of
 // machine cards, a detail view per machine, the fork's own features and its own
@@ -116,6 +117,16 @@ export function createCatalogView({core, visuals, snapshots, modeFor, getKit, is
     for (let i = 0; i < lines.length;) {
       const line = lines[i];
       if (!line.trim()) { ++i; continue; }
+      const image = /^!\[([^\]]*)\]\(([^)]+)\)$/.exec(line.trim());
+      if (image) {
+        const src = GUIDE_MEDIA.images?.[image[2]];
+        if (src) {
+          const figure = node('figure', undefined, 'guide-figure'), picture = doc.createElement('img');
+          picture.src = src; picture.alt = image[1]; picture.loading = 'lazy'; picture.width = 720; picture.height = 330;
+          figure.append(picture, node('figcaption', image[1])); blocks.push(figure);
+        }
+        ++i; continue;
+      }
       const heading = /^(#{1,3}) (.*)$/.exec(line);
       if (heading) { const h = node('h' + (heading[1].length + 1)); h.append(...inline(heading[2])); blocks.push(h); ++i; continue; }
       if (line.startsWith('|')) {

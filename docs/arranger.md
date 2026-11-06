@@ -19,6 +19,8 @@ Song scenes from the timeline. Switching back to Linear restores its placement.
 
 ### Understand the screen
 
+![The timeline playing: eight tracks of clips, the edit cursor, the playhead and the loop band](images/arranger/timeline.gif)
+
 - **Header:** `Linear by Veff` identifies the timeline.
 - **Tracks:** keys **1–8** select a track and highlight its lane. Entering Linear
   follows the currently selected instrument; AUX tracks have no timeline lane.
@@ -59,6 +61,8 @@ is not the same source as A on track 2.
 
 ### Mute one clip
 
+![Stop + click E1 mutes the selected clip, which turns grey](images/arranger/mute.gif)
+
 Select a clip, then hold **Stop** and click **E1**, or choose **Toggle Mute Clip**
 in the actions menu. The clip turns gray and stops producing sequenced notes;
 its label and selection outline remain visible. Repeat to unmute. This changes
@@ -68,11 +72,15 @@ the playhead when released.
 
 ### Read the shortcuts
 
+![Holding Shift, then Stop, shows their shortcuts in the footer](images/arranger/shortcuts.gif)
+
 **E1–E4** are the four encoders. **Turn** means rotate; **click** means press the
 encoder. Hold **Shift** or **Stop** while performing the other part of a chord.
 Plain **1–8** always means the track keys, except inside piano roll.
 
 ### Find an action without memorizing its chord
+
+![A short press of Arrange opens the actions menu; E1 browses it and unavailable actions are dimmed](images/arranger/menu.gif)
 
 On the timeline, **press Arrange briefly** to open the actions menu. Press it
 again to cancel and return to Linear. Holding Arrange still opens the same menu;
@@ -123,6 +131,8 @@ when the destination below is free. To replace an occupied destination, use the
 regular **Shift + Sample** bounce controls and their replacement confirmation.
 
 ## 2. Make your first phrase
+
+![Track keys choose a lane, E1 moves the cursor, + adds an empty clip and E4 stretches it](images/arranger/add-clip.gif)
 
 1. Choose a track with **1–8** and move the cursor with **E1**.
 2. With transport stopped and recording disarmed, press **+** to create an empty clip. Its new source has 64 steps at 1× speed; the visible clip starts at 16 steps (one bar).
@@ -225,6 +235,8 @@ Click **E4** on a selected clip to open its source in the stock editor. Press
 
 ### Piano roll
 
+![Piano roll: the time cursor moves across the notes, + adds one, E3 transposes it, then it plays](images/arranger/piano-roll.gif)
+
 Press **Shift + click E4** to open the selected source in piano roll. It shows
 eight pitches at a time and scrolls as the pitch cursor moves beyond them.
 It opens around the first stored note, including its time and pitch, and shows
@@ -298,6 +310,8 @@ and destination instruments. Collisions, locks and full destinations reject the
 operation without changing the original.
 
 ## 7. Bounce a clip to audio
+
+![Bounce to Sampler renders the clip in real time, then assigns the sample on the track below](images/arranger/bounce.gif)
 
 Bounce performs audible, real-time internal resampling and places the result on
 the **track below**, at the same timeline position. The source clip stays intact.

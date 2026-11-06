@@ -158,6 +158,9 @@ main:has(#builder-workspace[data-browse=true]) .sidebar { display:none; }
 .guide-body p,.guide-body li { color:var(--ink-2); font-size:15px; line-height:1.6; }
 .guide-body ul,.guide-body ol { margin:0 0 14px; padding-left:22px; }
 .guide-body strong { color:var(--ink); font-weight:500; }
+.guide-figure { margin:4px 0 18px; }
+.guide-figure img { display:block; width:100%; max-width:720px; height:auto; background:#000; border:1px solid #2a2a2e; }
+.guide-figure figcaption { margin-top:6px; font-size:13px; color:var(--muted); }
 .guide-table { width:100%; border-collapse:collapse; margin:6px 0 16px; font-size:14px; }
 .guide-table th,.guide-table td { text-align:left; vertical-align:top; padding:8px 10px; border-bottom:1px solid var(--line); color:var(--ink-2); }
 .guide-table th { color:var(--muted); font-weight:400; font-size:12px; }
