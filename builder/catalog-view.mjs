@@ -177,6 +177,7 @@ export function createCatalogView({core, visuals, snapshots, modeFor, getKit, is
           img.src = LINEAR_PREVIEW.gif; img.width = 720; img.height = 330; img.loading = 'lazy';
           img.alt = 'Linear by Veff on the OP–XY screen: playing an arrangement, adding and stretching a clip, the actions menu, bouncing a clip to a sampler, the piano roll and muting a clip.';
           screen.append(img);
+          screen.dataset.linearGuide = ''; screen.title = 'Read how Linear by Veff works';
           card.append(screen);
         }
         card.append(node('p', feature.summary ?? ''));

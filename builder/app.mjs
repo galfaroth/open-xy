@@ -713,7 +713,7 @@ export async function createBuilder({core = Core, wizardApi = Wizard, retained =
       more.onclick = event => { event.preventDefault(); location.hash = '#/linear'; };
       row.append(more); row.dataset.guide = 'linear';
       // Like a machine card's title, the name opens its page: the same guide as Read more.
-      button.onclick = event => { if (event.target.closest('.machine-name')) location.hash = '#/linear'; };
+      button.onclick = event => { if (event.target.closest('.machine-name, .card-screen')) location.hash = '#/linear'; };
     }
     button.setAttribute('aria-label', name + ', extension. ' + (locked ? locked : (included ? 'Remove from' : 'Add to') + ' the install'));
     button.onclick = () => { if (!input.disabled) toggle(!included); };
