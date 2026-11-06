@@ -712,11 +712,10 @@ export async function createBuilder({core = Core, wizardApi = Wizard, retained =
       const more = node('a', 'Read more →', 'card-more'); more.href = '#/linear';
       more.onclick = event => { event.preventDefault(); location.hash = '#/linear'; };
       row.append(more); row.dataset.guide = 'linear';
-      // Like a machine card's title, the name opens its page: the same guide as Read more.
-      button.onclick = event => { if (event.target.closest('.machine-name, .card-screen')) location.hash = '#/linear'; };
     }
     button.setAttribute('aria-label', name + ', extension. ' + (locked ? locked : (included ? 'Remove from' : 'Add to') + ' the install'));
-    button.onclick = () => { if (!input.disabled) toggle(!included); };
+    // A locked card (Linear by Veff) cannot be toggled: anywhere on it opens its guide.
+    button.onclick = () => { if (locked && guide) location.hash = '#/linear'; else if (!input.disabled) toggle(!included); };
     row.append(label, button);
     if (favorite) {
       const star = node('button', undefined, 'machine-favorite'); star.type = 'button';

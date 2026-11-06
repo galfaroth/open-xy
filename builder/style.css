@@ -447,7 +447,7 @@ details input { max-width:100%; }
 .machine.card .machine-meta::before { content:''; display:inline-block; width:8px; height:8px; margin-right:7px; border-radius:0; background:var(--machine); vertical-align:0; }
 .card-keywords { padding:0 4px; font:11px var(--sans); color:var(--pink-text); }
 .new-badge { display:inline-flex; align-items:center; font:500 10px/1 var(--sans); letter-spacing:.04em; text-transform:uppercase; padding:5px 8px; background:#5fd38a; color:#0b2414; }
-.machine.card[data-guide] .machine-name,.machine.card[data-guide] .card-screen,.veff-feature-screen[data-linear-guide] { cursor:pointer; }
+.machine.card[data-guide]>button,.veff-feature-screen[data-linear-guide] { cursor:pointer; }
 .machine.card .card-title { cursor:pointer; text-decoration:underline; text-decoration-color:transparent; text-underline-offset:4px; text-decoration-thickness:1px; }
 .machine.card .card-title:hover { text-decoration-color:var(--pink); }
 .machine.card>.card-more { position:absolute; right:14px; bottom:14px; z-index:2; font-size:12px; color:var(--muted); text-decoration:none; }
