@@ -3,7 +3,7 @@
   Replace SVG_SOURCE with sdk/platform/opxy-1.2.1/arranger.svg and COLS with 4, add
   `#from,count` slicing at the end, render 3840x2200 sheets with headless Chrome,
   crop 960x440 frames and join them at 10 fps:
-  ffmpeg -framerate 10 -i f/%04d.png -vf "scale=720:-1:flags=lanczos,split[a][b];[a]palettegen=max_colors=32[p];[b][p]paletteuse=dither=none" -loop 0 linear-by-veff.gif -->
+  ffmpeg -framerate 10 -i f/%04d.png -vf "scale=480:-1:flags=lanczos,split[a][b];[a]palettegen=max_colors=32[p];[b][p]paletteuse=dither=none" -loop 0 linear-by-veff.gif -->
 <html><head><meta charset="utf-8">
 <style>
 html,body{margin:0;background:#000}
@@ -139,7 +139,7 @@ function piano(s) {
 }
 
 // ── the story ──
-const frames = [];
+const frames = [], scenes = {};
 const push = (svg, hold = 1) => { for (let i = 0; i < hold; ++i) frames.push(svg); };
 const W = 8 * BAR;
 const clips = [
@@ -154,30 +154,36 @@ const copy = () => clips.map(c => ({...c}));
 const selectAt = (cl, track, cursor) => cl.findIndex(c => c.track === track && cursor >= c.start && cursor < c.start + c.length);
 
 // 1. Playback across the arrangement, loop band over bars 1-8.
+scenes.play = frames.length;
 for (let t = 0; t <= 8 * BAR - 1; t += BAR / 4)
   push(timeline({window: W, track: 0, cursor: 0, clips, selected: 0, playhead: t, loop: [0, 8 * BAR]}));
 // 2. Track keys and the edit cursor (E1 TIME).
+scenes.navigate = frames.length;
 let cursor = 0;
 for (const track of [1, 2]) push(timeline({window: W, track, cursor, clips, selected: selectAt(clips, track, cursor), toast: 'LINEAR'}), 3);
 for (; cursor <= 2 * BAR; cursor += BAR / 2)
   push(timeline({window: W, track: 2, cursor, clips, selected: selectAt(clips, 2, cursor)}), 2);
 cursor = 2 * BAR;
 // 3. + adds an empty clip at the cursor, E4 stretches it.
+scenes.add = frames.length;
 const added = copy(); added.push({track: 2, start: cursor, length: BAR, pattern: 0});
 const slot = added.length - 1;
 push(timeline({window: W, track: 2, cursor, clips: added, selected: slot, toast: 'ADDED EMPTY CLIP'}), 8);
 for (let l = BAR; l <= 3 * BAR; l += BAR / 2) { added[slot].length = l; push(timeline({window: W, track: 2, cursor, clips: added, selected: slot, toast: 'ADDED EMPTY CLIP'}), 2); }
 push(timeline({window: W, track: 2, cursor, clips: added, selected: slot}), 4);
 // 4. Shift shows its shortcuts; Stop its editing chords.
+scenes.shortcuts = frames.length;
 push(timeline({window: W, track: 2, cursor, clips: added, selected: slot, shift: true}), 10);
 push(timeline({window: W, track: 2, cursor, clips: added, selected: slot, stop: true}), 10);
 // 5. Arrange opens the actions menu; E1 browses to Bounce to Sampler.
+scenes.menu = frames.length;
 const disabled = {3: 'NOTHING TO REDO', 17: 'CLIPBOARD EMPTY'};
 const ms = i => ({window: W, track: 2, cursor, clips: added, selected: slot, index: i, disabled, clipLetter: 'A'});
 push(menu({...ms(0), toast: 'ACTIONS / SHORTCUT HELP'}), 8);
 for (let i = 1; i <= 14; ++i) push(menu(ms(i)), i === 3 ? 5 : 2);
 push(menu(ms(14)), 10);
 // 6. Bounce renders the clip into a sampler on the track below.
+scenes.bounce = frames.length;
 const c = added[slot];
 for (let p = 0; p <= 100; p += 5) {
   const frame = timeline({window: W, track: 2, cursor, clips: added, selected: slot, playhead: c.start + c.length * p / 100,
@@ -187,6 +193,7 @@ for (let p = 0; p <= 100; p += 5) {
 }
 push(timeline({window: W, track: 2, cursor, clips: added, selected: slot, toast: 'BOUNCE SAVED'}), 14);
 // 7. Shift + click E4: piano roll of the selected clip.
+scenes.piano = frames.length;
 const notes = [{at: 0, len: 960, pitch: 60, vel: 100}, {at: 1920, len: 960, pitch: 63, vel: 90}, {at: 3840, len: 480, pitch: 67, vel: 110},
   {at: 4800, len: 1440, pitch: 65, vel: 96}, {at: 6720, len: 480, pitch: 62, vel: 80}];
 const ps = (o) => ({track: 2, letter: 'A', low: 58, pitch: 60, time: 0, notes, selected: 0, toast: 'E1 CURSOR E2 ZOOM E3 PITCH E4 LENGTH', ...o});
@@ -200,6 +207,7 @@ push(piano(ps({time: 5760, pitch: 60, selected: 5, toast: ''})), 6);
 for (let n = 60; n <= 64; ++n) { notes[5].pitch = n; push(piano(ps({time: 5760, pitch: n, selected: 5, toast: ''})), 2); }
 for (let t = 0; t < 7680; t += 480) push(piano(ps({time: 5760, pitch: 64, selected: 5, playhead: t, toast: 'NOTES UPDATED (SHARED SOURCE)'})), 1);
 // 8. Back on the timeline: Stop + click E1 mutes the clip.
+scenes.mute = frames.length;
 push(timeline({window: W, track: 2, cursor, clips: added, selected: slot, toast: 'RETURNED FROM NOTE EDIT'}), 8);
 const muted = added.map(x => ({...x})); muted[slot].muted = true;
 push(timeline({window: W, track: 2, cursor, clips: muted, selected: slot, stop: true}), 6);
@@ -207,5 +215,6 @@ push(timeline({window: W, track: 2, cursor, clips: muted, selected: slot}), 14);
 
 const grid = document.getElementById('grid');
 frames.forEach(f => grid.appendChild(f.cloneNode(true)));
-document.title = 'frames:' + frames.length;
+scenes.end = frames.length;
+document.title = 'frames:' + frames.length + ' scenes:' + JSON.stringify(scenes);
 </script></body></html>

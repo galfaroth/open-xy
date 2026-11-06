@@ -115,6 +115,7 @@ export async function createBuilder({core = Core, wizardApi = Wizard, retained =
       if (!acknowledged) { showEntryGate(); return; }
     }
     wizard.navigate(step);
+    showInstallFlow();
     if ([2, 3].includes(step)) $(step === 2 ? 'machine-capacity-host' : 'extension-capacity-host').append($('selection-capacity'));
     document.querySelectorAll('[data-page]').forEach(p => p.hidden = Number(p.dataset.page) !== step);
     document.querySelectorAll('.steps button').forEach(b => {
@@ -122,6 +123,43 @@ export async function createBuilder({core = Core, wizardApi = Wizard, retained =
     });
     document.querySelector(`[data-page="${step}"] h1`).focus();
     visuals.reveal(document.querySelector(`[data-page="${step}"]`));
+  }
+  // Installing from the catalog: the bar names what is being installed and shows only
+  // the OS and Install steps; Change selection returns to the catalog.
+  function showInstallFlow() {
+    if (!browseFirst) return;
+    const flow = installFromCatalog && !builderPreview;
+    if (flow) document.documentElement.dataset.flow = 'catalog'; else delete document.documentElement.dataset.flow;
+    $('install-summary').hidden = !flow;
+    const label = (step, text) => { const b = document.querySelector(`.steps [data-step="${step}"] b`); if (b) b.textContent = text; };
+    label(4, flow ? '02' : '04');
+    if (!flow || !kit) return;
+    const chosen = kit.machines.filter(m => selected.includes(m.id));
+    const count = (n, one, many) => n ? [n, n === 1 ? one : many] : null;
+    const parts = [
+      count(chosen.filter(m => m.kind === 'synth').length, 'synth', 'synths'),
+      count(chosen.filter(m => m.kind === 'drum').length, 'drum kit', 'drum kits'),
+      count(chosen.filter(m => m.kind === 'sample').length, 'sample engine', 'sample engines'),
+      count(chosen.filter(m => m.kind === 'effect').length, 'effect', 'effects'),
+      count(chosen.filter(m => m.kind === 'player').length, 'player', 'players'),
+      count(selectedExtensions.length, 'extension', 'extensions'),
+    ].filter(Boolean);
+    const text = $('install-summary-text');
+    text.replaceChildren('Installing ');
+    parts.forEach(([n, word], i) => { if (i) text.append(', '); text.append(node('b', String(n), 'summary-count'), ' ' + word); });
+    text.append(' + Linear ', node('b', 'by Veff', 'summary-count'));
+    // Hovering (or focusing) the summary lists everything, grouped like the catalog.
+    text.removeAttribute('title'); text.tabIndex = 0;
+    const groups = [['Synths', 'synth'], ['Drum kits', 'drum'], ['Sample engines', 'sample'], ['Effects', 'effect'], ['Players', 'player']]
+      .map(([title, kind]) => [title, chosen.filter(m => m.kind === kind).map(m => m.name)]);
+    groups.push(['Extensions', [...(kit.extensions ?? []).filter(e => selectedExtensions.includes(e.id)).map(e => e.name), 'Linear by Veff']]);
+    const list = node('div', undefined, 'summary-list'); list.setAttribute('role', 'tooltip');
+    for (const [title, names] of groups) if (names.length) {
+      const group = node('div', undefined, 'summary-group'), items = node('ul');
+      for (const name of names) items.append(node('li', name));
+      group.append(node('h3', title), items); list.append(group);
+    }
+    text.append(list);
   }
   function ready() {
     if (browseFirst) $('choose').firstChild.nodeValue = installFromCatalog ? 'Build firmware ' : 'Choose machines ';
@@ -153,6 +191,8 @@ export async function createBuilder({core = Core, wizardApi = Wizard, retained =
     $('phase-nav').hidden = true;
     $('builder-workspace').hidden = true;
     $('builder-workspace').inert = true;
+    // The notice before installing from the catalog already names what will be installed.
+    showInstallFlow();
   }
   function openPreviewLink() {
     const link = /^#preview\/(machines|extensions|settings)(?:\/([a-z0-9_-]+))?$/.exec(location.hash);
@@ -165,7 +205,7 @@ export async function createBuilder({core = Core, wizardApi = Wizard, retained =
     if (landing && builderPreview && kit && $('builder-workspace').dataset.browse === 'true') {
       if (route?.machine && kit.machines.some(m => m.id === route.machine)) { inspect(route.machine); view.open(); }
       else view.close();
-      view.showAbout(!!route?.about);
+      view.showAbout(!!route?.about); view.showGuide?.(!!route?.linear);
       return;
     }
     builderPreview = !!match;
@@ -185,7 +225,7 @@ export async function createBuilder({core = Core, wizardApi = Wizard, retained =
           else inspect(kit.machines.find(m => m.id === match[2])?.id ?? kit.machines[0].id);
           if (match[1] === 'machines' && kit.machines.some(m => m.id === match[2])) view?.open();
           if (route?.machine && kit.machines.some(m => m.id === route.machine)) { inspect(route.machine); view.open(); }
-          view?.showAbout?.(!!route?.about);
+          view?.showAbout?.(!!route?.about); view?.showGuide?.(!!route?.linear);
           recalculate();
         }
       } else {
@@ -212,6 +252,7 @@ export async function createBuilder({core = Core, wizardApi = Wizard, retained =
       installFromCatalog = pickedInCatalog = true; navigate(1); ready();
     };
     $('path-rebuild').onclick = () => { installFromCatalog = false; navigate(1); ready(); };
+    $('install-change').onclick = () => { catalogLanding = true; acknowledged = false; openPreviewLink(); };
     document.querySelectorAll('[data-browse]').forEach(button => {
       button.hidden = false;
       button.onclick = () => { catalogLanding = true; openPreviewLink(); };
@@ -559,7 +600,7 @@ export async function createBuilder({core = Core, wizardApi = Wizard, retained =
     browsing.keywords = browsing.keywords.filter(keyword => offered.includes(keyword));
     $('keyword-filters').hidden = !offered.length;
     $('keyword-filters').replaceChildren(...offered.map(keyword => {
-      const chip = node('button', keyword, 'keyword-filter'); chip.type = 'button'; chip.dataset.keyword = keyword;
+      const chip = node('button', keyword === VEFF_KEYWORD ? 'by Veff' : keyword, 'keyword-filter'); chip.type = 'button'; chip.dataset.keyword = keyword;
       const count = node('span', String(counts.get(keyword)), 'keyword-count'); count.setAttribute('aria-hidden', 'true');
       chip.append(count); chip.setAttribute('aria-label', keyword + ', ' + counts.get(keyword) + (counts.get(keyword) === 1 ? ' machine' : ' machines'));
       chip.onclick = () => {
@@ -659,7 +700,7 @@ export async function createBuilder({core = Core, wizardApi = Wizard, retained =
     const builtIn = (view.builtIn?.() ?? []).filter(f => matches(f.name, f.summary) && starred('feature:' + f.name)).map(f => () =>
       extensionCard(f.name, f.summary, ['Extension', 'Always included'], true, null, () => {}, {
         locked: 'The whole firmware is built on ' + f.name + ': every build here includes it, so it cannot be deselected.',
-        screen: f.screen, favorite: 'feature:' + f.name}));
+        screen: f.screen, favorite: 'feature:' + f.name, guide: f.guide}));
     if (veffOnly) return builtIn;
     const cards = [...builtIn, ...entries.map(extension => () => {
       const included = selectedExtensions.includes(extension.id);
@@ -686,7 +727,7 @@ export async function createBuilder({core = Core, wizardApi = Wizard, retained =
         }, {favorite: 'setting:grayscale'}));
     return cards;
   }
-  function extensionCard(name, description, facts, included, blocked, toggle, {locked = null, screen: art = null, id = null, favorite = null} = {}) {
+  function extensionCard(name, description, facts, included, blocked, toggle, {locked = null, screen: art = null, id = null, favorite = null, guide = false} = {}) {
     const row = node('article', undefined, 'machine card' + (included ? ' selected' : ''));
     row.dataset.kind = 'extension';
     if (locked) { row.dataset.locked = 'true'; row.title = locked; }
@@ -708,8 +749,14 @@ export async function createBuilder({core = Core, wizardApi = Wizard, retained =
     button.append(screen, name_, tags, node('span', description, 'machine-desc'), meta);
     if (blocked) button.append(node('span', blocked, 'card-keywords'));
     if (locked) { button.append(node('span', 'Built into every firmware', 'card-keywords')); button.title = locked; label.title = locked; }
+    if (locked && guide) {
+      const more = node('a', 'Read more →', 'card-more'); more.href = '#/linear';
+      more.onclick = event => { event.preventDefault(); location.hash = '#/linear'; };
+      row.append(more); row.dataset.guide = 'linear';
+    }
     button.setAttribute('aria-label', name + ', extension. ' + (locked ? locked : (included ? 'Remove from' : 'Add to') + ' the install'));
-    button.onclick = () => { if (!input.disabled) toggle(!included); };
+    // A locked card (Linear by Veff) cannot be toggled: anywhere on it opens its guide.
+    button.onclick = () => { if (locked && guide) location.hash = '#/linear'; else if (!input.disabled) toggle(!included); };
     row.append(label, button);
     if (favorite) {
       const star = node('button', undefined, 'machine-favorite'); star.type = 'button';

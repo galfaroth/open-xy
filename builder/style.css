@@ -72,6 +72,23 @@ main { max-width:1440px; margin:0 auto; padding:0 var(--gutter) 28px; }
 .nav-icon svg { width:100%; }
 .source-links { display:flex; gap:4px; margin-left:auto; }
 .steps:not([hidden])~.source-links { margin-left:0; }
+/* Installing from the catalog: the name, what is installed, and only the OS and Install steps. */
+[data-veff] .brand-mark,[data-veff] .brand-product { display:none; }
+[data-veff] .brand-name { font-size:16px; letter-spacing:0; }
+[data-flow=catalog] .steps [data-step="2"],[data-flow=catalog] .steps [data-step="3"],[data-flow=catalog] .source-links,[data-flow=catalog] .masthead { display:none; }
+.install-summary { order:-1; display:flex; flex-wrap:wrap; align-items:center; gap:4px 14px; font-size:15px; color:var(--ink); }
+#install-summary-text { font-weight:500; }
+.summary-count { color:var(--pink-text); font-weight:500; }
+#install-summary-text { position:relative; cursor:help; outline-offset:4px; }
+.summary-list { display:none; position:absolute; top:calc(100% + 10px); left:0; z-index:30; min-width:min(520px,calc(100vw - 32px)); padding:16px 18px; background:var(--paper); border:1px solid var(--line-strong); box-shadow:0 12px 32px #000c; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:14px 22px; font-weight:400; }
+#install-summary-text:hover .summary-list,#install-summary-text:focus .summary-list,#install-summary-text:focus-within .summary-list { display:grid; }
+.summary-group h3 { margin:0 0 6px; font-size:11px; font-weight:400; color:var(--pink-text); }
+.summary-group ul { margin:0; padding:0; list-style:none; }
+.summary-group li { font-size:13px; line-height:1.5; color:var(--ink-2); }
+.install-summary #install-change { display:inline-flex; align-items:center; min-height:34px; padding:0 14px; border:1px solid var(--line-strong); color:var(--ink); font:500 13px var(--sans); text-decoration:none; }
+.install-summary #install-change:hover { border-color:var(--ink-2); background:var(--soft); }
+.install-summary[hidden] { display:none; }
+.install-summary .text-button { min-height:0; padding:0; color:var(--ink); text-decoration:underline; text-decoration-color:var(--pink); text-underline-offset:3px; }
 .source-link { padding:8px 12px; font-size:13px; font-weight:500; color:var(--muted); text-decoration:none; border-radius:0; }
 .source-link:hover { color:var(--ink); background:var(--soft); }
 .main-stage { min-width:0; margin-top:20px; padding:clamp(20px,3vw,44px); background:var(--panel); border:1px solid var(--line); border-radius:0; }
@@ -151,6 +168,21 @@ main:has(#builder-workspace[data-browse=true]) .sidebar { display:none; }
 .veff-sync-how { margin:0; max-width:880px; font-size:13px; color:var(--muted); }
 .about-veff { width:min(680px,calc(100% - 32px)); max-height:calc(100dvh - 48px); padding:28px; border:1px solid var(--line-strong); background:var(--panel); color:var(--ink); overflow-y:auto; }
 .about-veff::backdrop { background:#000c; }
+.linear-guide { width:min(920px,calc(100% - 32px)); }
+.guide-body h2 { font-size:clamp(26px,4vw,36px); margin:0 0 8px; }
+.guide-body h3 { font-size:21px; margin:34px 0 10px; padding-top:18px; border-top:1px solid var(--line); }
+.guide-body h4 { font-size:16px; font-weight:500; margin:22px 0 8px; color:var(--pink-text); }
+.guide-body p,.guide-body li { color:var(--ink-2); font-size:15px; line-height:1.6; }
+.guide-body ul,.guide-body ol { margin:0 0 14px; padding-left:22px; }
+.guide-body strong { color:var(--ink); font-weight:500; }
+.guide-figure { margin:4px 0 18px; }
+.guide-figure img { display:block; width:100%; max-width:480px; height:auto; background:#000; border:1px solid #2a2a2e; }
+.guide-figure figcaption { margin-top:6px; font-size:13px; color:var(--muted); }
+.guide-table { width:100%; border-collapse:collapse; margin:6px 0 16px; font-size:14px; }
+.guide-table th,.guide-table td { text-align:left; vertical-align:top; padding:8px 10px; border-bottom:1px solid var(--line); color:var(--ink-2); }
+.guide-table th { color:var(--muted); font-weight:400; font-size:12px; }
+.guide-table td:first-child { color:var(--ink); white-space:nowrap; }
+.veff-feature-more { display:inline-block; margin-top:12px; font-size:14px; font-weight:500; color:var(--ink); }
 .about-close { float:right; margin:-6px -6px 0 12px; }
 .about-head { display:flex; align-items:center; gap:20px; margin-bottom:20px; }
 .about-photo { flex:none; width:120px; height:120px; object-fit:cover; background:#000; }
@@ -174,7 +206,7 @@ button.source-link { min-height:0; border:0; background:none; cursor:pointer; }
 .gate-browse { display:block; margin:24px auto 0; }
 @media(max-width:1000px) { .veff-paths { grid-template-columns:repeat(2,minmax(0,1fr)); } .path-feature { grid-column:1 / -1; } }
 @media(max-width:640px) { .veff-paths { grid-template-columns:1fr; } }
-.veff-badge { display:inline-flex; align-items:center; gap:5px; font:500 10px/1 var(--sans); letter-spacing:0; text-transform:lowercase; padding:5px 8px; border-radius:0; background:var(--pink); color:var(--pink-ink); white-space:nowrap; }
+.veff-badge { display:inline-flex; align-items:center; gap:5px; font:500 10px/1 var(--sans); letter-spacing:0; text-transform:none; padding:5px 8px; border-radius:0; background:var(--pink); color:var(--pink-ink); white-space:nowrap; }
 .veff-badge::before { content:''; width:6px; height:6px; border-radius:50%; background:var(--pink-ink); }
 
 /* ── gates ── */
@@ -435,6 +467,7 @@ details input { max-width:100%; }
 .machine.card .machine-meta::before { content:''; display:inline-block; width:8px; height:8px; margin-right:7px; border-radius:0; background:var(--machine); vertical-align:0; }
 .card-keywords { padding:0 4px; font:11px var(--sans); color:var(--pink-text); }
 .new-badge { display:inline-flex; align-items:center; font:500 10px/1 var(--sans); letter-spacing:.04em; text-transform:uppercase; padding:5px 8px; background:#5fd38a; color:#0b2414; }
+.machine.card[data-guide]>button,.veff-feature-screen[data-linear-guide] { cursor:pointer; }
 .machine.card .card-title { cursor:pointer; text-decoration:underline; text-decoration-color:transparent; text-underline-offset:4px; text-decoration-thickness:1px; }
 .machine.card .card-title:hover { text-decoration-color:var(--pink); }
 .machine.card>.card-more { position:absolute; right:14px; bottom:14px; z-index:2; font-size:12px; color:var(--muted); text-decoration:none; }

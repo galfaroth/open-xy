@@ -1,6 +1,9 @@
 import VEFF from './veff.json' with { type: 'json' };
 import LINEAR_PREVIEW from './linear-preview.json' with { type: 'json' };
 import SYNC from './sync-status.json' with { type: 'json' };
+// Linear by Veff's user guide, shown at #/linear exactly as the repository documents it.
+import LINEAR_GUIDE from '../docs/arranger.md?raw';
+import GUIDE_MEDIA from './linear-guide-media.json' with { type: 'json' };
 
 // The Open-XY Mods by Veff presentation of the machine collection: a browsable grid of
 // machine cards, a detail view per machine, the fork's own features and its own
@@ -93,8 +96,78 @@ export function createCatalogView({core, visuals, snapshots, modeFor, getKit, is
       if (links.length) target.replaceChildren('Veff: ', ...linkRow('').childNodes);
     }
   }
+  // A small Markdown reader for the guide: headings, paragraphs, lists, tables, **bold**, `code`, links.
+  function inline(text) {
+    const out = [];
+    const pattern = /\*\*([^*]+)\*\*|`([^`]+)`|\[([^\]]+)\]\(([^)]+)\)/g;
+    let at = 0;
+    for (const m of text.matchAll(pattern)) {
+      out.push(text.slice(at, m.index));
+      if (m[1] !== undefined) out.push(node('strong', m[1]));
+      else if (m[2] !== undefined) out.push(node('code', m[2]));
+      else out.push(/^https:\/\//.test(m[4]) ? link(m[3], m[4]) :
+        link(m[3], (data.fork?.repository ?? 'https://github.com/galfaroth/open-xy') + '/blob/veff/staging/docs/' + m[4]));
+      at = m.index + m[0].length;
+    }
+    out.push(text.slice(at));
+    return out;
+  }
+  function markdown(source) {
+    const blocks = [], lines = source.replace(/\r/g, '').split('\n');
+    for (let i = 0; i < lines.length;) {
+      const line = lines[i];
+      if (!line.trim()) { ++i; continue; }
+      const image = /^!\[([^\]]*)\]\(([^)]+)\)$/.exec(line.trim());
+      if (image) {
+        const src = GUIDE_MEDIA.images?.[image[2]];
+        if (src) {
+          const figure = node('figure', undefined, 'guide-figure'), picture = doc.createElement('img');
+          picture.src = src; picture.alt = image[1]; picture.loading = 'lazy'; picture.width = 480; picture.height = 220;
+          figure.append(picture, node('figcaption', image[1])); blocks.push(figure);
+        }
+        ++i; continue;
+      }
+      const heading = /^(#{1,3}) (.*)$/.exec(line);
+      if (heading) { const h = node('h' + (heading[1].length + 1)); h.append(...inline(heading[2])); blocks.push(h); ++i; continue; }
+      if (line.startsWith('|')) {
+        const rows = [];
+        while (i < lines.length && lines[i].startsWith('|')) rows.push(lines[i++]);
+        const cells = row => row.replace(/^\||\|$/g, '').split('|').map(c => c.trim());
+        const table = node('table', undefined, 'guide-table'), head = node('tr');
+        for (const c of cells(rows[0])) { const th = node('th'); th.append(...inline(c)); head.append(th); }
+        const thead = node('thead'); thead.append(head); const tbody = node('tbody');
+        for (const row of rows.slice(2)) { const tr = node('tr'); for (const c of cells(row)) { const td = node('td'); td.append(...inline(c)); tr.append(td); } tbody.append(tr); }
+        table.append(thead, tbody); blocks.push(table); continue;
+      }
+      const item = /^(\d+\.|-) (.*)$/.exec(line);
+      if (item) {
+        const list = node(item[1] === '-' ? 'ul' : 'ol');
+        while (i < lines.length && /^(\d+\.|-) /.test(lines[i])) {
+          let text = lines[i++].replace(/^(\d+\.|-) /, '');
+          while (i < lines.length && /^ {2,}\S/.test(lines[i])) text += ' ' + lines[i++].trim();
+          const li = node('li'); li.append(...inline(text)); list.append(li);
+        }
+        blocks.push(list); continue;
+      }
+      let text = line;
+      while (++i < lines.length && lines[i].trim() && !/^(#|\||\d+\. |- )/.test(lines[i])) text += ' ' + lines[i].trim();
+      const p = node('p'); p.append(...inline(text)); blocks.push(p);
+    }
+    return blocks;
+  }
+  function renderGuide() {
+    const dialog = doc.getElementById('linear-guide');
+    if (!dialog || !LINEAR_GUIDE) return;
+    const close = node('button', 'Close', 'secondary about-close'); close.type = 'button'; close.onclick = () => dialog.close();
+    const body = node('div', undefined, 'guide-body'); body.append(...markdown(LINEAR_GUIDE));
+    body.querySelector('h2')?.setAttribute('id', 'linear-guide-title');
+    dialog.replaceChildren(close, body);
+    dialog.onclick = event => { if (event.target === dialog) dialog.close(); };
+    dialog.addEventListener('close', () => { if (location.hash === '#/linear') leave(); });
+    for (const target of doc.querySelectorAll('[data-linear-guide]')) target.onclick = event => { event.preventDefault(); event.stopPropagation(); go('#/linear'); };
+  }
   function renderBase(version = base?.version) {
-    renderSync(); renderAbout();
+    renderSync(); renderAbout(); renderGuide();
     for (const target of doc.querySelectorAll('[data-veff-base]')) {
       const parts = [(data.upstream?.name ?? 'Open-XY') + (version ? ' ' + version : '')];
       target.replaceChildren('Based on ', link(parts[0], data.upstream?.site ?? 'https://open-xy.com'));
@@ -112,14 +185,19 @@ export function createCatalogView({core, visuals, snapshots, modeFor, getKit, is
         if (feature.preview === 'linear' && LINEAR_PREVIEW.gif) {
           const screen = node('figure', undefined, 'veff-feature-screen');
           const img = doc.createElement('img');
-          img.src = LINEAR_PREVIEW.gif; img.width = 720; img.height = 330; img.loading = 'lazy';
+          img.src = LINEAR_PREVIEW.gif; img.width = 480; img.height = 220; img.loading = 'lazy';
           img.alt = 'Linear by Veff on the OP–XY screen: playing an arrangement, adding and stretching a clip, the actions menu, bouncing a clip to a sampler, the piano roll and muting a clip.';
           screen.append(img);
+          screen.dataset.linearGuide = ''; screen.title = 'Read how Linear by Veff works';
           card.append(screen);
         }
         card.append(node('p', feature.summary ?? ''));
         if (target.dataset.veffFeatures === 'full') for (const text of feature.help ?? []) card.append(node('p', text, 'veff-feature-help'));
         if (feature.note) card.append(node('p', feature.note, 'veff-feature-note'));
+        if (feature.preview === 'linear') {
+          const more = node('a', 'Read more →', 'veff-feature-more');
+          more.href = '#/linear'; more.dataset.linearGuide = ''; card.append(more);
+        }
         return card;
       }));
     }
@@ -312,18 +390,23 @@ export function createCatalogView({core, visuals, snapshots, modeFor, getKit, is
     card, detail, open, close,
     // The catalog's own route: {machine} or {about}, or null for the catalog itself.
     route() {
-      const m = /^#\/(?:machine\/([a-z0-9_-]+)|(about))?$/.exec(location.hash);
-      return m && {machine: m[1] ?? null, about: !!m[2]};
+      const m = /^#\/(?:machine\/([a-z0-9_-]+)|(about)|(linear))?$/.exec(location.hash);
+      return m && {machine: m[1] ?? null, about: !!m[2], linear: !!m[3]};
     },
     showAbout(show) {
       const dialog = doc.getElementById('about-veff');
       if (!dialog) return;
       if (show && !dialog.open) dialog.showModal(); else if (!show && dialog.open) dialog.close();
     },
+    showGuide(show) {
+      const dialog = doc.getElementById('linear-guide');
+      if (!dialog) return;
+      if (show && !dialog.open) { dialog.showModal(); dialog.scrollTop = 0; } else if (!show && dialog.open) dialog.close();
+    },
     isVeff: m => !!veffMachine(m.id),
     // Firmware features every build carries (Linear by Veff), shown as fixed extension cards.
     builtIn: () => (data.features ?? []).map(f => ({name: f.name, summary: f.summary ?? '',
-      screen: f.preview === 'linear' ? LINEAR_PREVIEW.gif : null})),
+      screen: f.preview === 'linear' ? LINEAR_PREVIEW.gif : null, guide: f.preview === 'linear'})),
     selected: showSelection,
   };
 }
