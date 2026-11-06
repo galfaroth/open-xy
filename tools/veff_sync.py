@@ -50,10 +50,10 @@ def write_status(status, message, dry_run):
     text = json.dumps(status, indent=2) + '\n'
     if STATUS.exists() and STATUS.read_text(encoding='utf-8') == text:
         return False
-    STATUS.write_text(text, encoding='utf-8')
     if dry_run:
         print('Would commit status:', text)
         return False
+    STATUS.write_text(text, encoding='utf-8')
     git('add', str(STATUS.relative_to(ROOT)))
     git('commit', '-q', '-m', message)
     return True

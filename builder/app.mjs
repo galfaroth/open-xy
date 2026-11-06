@@ -40,6 +40,24 @@ export async function createBuilder({core = Core, wizardApi = Wizard, retained =
   // last build here, or a layout.json they load. Kept in this browser as a convenience;
   // the layout.json in every download is the record.
   const NUMBERS_KEY = 'open-xy-machine-numbers';
+  // The catalog's last selection, and when each machine was first seen here (a machine
+  // that appeared since the previous visit is marked NEW for a day). This browser only.
+  const SELECTION_KEY = 'veff-catalog-selection', SEEN_KEY = 'veff-catalog-seen', NEW_FOR = 24 * 3600 * 1000;
+  let firstSeen = {};
+  function rememberSelection() {
+    if (!browseFirst || !kit) return;
+    try { localStorage.setItem(SELECTION_KEY, JSON.stringify({machines: selected, extensions: selectedExtensions})); } catch {}
+  }
+  function noteSeen(ids) {
+    let stored = {};
+    try { stored = JSON.parse(localStorage.getItem(SEEN_KEY) ?? '{}') ?? {}; } catch {}
+    const returning = Object.keys(stored).length > 0, now = Date.now();
+    // On a first visit nothing is new; afterwards an unseen machine is new from now.
+    for (const id of ids) if (typeof stored[id] !== 'number') stored[id] = returning ? now : 0;
+    firstSeen = stored;
+    try { localStorage.setItem(SEEN_KEY, JSON.stringify(stored)); } catch {}
+  }
+  const isNew = id => browseFirst && firstSeen[id] > 0 && Date.now() - firstSeen[id] < NEW_FOR;
   let numbers = null;
   function rememberNumbers(value) {
     numbers = value;
@@ -571,7 +589,12 @@ export async function createBuilder({core = Core, wizardApi = Wizard, retained =
       meta.append(memory);
       const originLabel = {bundled: 'Core', official: 'Core', catalog: 'Community', personal: 'Yours'}[m.origin];
       meta.append(node('span', originLabel, 'machine-origin'));
-      button.append(meta); button.onclick = () => inspect(m.id);
+      button.append(meta);
+      // A catalog card toggles its selection; only its title (catalog view) opens its page.
+      button.onclick = event => {
+        if (!view || event.target.closest('.machine-name')) { inspect(m.id); return; }
+        input.checked = !input.checked; input.onchange();
+      };
       input.onchange = () => {
         if (builderPreview) pickedInCatalog = true;
         selected = input.checked ? [...selected, m.id] : selected.filter(id => id !== m.id);
@@ -592,6 +615,7 @@ export async function createBuilder({core = Core, wizardApi = Wizard, retained =
       star.onclick = () => { toggleFavorite(m.id); showFavorite(); };
       row.append(label, glyph, button, star); $('machines').append(row);
       view?.card(row, m, button);
+      if (isNew(m.id)) { row.dataset.new = 'true'; button.querySelector('.card-tags')?.prepend(node('span', 'New', 'new-badge')); }
     });
     for (const card of extensionCards) $('machines').append(card());
   }
@@ -624,7 +648,7 @@ export async function createBuilder({core = Core, wizardApi = Wizard, retained =
           selectedExtensions = core.extensionSelection(kit, include ? [...selectedExtensions, extension.id]
             : selectedExtensions.filter(id => id !== extension.id));
           invalidate(); renderExtensions(); renderMachines(); recalculate();
-        });
+        }, {id: extension.id});
     })];
     if (matches('Grayscale machine graphics', $('graphics-note').textContent))
       cards.push(() => extensionCard('Grayscale machine graphics', $('graphics-note').textContent,
@@ -633,7 +657,7 @@ export async function createBuilder({core = Core, wizardApi = Wizard, retained =
         }));
     return cards;
   }
-  function extensionCard(name, description, facts, included, blocked, toggle, {locked = null, screen: art = null} = {}) {
+  function extensionCard(name, description, facts, included, blocked, toggle, {locked = null, screen: art = null, id = null} = {}) {
     const row = node('article', undefined, 'machine card' + (included ? ' selected' : ''));
     row.dataset.kind = 'extension';
     if (locked) { row.dataset.locked = 'true'; row.title = locked; }
@@ -647,6 +671,7 @@ export async function createBuilder({core = Core, wizardApi = Wizard, retained =
     else { const glyph = node('span', undefined, 'card-glyph'); glyph.append(visuals.icon('settings')); screen.append(glyph); }
     const name_ = node('span', name, 'machine-name');
     const tags = node('span', undefined, 'card-tags'); tags.append(node('span', 'Extension', 'card-kind'));
+    if (id && isNew(id)) tags.prepend(node('span', 'New', 'new-badge'));
     if (locked) tags.append(node('span', 'by Veff', 'veff-badge'));
     const meta = node('span', undefined, 'machine-meta');
     for (const fact of facts) meta.append(node('span', fact));
@@ -723,6 +748,7 @@ export async function createBuilder({core = Core, wizardApi = Wizard, retained =
   }
   function recalculate() {
     updateOverrideCount();
+    rememberSelection();
     linked = null; $('selection-count').textContent = selected.length + ' selected';
     view?.selected();
     $('extension-memory').textContent = '';
@@ -918,6 +944,18 @@ export async function createBuilder({core = Core, wizardApi = Wizard, retained =
     view?.loaded(kit);
     $('capacity-foot').textContent = kib(core.moduleBytes(kit.profile)) + ' for machines; CPU load is not measured';
     selected = kit.machines.filter(m => core.chosenByDefault(m) && (view?.chosenByDefault?.(m) ?? true)).map(machine => machine.id);
+    if (browseFirst) {
+      noteSeen([...kit.machines.map(m => m.id), ...(kit.extensions ?? []).map(e => e.id)]);
+      try {
+        const saved = JSON.parse(localStorage.getItem(SELECTION_KEY) ?? 'null');
+        if (saved && Array.isArray(saved.machines)) {
+          const known = saved.machines.filter(id => kit.machines.some(m => m.id === id));
+          if (known.length) { selected = known; pickedInCatalog = true; }
+          if (Array.isArray(saved.extensions))
+            selectedExtensions = core.extensionSelection(kit, saved.extensions.filter(id => (kit.extensions ?? []).some(e => e.id === id)));
+        }
+      } catch {}
+    }
     try {
       const remembered = JSON.parse(localStorage.getItem(NUMBERS_KEY) ?? 'null');
       if (remembered) numbers = core.readLayout(kit, {format: 'opxy-layout/1', ...remembered}).machines;

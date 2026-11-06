@@ -46,8 +46,8 @@ export function createCatalogView({core, visuals, snapshots, modeFor, getKit, is
     const repository = data.upstream?.repository ?? 'https://github.com/etcetc000/open-xy';
     const testing = SYNC.state === 'in-testing';
     const title = testing
-      ? 'Open-XY changed its SDK' + (SYNC.pending?.since ? ' on ' + SYNC.pending.since : '') +
-        '. Linear by Veff is being tested on an OP–XY with it; until then this installer stays on the last tested Open-XY, and that release follows, usually within a few days.'
+      ? 'Open-XY has changed its SDK' + (SYNC.pending?.since ? ' (in testing since ' + SYNC.pending.since + ')' : '') +
+        '. Linear by Veff is being tested on an OP–XY with it; until then this installer stays on the last tested Open-XY, and the update follows, usually within a few days.'
       : 'Every synth, effect, player and extension on Open-XY staging is here.';
     for (const target of doc.querySelectorAll('[data-veff-sync]')) {
       const dot = node('span', undefined, 'sync-dot'); dot.dataset.state = testing ? 'testing' : 'current';
@@ -146,9 +146,16 @@ export function createCatalogView({core, visuals, snapshots, modeFor, getKit, is
     if (ex) tags.append(badge());
     button.querySelector('.machine-desc')?.before(tags);
     if (m.keywords?.length) button.append(node('span', m.keywords.join(' · '), 'card-keywords'));
+    // The card selects; its title opens the machine's page.
     button.setAttribute('aria-label', m.name + (author ? ' by ' + author : '') + ', ' +
-      (KINDS[m.kind] ?? m.kind) + (ex ? ', a Veff machine' : '') + '. Show details');
-    button.addEventListener('click', () => open());
+      (KINDS[m.kind] ?? m.kind) + (ex ? ', a Veff machine' : '') + '. Add to or remove from the install');
+    const title = button.querySelector('.machine-name');
+    title?.classList.add('card-title');
+    const more = node('a', 'Details →', 'card-more');
+    more.href = '#preview/machines/' + m.id;
+    more.setAttribute('aria-label', 'Details of ' + m.name);
+    row.append(more);
+    button.addEventListener('click', event => { if (event.target.closest('.card-title')) open(); });
   }
 
   // The encoders and what each edits: a position's own parameter first, then the ones a
