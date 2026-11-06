@@ -18,7 +18,7 @@
     <button data-step="3" disabled><span class="nav-icon" data-icon="controls"></span><span><b>03</b>Extensions</span></button>
     <button data-step="4" disabled><span class="nav-icon" data-icon="install"></span><span><b>04</b>Install</span></button>
   </nav>
-  <nav class="source-links" aria-label="Projects"><a class="source-link" href="https://github.com/galfaroth/open-xy" target="_blank" rel="noopener noreferrer">This fork</a><a class="source-link" href="https://github.com/etcetc000/open-xy" target="_blank" rel="noopener noreferrer">Open-XY</a></nav>
+  <nav class="source-links" aria-label="Projects"><button type="button" class="source-link about-open" data-about-open hidden>About Veff</button><a class="source-link" href="https://github.com/galfaroth/open-xy" target="_blank" rel="noopener noreferrer">This fork</a><a class="source-link" href="https://github.com/etcetc000/open-xy" target="_blank" rel="noopener noreferrer">Open-XY</a></nav>
   </aside>
   <div class="main-stage">
   <section id="browser-gate" class="panel browser-notice" aria-labelledby="browser-notice-title">
@@ -162,6 +162,7 @@
     </div>
     <div class="actions"><button data-step="2" class="secondary">← Machines</button><button id="build" class="primary" disabled>Build firmware <span aria-hidden="true">→</span></button></div>
   </section>
+  <dialog id="about-veff" class="about-veff" aria-labelledby="about-veff-title"></dialog>
   <dialog id="selected-previews" aria-labelledby="selected-previews-title" aria-describedby="selected-previews-note">
     <div class="selected-previews-heading"><div class="selected-previews-title-group"><h2 id="selected-previews-title">Machine graphics</h2><span id="selected-previews-count"></span></div><button id="close-selected-previews" type="button" class="secondary" autofocus>Done</button></div>
     <div class="graphics-bulk-actions" role="group" aria-label="Apply graphics to all selected machines">
@@ -197,7 +198,8 @@
   <footer>
       <div class="footer-credit">
         <p><strong>Open-XY Mods by Veff</strong> is a fork of <a href="https://open-xy.com" target="_blank" rel="noopener noreferrer">Open-XY</a>, made in agreement with its maintainers. Open-XY, its SDK, builder and core machines are the work of the <a href="https://github.com/etcetc000/open-xy/graphs/contributors" target="_blank" rel="noopener noreferrer">Open-XY contributors</a>. <span data-veff-base></span>.</p>
-        <p><a href="https://github.com/galfaroth/open-xy" target="_blank" rel="noopener noreferrer">This fork on GitHub</a> · <a href="https://github.com/etcetc000/open-xy" target="_blank" rel="noopener noreferrer">Open-XY on GitHub</a></p>
+        <p><a href="https://github.com/galfaroth/open-xy" target="_blank" rel="noopener noreferrer">This fork on GitHub</a> · <a href="https://github.com/etcetc000/open-xy" target="_blank" rel="noopener noreferrer">Open-XY on GitHub</a> · <button type="button" class="text-button about-open" data-about-open hidden>About Veff</button></p>
+        <p class="about-links-footer" data-about-links hidden></p>
       </div>
       <div class="footer-copy">
         <p>This is an independent community project. It is not affiliated with, endorsed, sponsored, or supported by teenage engineering. Product and company names are used solely to identify the hardware this project works with.</p>

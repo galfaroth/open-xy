@@ -60,8 +60,30 @@ export function createCatalogView({core, visuals, snapshots, modeFor, getKit, is
       if (target.dataset.veffSync !== 'short') target.append(node('span', ' — ' + title, 'sync-detail'));
     }
   }
+  // About Veff: who makes this fork, in a dialog from the header and footer.
+  function renderAbout() {
+    const about = data.about, dialog = doc.getElementById('about-veff');
+    if (!about || !dialog) return;
+    const links = Object.entries(about.links ?? {}).filter(([, url]) => typeof url === 'string' && /^https:\/\//.test(url));
+    const linkRow = cls => { const row = node('p', undefined, cls); links.forEach(([label, url], i) => { if (i) row.append(' · '); row.append(link(label, url)); }); return row; };
+    const head = node('div', undefined, 'about-head');
+    if (about.photo) { const img = doc.createElement('img'); img.src = about.photo; img.alt = about.photoAlt ?? ''; img.width = 120; img.height = 120; img.className = 'about-photo'; head.append(img); }
+    const titles = node('div');
+    const h = node('h2', about.title ?? 'About'); h.id = 'about-veff-title';
+    titles.append(node('span', 'open-xy mods by veff', 'eyebrow'), h, node('p', (about.roles ?? []).join(' · '), 'about-roles'));
+    head.append(titles);
+    const close = node('button', 'Close', 'secondary about-close'); close.type = 'button'; close.onclick = () => dialog.close();
+    dialog.replaceChildren(close, head, ...(about.bio ?? []).map(text => node('p', text, 'about-bio')));
+    if (links.length) dialog.append(linkRow('about-links'));
+    dialog.onclick = event => { if (event.target === dialog) dialog.close(); };
+    for (const button of doc.querySelectorAll('[data-about-open]')) { button.hidden = false; button.onclick = () => dialog.showModal(); }
+    for (const target of doc.querySelectorAll('[data-about-links]')) {
+      target.hidden = !links.length;
+      if (links.length) target.replaceChildren('Veff: ', ...linkRow('').childNodes);
+    }
+  }
   function renderBase(version = base?.version) {
-    renderSync();
+    renderSync(); renderAbout();
     for (const target of doc.querySelectorAll('[data-veff-base]')) {
       const parts = [(data.upstream?.name ?? 'Open-XY') + (version ? ' ' + version : '')];
       target.replaceChildren('Based on ', link(parts[0], data.upstream?.site ?? 'https://open-xy.com'));

@@ -132,6 +132,19 @@ main { max-width:1440px; margin:0 auto; padding:0 var(--gutter) 28px; }
 .veff-sync-state { margin:0 0 4px; font-size:14px; color:var(--ink-2); }
 .veff-sync-state .sync-detail { color:var(--muted); }
 .veff-sync-how { margin:0; max-width:880px; font-size:13px; color:var(--muted); }
+.about-veff { width:min(680px,calc(100% - 32px)); max-height:calc(100dvh - 48px); padding:28px; border:1px solid var(--line-strong); background:var(--panel); color:var(--ink); overflow-y:auto; }
+.about-veff::backdrop { background:#000c; }
+.about-close { float:right; margin:-6px -6px 0 12px; }
+.about-head { display:flex; align-items:center; gap:20px; margin-bottom:20px; }
+.about-photo { flex:none; width:120px; height:120px; object-fit:cover; background:#000; }
+.about-head h2 { margin:0 0 6px; font-size:clamp(26px,4vw,36px); }
+.about-head .eyebrow { margin-bottom:8px; }
+.about-roles { margin:0; color:var(--pink-text); font-size:14px; }
+.about-bio { color:var(--ink-2); font-size:15.5px; line-height:1.6; margin:0 0 14px; }
+.about-links { margin:20px 0 0; padding-top:16px; border-top:1px solid var(--line); font-size:15px; }
+.about-links-footer { margin:8px 0 0; font-size:13px; }
+button.source-link { min-height:0; border:0; background:none; cursor:pointer; }
+@media(max-width:520px) { .about-head { flex-direction:column; align-items:flex-start; } }
 .sync-dot { display:inline-block; width:8px; height:8px; margin-right:7px; border-radius:50%; vertical-align:1px; background:#5fd38a; box-shadow:0 0 0 3px #5fd38a26; }
 .sync-dot[data-state=testing] { background:#ffd45c; box-shadow:0 0 0 3px #ffd45c26; }
 .brand-sync { cursor:help; }
