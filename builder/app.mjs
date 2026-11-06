@@ -177,6 +177,8 @@ export async function createBuilder({core = Core, wizardApi = Wizard, retained =
     $('phase-nav').hidden = true;
     $('builder-workspace').hidden = true;
     $('builder-workspace').inert = true;
+    // The notice before installing from the catalog already names what will be installed.
+    showInstallFlow();
   }
   function openPreviewLink() {
     const link = /^#preview\/(machines|extensions|settings)(?:\/([a-z0-9_-]+))?$/.exec(location.hash);
