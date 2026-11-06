@@ -18,7 +18,8 @@ import sys
 import tempfile
 import xml.etree.ElementTree as ET
 
-from . import arranger, benchmark, extensions, runtime, screen, startup_label, stock_tables
+from . import benchmark, extensions, runtime, screen, startup_label, stock_tables
+from . import arranger  # Linear by Veff (fork); kept apart so upstream import edits merge cleanly
 from .adapters import (sends_per_key, aux_preset_files, catalog_entry, check_aux_presets, generate_control, generate_display, generate_fx_object,
                        generate_player_object, generate_player_table, generate_registration,
                        generate_registration_stock, generate_sample_voice,
@@ -219,11 +220,12 @@ SDK_UNITS = ('divide', 'memory', 'registration', 'registration_stock', 'startup'
              'master_filter_state', 'master_filter_collection', 'master_filter_stock', 'master_filter_hooks', 'master_filter_panel',
              'players', 'player_hooks', 'player_table', 'keyboard_octaves', 'sample_overview', 'sample_overview_stock',
              'drum_machines', 'drum_callbacks', 'drum_values_stock', 'drum_synthesis_stock', 'drum_hooks',
-             'drum_send', 'drum_send_hooks',
-             # Linear by Veff (docs/arranger.md): the arranger and the shared module event dispatch.
-             'arranger_state', 'arranger_ui', 'arranger_transport', 'arranger_stock', 'arranger_project',
-             'arranger_bounce', 'arranger_bounce_remote', 'arranger_bounce_job', 'arranger_bounce_destination',
-             'module_events')
+             'drum_send', 'drum_send_hooks')
+# Linear by Veff (docs/arranger.md): the arranger and the shared module event dispatch. Appended
+# apart from upstream's tuple so the fork merges Open-XY's own unit changes without conflicts.
+SDK_UNITS += ('arranger_state', 'arranger_ui', 'arranger_transport', 'arranger_stock', 'arranger_project',
+              'arranger_bounce', 'arranger_bounce_remote', 'arranger_bounce_job', 'arranger_bounce_destination',
+              'module_events')
 # SDK units that exist only for a profile service, linked when a machine needs it.
 UNIT_SERVICES = dict.fromkeys(('sample_machines', 'sample_hooks', 'sample_callbacks', 'sample_cache',
                                'sample_cache_stock', 'sample_cache_hooks', 'sample_progress',
