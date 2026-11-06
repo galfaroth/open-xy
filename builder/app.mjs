@@ -165,7 +165,7 @@ export async function createBuilder({core = Core, wizardApi = Wizard, retained =
     if (landing && builderPreview && kit && $('builder-workspace').dataset.browse === 'true') {
       if (route?.machine && kit.machines.some(m => m.id === route.machine)) { inspect(route.machine); view.open(); }
       else view.close();
-      view.showAbout(!!route?.about);
+      view.showAbout(!!route?.about); view.showGuide?.(!!route?.linear);
       return;
     }
     builderPreview = !!match;
@@ -185,7 +185,7 @@ export async function createBuilder({core = Core, wizardApi = Wizard, retained =
           else inspect(kit.machines.find(m => m.id === match[2])?.id ?? kit.machines[0].id);
           if (match[1] === 'machines' && kit.machines.some(m => m.id === match[2])) view?.open();
           if (route?.machine && kit.machines.some(m => m.id === route.machine)) { inspect(route.machine); view.open(); }
-          view?.showAbout?.(!!route?.about);
+          view?.showAbout?.(!!route?.about); view?.showGuide?.(!!route?.linear);
           recalculate();
         }
       } else {
@@ -559,7 +559,7 @@ export async function createBuilder({core = Core, wizardApi = Wizard, retained =
     browsing.keywords = browsing.keywords.filter(keyword => offered.includes(keyword));
     $('keyword-filters').hidden = !offered.length;
     $('keyword-filters').replaceChildren(...offered.map(keyword => {
-      const chip = node('button', keyword, 'keyword-filter'); chip.type = 'button'; chip.dataset.keyword = keyword;
+      const chip = node('button', keyword === VEFF_KEYWORD ? 'by Veff' : keyword, 'keyword-filter'); chip.type = 'button'; chip.dataset.keyword = keyword;
       const count = node('span', String(counts.get(keyword)), 'keyword-count'); count.setAttribute('aria-hidden', 'true');
       chip.append(count); chip.setAttribute('aria-label', keyword + ', ' + counts.get(keyword) + (counts.get(keyword) === 1 ? ' machine' : ' machines'));
       chip.onclick = () => {
@@ -659,7 +659,7 @@ export async function createBuilder({core = Core, wizardApi = Wizard, retained =
     const builtIn = (view.builtIn?.() ?? []).filter(f => matches(f.name, f.summary) && starred('feature:' + f.name)).map(f => () =>
       extensionCard(f.name, f.summary, ['Extension', 'Always included'], true, null, () => {}, {
         locked: 'The whole firmware is built on ' + f.name + ': every build here includes it, so it cannot be deselected.',
-        screen: f.screen, favorite: 'feature:' + f.name}));
+        screen: f.screen, favorite: 'feature:' + f.name, guide: f.guide}));
     if (veffOnly) return builtIn;
     const cards = [...builtIn, ...entries.map(extension => () => {
       const included = selectedExtensions.includes(extension.id);
@@ -686,7 +686,7 @@ export async function createBuilder({core = Core, wizardApi = Wizard, retained =
         }, {favorite: 'setting:grayscale'}));
     return cards;
   }
-  function extensionCard(name, description, facts, included, blocked, toggle, {locked = null, screen: art = null, id = null, favorite = null} = {}) {
+  function extensionCard(name, description, facts, included, blocked, toggle, {locked = null, screen: art = null, id = null, favorite = null, guide = false} = {}) {
     const row = node('article', undefined, 'machine card' + (included ? ' selected' : ''));
     row.dataset.kind = 'extension';
     if (locked) { row.dataset.locked = 'true'; row.title = locked; }
@@ -708,6 +708,13 @@ export async function createBuilder({core = Core, wizardApi = Wizard, retained =
     button.append(screen, name_, tags, node('span', description, 'machine-desc'), meta);
     if (blocked) button.append(node('span', blocked, 'card-keywords'));
     if (locked) { button.append(node('span', 'Built into every firmware', 'card-keywords')); button.title = locked; label.title = locked; }
+    if (locked && guide) {
+      const more = node('a', 'Read more →', 'card-more'); more.href = '#/linear';
+      more.onclick = event => { event.preventDefault(); location.hash = '#/linear'; };
+      row.append(more); row.dataset.guide = 'linear';
+      // Like a machine card's title, the name opens its page: the same guide as Read more.
+      button.onclick = event => { if (event.target.closest('.machine-name')) location.hash = '#/linear'; };
+    }
     button.setAttribute('aria-label', name + ', extension. ' + (locked ? locked : (included ? 'Remove from' : 'Add to') + ' the install'));
     button.onclick = () => { if (!input.disabled) toggle(!included); };
     row.append(label, button);

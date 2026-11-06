@@ -1,6 +1,6 @@
-# Linear Arranger — User Guide
+# Linear by Veff — User Guide
 
-**MVP-027 · OP-XY OS 1.2.1 · Experimental firmware**
+**OP-XY OS 1.2.1 · Open-XY Mods by Veff · Experimental firmware**
 
 Build an arrangement across eight tracks, placing clips anywhere on the timeline.
 This guide starts with the everyday workflow, then covers independent clip
@@ -370,11 +370,10 @@ Capacity is **256 clips**, **16 sources per track**, and **120 notes per source*
 Deleting clips or undoing source creation does not remove or renumber sources.
 The screen draws up to **64 visible clips or notes** and reports overflow.
 
-For installation, use the [build and install guide](build.md#5-install). MVP-010
-requires its matching firmware, catalog and **new
-`content/display/open-xy-arranger.svg`**. Updating only `os.ldr` is insufficient.
+Every firmware the Open-XY Mods by Veff installer builds includes Linear and its
+timeline artwork, **`content/display/open-xy-arranger.svg`**: install the whole
+download, since updating only `os.ldr` is insufficient.
 
-The menu and new editing features still require hardware acceptance. Host tests and exact-image
-reconstruction do not establish device timing, recovery, or protection against
-power loss. The separately downloaded upstream beta is not yet integrated with
-this arranger build.
+The menu and newer editing features still await full hardware acceptance. Host tests and
+exact-image reconstruction do not establish device timing, recovery, or protection
+against power loss.
