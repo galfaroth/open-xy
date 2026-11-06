@@ -130,6 +130,12 @@ main { max-width:1440px; margin:0 auto; padding:0 var(--gutter) 28px; }
 .veff-credit { margin:20px 0 0; font-size:13px; color:var(--muted); }
 /* While browsing, the intro carries the name, its base and the links; the bar returns for installing. */
 main:has(#builder-workspace[data-browse=true]) .sidebar { display:none; }
+/* A machine's page keeps only the intro's top row (name, base, links) above it. */
+[data-page]:has(.machine-workspace[data-view=detail]) .veff-intro>:not(.veff-top),
+[data-page]:has(.machine-workspace[data-view=detail]) .veff-intro::before,
+[data-page]:has(.machine-workspace[data-view=detail])>.page-header { display:none; }
+[data-page]:has(.machine-workspace[data-view=detail]) .veff-intro { margin-bottom:20px; padding-bottom:0; border-bottom:0; }
+[data-page]:has(.machine-workspace[data-view=detail]) .veff-top { margin-bottom:0; }
 .veff-top { position:relative; display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:12px 24px; margin:-8px 0 36px; padding-bottom:18px; border-bottom:1px solid var(--line); font-weight:400; }
 .veff-brand { display:flex; flex-wrap:wrap; align-items:baseline; gap:4px 14px; }
 .veff-brand-name { font-size:16px; font-weight:500; color:var(--ink); }
@@ -523,6 +529,14 @@ details input { max-width:100%; }
 /* Memory: the bar alone; hovering or focusing it shows what uses the memory. */
 .capacity { padding:16px 18px; border-radius:0; background:var(--card); border:1px solid var(--line); }
 .machine-workspace .capacity { margin-top:22px; }
+/* While browsing, memory stays in view at the bottom of the window. */
+#builder-workspace[data-browse=true] #machine-capacity-host { position:sticky; bottom:0; z-index:8; padding:16px 0 12px; background:linear-gradient(transparent,var(--paper) 22px); }
+#builder-workspace[data-browse=true] #machine-capacity-host .capacity { margin-top:0; box-shadow:0 -10px 30px #000a; }
+.capacity[data-over=true] { border-color:#ffd45c; }
+.capacity[data-over=true] #room-value { color:#ffd45c; }
+.install-limit { margin:10px 0 0; font-size:13px; color:#ffd45c; }
+.capacity-toast { position:fixed; left:50%; bottom:120px; z-index:40; transform:translateX(-50%); max-width:calc(100% - 32px); padding:12px 18px; background:#ffd45c; color:#241c08; font-weight:500; font-size:14px; box-shadow:0 12px 32px #000c; }
+button.compact { min-height:32px; padding:4px 12px; font-size:12px; }
 .capacity-heading { display:flex; flex-wrap:wrap; justify-content:space-between; gap:8px; margin-bottom:10px; }
 .capacity-heading h2 { font:12px var(--sans); letter-spacing:0; text-transform:lowercase; color:var(--pink-text); margin:0; }
 .capacity-heading strong { font:12px var(--sans); }

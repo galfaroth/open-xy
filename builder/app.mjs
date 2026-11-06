@@ -157,9 +157,17 @@ export async function createBuilder({core = Core, wizardApi = Wizard, retained =
   function openPreviewLink() {
     const link = /^#preview\/(machines|extensions|settings)(?:\/([a-z0-9_-]+))?$/.exec(location.hash);
     // The catalog landing is the machines preview, opened without a link.
-    const landing = !link && catalogLanding && !acknowledged && !location.hash;
+    const route = view?.route?.();
+    const landing = !link && catalogLanding && !acknowledged && (!location.hash || !!route);
     const match = link ?? (landing ? [location.hash, 'machines', undefined] : null);
     const leavingMachines = builderPreview && !match;
+    // Moving between the catalog's own routes keeps the page as it is: open or close a machine, or About.
+    if (landing && builderPreview && kit && $('builder-workspace').dataset.browse === 'true') {
+      if (route?.machine && kit.machines.some(m => m.id === route.machine)) { inspect(route.machine); view.open(); }
+      else view.close();
+      view.showAbout(!!route?.about);
+      return;
+    }
     builderPreview = !!match;
     if (builderPreview || wizard.previewLink(location.hash)) {
       $('browser-gate').hidden = true;
@@ -176,6 +184,8 @@ export async function createBuilder({core = Core, wizardApi = Wizard, retained =
           if (match[1] !== 'machines') inspectExtension(kit.extensions?.find(e => e.id === match[2])?.id ?? kit.extensions?.[0]?.id);
           else inspect(kit.machines.find(m => m.id === match[2])?.id ?? kit.machines[0].id);
           if (match[1] === 'machines' && kit.machines.some(m => m.id === match[2])) view?.open();
+          if (route?.machine && kit.machines.some(m => m.id === route.machine)) { inspect(route.machine); view.open(); }
+          view?.showAbout?.(!!route?.about);
           recalculate();
         }
       } else {
@@ -188,6 +198,16 @@ export async function createBuilder({core = Core, wizardApi = Wizard, retained =
   }
   if (browseFirst) {
     // Every way into the installation goes through navigate(1), and so through the notice.
+    document.querySelectorAll('[data-catalog-tool]').forEach(el => { el.hidden = false; });
+    const refreshSelection = () => { pickedInCatalog = true; invalidate(); renderMachines(); renderExtensions(); recalculate(); };
+    $('unselect-all').onclick = () => { selected = []; selectedExtensions = []; refreshSelection(); };
+    $('select-favorites').onclick = () => {
+      selected = [...new Set([...selected, ...kit.machines.filter(m => favorites.has(m.id)).map(m => m.id)])];
+      selectedExtensions = core.extensionSelection(kit, [...new Set([...selectedExtensions,
+        ...(kit.extensions ?? []).filter(e => favorites.has(e.id)).map(e => e.id)])]);
+      if (favorites.has('setting:grayscale') && !$('grayscale-graphics').checked) { $('grayscale-graphics').checked = true; $('grayscale-graphics').onchange(); }
+      refreshSelection();
+    };
     for (const id of ['path-install', 'browse-install']) $(id).onclick = () => {
       installFromCatalog = pickedInCatalog = true; navigate(1); ready();
     };
@@ -763,6 +783,26 @@ export async function createBuilder({core = Core, wizardApi = Wizard, retained =
     $('extension-note').hidden = !extension.note;
     document.querySelectorAll('#extensions button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.id === id)));
   }
+  // Too much for the module memory: say so while choosing, once, and grey the install buttons.
+  let overLimit = false, toastTimer;
+  function showLimit() {
+    if (!browseFirst) return;
+    const over = !!kit && selected.length > 0 && !linked;
+    const empty = !!kit && !selected.length;
+    for (const id of ['browse-install', 'path-install']) if ($(id)) $(id).disabled = over || empty;
+    let note = $('install-limit');
+    if (!note) { note = node('p', '', 'install-limit'); note.id = 'install-limit'; note.setAttribute('role', 'status'); $('selection-capacity').append(note); }
+    const message = 'Too much selected for the OP–XY’s ' + kib(core.moduleBytes(kit.profile)) + ' of machine memory. Deselect some machines or extensions to install.';
+    note.textContent = over ? message : empty ? 'Choose at least one machine to install.' : '';
+    note.hidden = !over && !empty;
+    $('selection-capacity').dataset.over = String(over);
+    if (over && !overLimit) {
+      const toast = $('capacity-toast'); toast.textContent = 'Too much selected — it no longer fits in ' + kib(core.moduleBytes(kit.profile)) + '.';
+      toast.hidden = false; clearTimeout(toastTimer); toastTimer = setTimeout(() => { toast.hidden = true; }, 4000);
+    }
+    if (!over) $('capacity-toast').hidden = true;
+    overLimit = over;
+  }
   function recalculate() {
     updateOverrideCount();
     rememberSelection();
@@ -803,6 +843,7 @@ export async function createBuilder({core = Core, wizardApi = Wizard, retained =
         'Available': kib(linked.sizes.available)});
       status();
     } catch (error) { $('room-value').textContent = 'Selection cannot be built'; $('extension-memory').textContent = error.message; fail(error); }
+    showLimit();
     ready();
   }
   async function build() {

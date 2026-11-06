@@ -86,7 +86,8 @@ export function createCatalogView({core, visuals, snapshots, modeFor, getKit, is
     dialog.replaceChildren(close, head, ...(about.bio ?? []).map(paragraph));
     if (links.length) dialog.append(linkRow('about-links'));
     dialog.onclick = event => { if (event.target === dialog) dialog.close(); };
-    for (const button of doc.querySelectorAll('[data-about-open]')) { button.hidden = false; button.onclick = () => dialog.showModal(); }
+    for (const button of doc.querySelectorAll('[data-about-open]')) { button.hidden = false; button.onclick = () => go('#/about'); }
+    dialog.addEventListener('close', () => { if (location.hash === '#/about') leave(); });
     for (const target of doc.querySelectorAll('[data-about-links]')) {
       target.hidden = !links.length;
       if (links.length) target.replaceChildren('Veff: ', ...linkRow('').childNodes);
@@ -187,7 +188,9 @@ export function createCatalogView({core, visuals, snapshots, modeFor, getKit, is
     more.href = '#preview/machines/' + m.id;
     more.setAttribute('aria-label', 'Details of ' + m.name);
     row.append(more);
-    button.addEventListener('click', event => { if (event.target.closest('.card-title')) open(); });
+    more.href = '#/machine/' + m.id;
+    more.addEventListener('click', event => { event.preventDefault(); go('#/machine/' + m.id); });
+    button.addEventListener('click', event => { if (event.target.closest('.card-title')) go('#/machine/' + m.id); });
   }
 
   // The encoders and what each edits: a position's own parameter first, then the ones a
@@ -261,6 +264,13 @@ export function createCatalogView({core, visuals, snapshots, modeFor, getKit, is
     showSelection();
   }
 
+  // Routes, in the address so Back and links work: '' (the catalog), #/machine/<id>, #/about.
+  let routedInside = false;
+  function go(hash) { routedInside = true; location.hash = hash; }
+  function leave() {
+    if (routedInside) { routedInside = false; history.back(); }
+    else history.pushState(null, '', location.pathname + location.search), window.dispatchEvent(new HashChangeEvent('hashchange'));
+  }
   const workspace = () => $('machine-workspace');
   const isOpen = () => workspace()?.dataset.view === 'detail';
   function open() {
@@ -269,7 +279,7 @@ export function createCatalogView({core, visuals, snapshots, modeFor, getKit, is
     returnScroll = window.scrollY;
     area.dataset.view = 'detail';
     $('preview-controls-panel').open = true;
-    area.scrollIntoView?.({block: 'start'});
+    window.scrollTo(0, 0);
     $('detail-back').focus({preventScroll: true});
   }
   function close() {
@@ -284,12 +294,12 @@ export function createCatalogView({core, visuals, snapshots, modeFor, getKit, is
     (button || $('machine-search'))?.focus({preventScroll: true});
   }
 
-  $('detail-back').onclick = close;
+  $('detail-back').onclick = () => (/^#\/machine\//.test(location.hash) ? leave() : close());
   $('detail-select').onclick = () => { if (current) { setSelected(current.id, !isSelected(current.id)); showSelection(); } };
   doc.addEventListener('keydown', event => {
     if (event.key !== 'Escape' || !isOpen() || $('selected-previews')?.open || $('machine-presets')?.open) return;
     if (workspace().closest('[data-page]')?.hidden) return;
-    close();
+    if (/^#\/machine\//.test(location.hash)) leave(); else close();
   });
   for (const id of ['veff-intro', 'veff-featured']) if ($(id)) $(id).hidden = false;
   doc.documentElement.dataset.veff = 'true';
@@ -300,6 +310,16 @@ export function createCatalogView({core, visuals, snapshots, modeFor, getKit, is
     // Veff machines start unselected, like community machines.
     chosenByDefault: m => !veffMachine(m.id),
     card, detail, open, close,
+    // The catalog's own route: {machine} or {about}, or null for the catalog itself.
+    route() {
+      const m = /^#\/(?:machine\/([a-z0-9_-]+)|(about))?$/.exec(location.hash);
+      return m && {machine: m[1] ?? null, about: !!m[2]};
+    },
+    showAbout(show) {
+      const dialog = doc.getElementById('about-veff');
+      if (!dialog) return;
+      if (show && !dialog.open) dialog.showModal(); else if (!show && dialog.open) dialog.close();
+    },
     isVeff: m => !!veffMachine(m.id),
     // Firmware features every build carries (Linear by Veff), shown as fixed extension cards.
     builtIn: () => (data.features ?? []).map(f => ({name: f.name, summary: f.summary ?? '',
