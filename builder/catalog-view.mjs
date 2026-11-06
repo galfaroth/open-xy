@@ -171,7 +171,7 @@ export function createCatalogView({core, visuals, snapshots, modeFor, getKit, is
     }
     // A card names its maintainer on its own line.
     const credit = button.querySelector('.machine-author');
-    if (credit && author) credit.textContent = (/\bby \S+$/i.test(m.name) ? '' : 'by ') + author;
+    if (credit && author) credit.textContent = 'by ' + author;
     button.prepend(screen(m));
     const tags = node('span', undefined, 'card-tags');
     tags.append(node('span', KINDS[m.kind] ?? m.kind, 'card-kind'));

@@ -670,6 +670,7 @@ export async function createBuilder({core = Core, wizardApi = Wizard, retained =
     if (art) { const image = node('img'); image.alt = ''; image.src = art; image.decoding = 'async'; screen.append(image); screen.dataset.art = 'true'; }
     else { const glyph = node('span', undefined, 'card-glyph'); glyph.append(visuals.icon('settings')); screen.append(glyph); }
     const name_ = node('span', name, 'machine-name');
+    if (locked) name_.append(' ', node('span', 'by Veff', 'machine-author'));
     const tags = node('span', undefined, 'card-tags'); tags.append(node('span', 'Extension', 'card-kind'));
     if (id && isNew(id)) tags.prepend(node('span', 'New', 'new-badge'));
     if (locked) tags.append(node('span', 'by Veff', 'veff-badge'));

@@ -27,7 +27,7 @@
   "fork": {
     "name": "Open-XY Mods by Veff",
     "product": "Open-XY installer",
-    "maintainer": "Veff (galfaroth)",
+    "maintainer": "Veff",
     "repository": "https://github.com/galfaroth/open-xy"
   },
   "upstream": {
