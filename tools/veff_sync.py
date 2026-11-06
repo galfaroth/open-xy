@@ -121,11 +121,18 @@ def sync(args):
     head = git('rev-parse', 'HEAD')
     clean = True
     if not args.dry_run:
-        git('checkout', '-q', '-B', CANDIDATE, head)
-        clean = merge(upstream, 'Merge Open-XY staging ' + upstream[:7] + ' for testing')
-        if clean:
-            push(args, CANDIDATE, force=True)
-        git('checkout', '-q', BRANCH)
+        remote_candidate = args.remote + '/' + CANDIDATE
+        git('fetch', '-q', args.remote, CANDIDATE, check=False)
+        prepared = subprocess.run(['git', 'merge-base', '--is-ancestor', upstream, remote_candidate],
+                                  cwd=ROOT, capture_output=True).returncode == 0
+        if prepared:
+            print(CANDIDATE, 'already carries', upstream[:7], '(prepared by hand); leaving it')
+        else:
+            git('checkout', '-q', '-B', CANDIDATE, head)
+            clean = merge(upstream, 'Merge Open-XY staging ' + upstream[:7] + ' for testing')
+            if clean:
+                push(args, CANDIDATE, force=True)
+            git('checkout', '-q', BRANCH)
     pending = status.get('pending') or {}
     since = pending.get('since') if status.get('state') == 'in-testing' else None
     new_status = {'format': 'veff-sync/1', 'state': 'in-testing', 'upstream': base,
@@ -154,7 +161,13 @@ def accept(args):
     pending = (status.get('pending') or {}).get('commit')
     if status.get('state') != 'in-testing' or not pending:
         sys.exit('Nothing is in testing.')
-    if not merge(pending, 'Merge Open-XY staging ' + pending[:7] + ' (tested with Linear by Veff)'):
+    # The tested candidate (conflicts already resolved there) when it carries the pending revision.
+    candidate = args.remote + '/' + CANDIDATE
+    git('fetch', '-q', args.remote, CANDIDATE, check=False)
+    tested = candidate if subprocess.run(['git', 'merge-base', '--is-ancestor', pending, candidate],
+                                         cwd=ROOT, capture_output=True).returncode == 0 else pending
+    print('Releasing', tested)
+    if not merge(tested, 'Merge Open-XY staging ' + pending[:7] + ' (tested with Linear by Veff)'):
         sys.exit('Open-XY ' + pending[:7] + ' does not merge cleanly; resolve it by hand, then run --accept again.')
     write_status({'format': 'veff-sync/1', 'state': 'up-to-date', 'upstream': pending},
                  'Sync status: Open-XY ' + pending[:7] + ' tested and released', args.dry_run)
