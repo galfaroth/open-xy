@@ -79,6 +79,9 @@ def selection_services(kit, result):
                            # kit.json names it master_processor; older kits, master_filter (core.mjs processorOf).
                            (['master_filter'] if any((e.get('master_processor') or e.get('master_filter')) and
                                                      e['id'] in result['extensions']
+                                                     for e in kit.get('extensions', [])) else []) +
+                           # A drumline_page extension links the drum services (core.mjs linkKit).
+                           (['drumline_page'] if any(e.get('drumline_page') and e['id'] in result['extensions']
                                                      for e in kit.get('extensions', [])) else []))
 
 
@@ -278,10 +281,10 @@ def main():
                 require((prefix / name).read_bytes() == art, 'Extension artwork differs')
                 expected_files[name] = art
         # Linear by Veff's reviewed timeline artwork ships with every build.
-        if profile.get('arranger_svg_sha256'):
+        if kit['profile'].get('arranger_svg_sha256'):
             name = 'content/display/open-xy-arranger.svg'
             art = (ROOT / 'sdk/platform/opxy-1.2.1/arranger.svg').read_bytes()
-            require(sha(art) == profile['arranger_svg_sha256'] and (prefix / name).read_bytes() == art,
+            require(sha(art) == kit['profile']['arranger_svg_sha256'] and (prefix / name).read_bytes() == art,
                     'Arranger artwork differs')
             expected_files[name] = art
         with zipfile.ZipFile(prefix.with_suffix('.zip')) as archive:
