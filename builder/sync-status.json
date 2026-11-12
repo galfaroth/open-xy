@@ -1,6 +1,13 @@
 {
   "format": "veff-sync/1",
-  "state": "up-to-date",
+  "state": "in-testing",
   "upstream": "91b5e9642c8087ae45db093d3b081c67cb201726",
-  "tested": "0.0.6"
+  "tested": "0.0.6",
+  "pending": {
+    "commit": "8b4caa16b7c823527b9e34d000e41d7cf0dcb7db",
+    "version": "0.0.6",
+    "reason": "conflict",
+    "since": "2026-11-12",
+    "merges": false
+  }
 }
