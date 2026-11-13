@@ -14,12 +14,20 @@
 // that add an offset while the chain initializes a stage, so several stages
 // of one send each get their own part of its memory. Outside a chain stage's
 // init the offset is 0 and they answer as stock does.
+//
+// A track's LFO (8d50f3a4, before the sends' effects run) modulates one word
+// of the audio record through 8d518ec4(records, track, index, amount), which
+// keeps the word's own value and index for stock's restore after the effects
+// (8d518d36). A send LFO aimed at "param 1..4" names words 0..3, slot 1's;
+// the call (hooked at 8d50f412) is sent on to the LFO slot's words instead
+// while the send holds the chain.
 #include <opxy/multifx.hpp>
 #include "stock.hpp"
 
 extern "C" {
 opxy::u32 sdk_multifx_scratch(opxy::u32, opxy::u32) __asm__("sdk_multifx_scratch");
 void sdk_multifx_scratch_pair(opxy::u32, opxy::u32*, opxy::u32*, opxy::u32) __asm__("sdk_multifx_scratch_pair");
+void sdk_multifx_lfo(opxy::u32, opxy::u32, opxy::u32, opxy::i32) __asm__("sdk_multifx_lfo");
 }
 
 namespace {
@@ -36,6 +44,8 @@ const u32 kMaxRequest = 524288;
 bool initializing;
 u32 offset, limit, taken;
 bool overflow;
+// Blocks for which each send still counts as holding the chain (mark_chain).
+volatile opxy::u8 chain_blocks[2];
 
 u32 base(u32 slot) { return word(kScratchBases + 4 * (slot == 14 ? 1 : 0)); }
 bool send(u32 slot) { return slot == 14 || slot == 15; }
@@ -69,7 +79,18 @@ void sdk_multifx_scratch_pair(u32 slot, u32* a, u32* b, u32 words) {
     *b = at + 4 * words;
 }
 
+void sdk_multifx_lfo(u32 records, u32 track, u32 index, i32 amount) {
+    if ((track == 14 || track == 15) && index < 4 && chain_blocks[track - 14]) {
+        chain_blocks[track - 14] = static_cast<opxy::u8>(chain_blocks[track - 14] - 1);
+        const i32* record = at<const i32>(records + track * kRecordStride);
+        index = opxy::multifx::kParamWord[opxy::multifx::lfo_slot(record[opxy::multifx::kLfoWord])][index];
+    }
+    stock<void(u32, u32, u32, i32)>(0x8d518ec4)(records, track, index, amount);
+}
+
 namespace opxy { namespace multifx {
+void mark_chain(u32 send) { if (send == 14 || send == 15) chain_blocks[send - 14] = 4; }
+
 u32 send_of(const i32* record) {
     const u32 address = static_cast<u32>(reinterpret_cast<Address>(record));
     for (u32 slot = 14; slot <= 15; ++slot)

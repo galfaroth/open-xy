@@ -3380,6 +3380,16 @@
       "symbol": "sdk_multifx_scratch",
       "call": false,
       "name": "MultiFX: a send's scratch allocator, offset per chain stage"
+    },
+    {
+      "kind": "hook",
+      "address": "0x8d50f412",
+      "file_offset": "0x14666e",
+      "length": 4,
+      "before": "00e3594d",
+      "symbol": "sdk_multifx_lfo",
+      "call": true,
+      "name": "MultiFX: a send LFO's write, moved to the LFO slot's words"
     }
   ],
   "compiler": "bfin-elf-gcc 8.0.0 (deanm1278/blackfin-plus-gnu e4408a1) + toolchain/gcc patches",

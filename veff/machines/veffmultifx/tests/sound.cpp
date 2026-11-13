@@ -38,6 +38,8 @@ void stage_process(void* object, i32* left, i32* right, const i32* record) {
     std::memcpy(seen_params[calls++ % 4], record, 16);
 }
 i32 stage_dry(void*, const i32*) { return 0x40000000; }   // one half
+u32 marked;
+void mark_chain(u32 send) { marked = send; }
 }}
 
 int main() {
@@ -51,13 +53,14 @@ int main() {
     for (u32 i = 0; i < 64; ++i) require(!l[i] && !r[i], "an empty chain returns nothing");
 
     // Slot 1 delay (choice 1), slot 3 reverb (choice 2): each slot's own words reach its stage.
-    records[0][kTypeWord] = 1 | (2 << 16);
+    records[0][kTypeWords[0]] = 1 | (2 << 16);
     for (u32 k = 0; k < kSlots; ++k)
         for (u32 j = 0; j < 4; ++j) records[0][kParamWord[k][j]] = static_cast<i32>(100 * k + j);
     init_count = 0;
     for (u32 i = 0; i < 64; ++i) l[i] = r[i] = 1 << 28;
     ::veffmultifx::process(state, l, r, records[0]);
     require(init_count == 2, "two stages built");
+    require(marked == 14, "the send is marked as holding the chain");
     require(last_offsets[0] == 0 && last_offsets[1] == 352800, "the second stage's memory follows the first's");
     // Delay: wet = x * 2/8 (first stage: wet only). Reverb: wet * 3/8 + chain * 1/2.
     const i32 x = 1 << 28, a = x / 8 * 2, expect = a / 8 * 3 + (a >> 1);
@@ -70,25 +73,25 @@ int main() {
     ::veffmultifx::process(state, l, r, records[0]);
     require(inits == 0, "unchanged choices keep their stages");
     // Slot 2 gets a chorus: built alone in free memory, slots 1 and 3 untouched.
-    records[0][kTypeWord] = 1 | (3 << 8) | (2 << 16);
+    records[0][kTypeWords[0]] = 1 | (3 << 8) | (2 << 16);
     init_count = 0;
     ::veffmultifx::process(state, l, r, records[0]);
     require(init_count == 1 && state.ready[0] && state.ready[1] && state.ready[2], "a changed slot alone is built");
     require(state.at[0] == 0 && state.at[2] == 352800, "the other stages keep their memory");
     require(state.at[1] >= state.at[2] + state.size[2], "the new stage takes free memory");
     // Three delays: the third does not fit and stays off; the others play on.
-    records[0][kTypeWord] = 1 | (1 << 8) | (1 << 16);
+    records[0][kTypeWords[0]] = 1 | (1 << 8) | (1 << 16);
     init_count = 0;
     ::veffmultifx::process(state, l, r, records[0]);
     require(state.ready[0] && state.ready[1] && !state.ready[2], "a stage past the send's memory stays off");
     require(state.at[0] == 0 && init_count == 1, "slot 1 is never rebuilt");
     // Slot 2 back to none frees its memory: slot 3's delay now fits.
-    records[0][kTypeWord] = 1 | (1 << 16);
+    records[0][kTypeWords[0]] = 1 | (1 << 16);
     init_count = 0;
     ::veffmultifx::process(state, l, r, records[0]);
     require(state.ready[0] && !state.ready[1] && state.ready[2] && init_count == 1, "a slot that did not fit takes freed memory");
     // An engine reset builds every stage again, in slot order.
-    records[0][kTypeWord] = 1 | (1 << 8) | (1 << 16);
+    records[0][kTypeWords[0]] = 1 | (1 << 8) | (1 << 16);
     ::veffmultifx::initialize(state);
     inits = 0;
     ::veffmultifx::process(state, l, r, records[0]);

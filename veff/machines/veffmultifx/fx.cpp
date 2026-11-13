@@ -1,4 +1,4 @@
-// MultiFX: up to four stock send effects in series on one send. The send
+// MultiFX: up to eight stock send effects in series on one send. The send
 // page (the Veff fork's platform) picks each slot's effect and edits its
 // parameters, which live in the send track's own words; this host builds the
 // stages and runs them.
@@ -78,18 +78,19 @@ void process(State& s, opxy::Channel left, opxy::Channel right, opxy::Parameters
         for (u32 i = 0; i < opxy::block_frames; ++i) left[i] = right[i] = 0;
         return;
     }
+    mark_chain(send);
     if (!s.built || s.send != send) {
         // A new send or an engine reset: every stage from scratch, in slot order.
         s.send = send;
         for (u32 k = 0; k < kSlots; ++k) s.ready[k] = 0;
-        for (u32 k = 0; k < kSlots; ++k) build_slot(s, k, choice(record[kTypeWord], k));
+        for (u32 k = 0; k < kSlots; ++k) build_slot(s, k, choice(record[type_word(k)], k));
         s.built = 1;
     } else {
         // A changed slot alone: the others keep playing, tails and all. Then
         // a slot that found no room before tries again in what was freed.
         bool changed = false;
         for (u32 k = 0; k < kSlots; ++k) {
-            const u32 c = choice(record[kTypeWord], k);
+            const u32 c = choice(record[type_word(k)], k);
             if (c != s.type[k]) { s.ready[k] = 0; build_slot(s, k, c); changed = true; }
         }
         if (changed)

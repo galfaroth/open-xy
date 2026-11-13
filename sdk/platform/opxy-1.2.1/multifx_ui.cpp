@@ -1,5 +1,5 @@
 // MultiFX (Veff fork), GUI side. On a send whose effect is the MultiFX chain:
-// - Stop + track key 1..4 (or Shift + Stop + 1..8) selects the slot the four
+// - Stop + track key 1..8 selects the slot the four
 //   encoders edit, and a popup names it and its effect;
 // - E1..E4 edit the slot's four parameters through stock's editor (8d5ad5bc),
 //   so stock steps, locks (with a step held) and publishes them as any
@@ -42,7 +42,8 @@ i32 current(u32 track, u32 index) {
 }
 void notify(const char* text) { stock<void(const char*, u32, u32, u32)>(0x8d549168)(text, 1, 0, 0x3f000000u); }
 u32 slot_of(u32 track) { return selected[track - 14] < kSlots ? selected[track - 14] : 0; }
-u32 slot_choice(u32 track, u32 slot) { return choice(current(track, kTypeWord), slot); }
+u32 slot_choice(u32 track, u32 slot) { return choice(current(track, type_word(slot)), slot); }
+u32 lfo_of(u32 track) { return lfo_slot(current(track, kLfoWord)); }
 
 // "SLOT 2 DELAY"
 void announce(u32 track, u32 slot) {
@@ -54,6 +55,12 @@ void announce(u32 track, u32 slot) {
     text[n++] = ' ';
     for (const char* p = name; *p && n < sizeof(text) - 1; ++p) text[n++] = *p;
     text[n] = 0;
+    notify(text);
+}
+// "LFO SLOT 3"
+void announce_lfo(u32 slot) {
+    char text[] = "LFO SLOT 1";
+    text[9] = static_cast<char>('1' + slot);
     notify(text);
 }
 }
@@ -68,17 +75,28 @@ u32 turn(u32 project, u32 track, u32 position, u32 event) {
     if (position >= 4) return stock<u32(u32, u32, u32, u32)>(0x8d5ad5bc)(project, track, position, event);
     const u32 slot = slot_of(track);
     if (shift_held()) {
-        // Shift + E1: the slot's effect. The other encoders do nothing with Shift.
-        if (position != 0 || !event) return 1;
+        // Shift + E1: the slot's effect. Shift + E2: the slot the send's LFO
+        // moves. The other encoders do nothing with Shift.
+        if (position > 1 || !event) return 1;
         const i32 delta = reinterpret_cast<const i32*>(event)[0];
-        const u32 now = slot_choice(track, slot);
-        const u32 next = delta > 0 ? (now + 1 < kChoices ? now + 1 : now) : delta < 0 ? (now ? now - 1 : 0) : now;
+        const auto step = [delta](u32 now, u32 count) {
+            return delta > 0 ? (now + 1 < count ? now + 1 : now) : delta < 0 ? (now ? now - 1 : 0) : now;
+        };
+        if (position == 1) {
+            const u32 now = lfo_of(track), next = step(now, kSlots);
+            if (next == now) return 1;
+            set_parameter(project, track, kLfoWord, static_cast<i32>(next));
+            announce_lfo(next);
+            return 1;
+        }
+        const u32 now = slot_choice(track, slot), next = step(now, kChoices);
         if (next == now) return 1;
-        u32 packed = static_cast<u32>(current(track, kTypeWord));
-        packed = (packed & ~(0xffu << (8 * slot))) | (next << (8 * slot));
+        const u32 shift = 8 * (slot & 3);
+        u32 packed = static_cast<u32>(current(track, type_word(slot)));
+        packed = (packed & ~(0xffu << shift)) | (next << shift);
         // A new effect starts from the middle of each of its parameters.
         for (u32 j = 0; j < 4; ++j) set_parameter(project, track, kParamWord[slot][j], kMiddle);
-        set_parameter(project, track, kTypeWord, static_cast<i32>(packed));
+        set_parameter(project, track, type_word(slot), static_cast<i32>(packed));
         announce(track, slot);
         return 1;
     }
@@ -86,7 +104,7 @@ u32 turn(u32 project, u32 track, u32 position, u32 event) {
 }
 
 const char* title(u32 track, u32 position) {
-    if (shift_held()) return position == 0 ? "effect" : "";
+    if (shift_held()) return position == 0 ? "effect" : position == 1 ? "lfo" : "";
     const u32 c = slot_choice(track, slot_of(track));
     if (c == kNone) return position == 0 ? "none" : "";
     // The stock effect's own name for the parameter (its record's callback).
@@ -118,9 +136,7 @@ bool raw_event(const void* raw) {
     const u32 track = selected_track();
     if (!on(track) || top_controller_vtable() != kAuxController) return false;
     const u32 slot = key - kFirstTrackKey;
-    if (slot >= 4 && !held(kShift)) return false;
     blocked[key] = true;
-    if (slot >= kSlots) { notify("4 SLOTS FOR NOW"); return true; }
     selected[track - 14] = static_cast<u8>(slot);
     announce(track, slot);
     return true;
@@ -132,6 +148,7 @@ bool view(u32 track, View& out) {
     namespace ui = platform::multifx_ui;
     if (!ui::on(track)) return false;
     out.slot = static_cast<u8>(ui::slot_of(track));
+    out.lfo = static_cast<u8>(ui::lfo_of(track));
     for (u32 k = 0; k < kSlots; ++k) out.type[k] = static_cast<u8>(ui::slot_choice(track, k));
     for (u32 j = 0; j < 4; ++j) {
         const char* t = ui::title(track, j);
@@ -144,7 +161,10 @@ bool view(u32 track, View& out) {
         u32 n = 0;
         for (; name[n] && n < 7; ++n) out.value[0][n] = name[n];
         out.value[0][n] = 0;
-        for (u32 j = 1; j < 4; ++j) out.value[j][0] = 0;
+        char lfo[] = "SLOT 1";
+        lfo[5] = static_cast<char>('1' + out.lfo);
+        for (u32 j = 0; j < sizeof lfo; ++j) out.value[1][j] = lfo[j];
+        for (u32 j = 2; j < 4; ++j) out.value[j][0] = 0;
     }
     return true;
 }

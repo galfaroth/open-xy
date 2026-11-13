@@ -1,18 +1,19 @@
 # MultiFX by Veff
 
 MultiFX is built into the Veff fork's firmware, like Linear by Veff. It is a send
-effect that runs a chain of up to four stock OP-XY effects in series on FX I or FX II.
+effect that runs a chain of up to eight stock OP-XY effects in series on FX I or FX II.
 Each send can hold its own chain.
 
 ## Use it
 
 1. Choose **MultiFX** as the send's effect, as you would choose delay or reverb.
-2. On the send page, press **Stop + 1–4** to pick the slot the encoders edit.
-   **Shift + Stop + 1–8** does the same. Slots 5–8 are not available yet.
+2. On the send page, press **Stop + 1–8** to pick the slot the encoders edit.
    A popup names the slot and its effect.
 3. Turn **Shift + E1** to choose the slot's effect: none, delay, reverb, chorus,
    phaser, dist or lofi.
-4. Turn **E1–E4** to set the slot's parameters. The titles are the stock effect's
+4. Turn **Shift + E2** to choose the slot the send's LFO moves. An LFO aimed at
+   param 1–4 then moves that slot's four parameters.
+5. Turn **E1–E4** to set the slot's parameters. The titles are the stock effect's
    own names for them. With a step held, the turns lock the step, as on any send.
 
 A track's send amount and the send's mute work as they do for any send effect.
@@ -33,8 +34,9 @@ that does not fit stays silent until another slot frees memory.
 ## The page
 
 MultiFX draws its own send page: the edited slot's parameters in the header,
-then the chain as four blocks from the send's input to its output, each named
-after its effect. The edited slot is lit and underlined.
+then the chain as two rows of four blocks from the send's input to its output,
+each named after its effect. The edited slot is lit and underlined, and the LFO
+slot carries a mark.
 
 ## Where it lives
 
@@ -46,11 +48,12 @@ after its effect. The edited slot is lit and underlined.
 | Send page controls and gestures | `sdk/platform/opxy-1.2.1/multifx_ui.cpp`, wired in `synth_controls.cpp` and `module_events.cpp` |
 | The installer's always-included card | `builder/veff.json` (`features`, `machine`) |
 
-Each slot's effect is stored in send track word 47, one byte per slot. Each slot's
-four parameters are stored in words 0–3, 4–7, 38–41 and 28, 34, 35, 37. All these
-words are below 42, so step locks reach them.
+Slots 1–4 store their effect in send track word 47 and slots 5–8 in word 46,
+one byte per slot; word 45 names the LFO's slot. The slots' parameters use the
+send words below 42 that stock leaves alone on a send: 0–15, 17, 18, 20–22,
+28–35, 37–39 (`sdk/include/opxy/multifx.hpp`). Step locks reach them all.
+A hook on the LFO's write (`8d50f412`) moves param 1–4 to the LFO slot's words.
 
 ## Limits of this prototype
 
-- Four slots per send.
-- The send's LFO moves slot 1's parameters only.
+- The page has not been tested on a device yet.
