@@ -5,6 +5,9 @@ extern "C" {
 bool sdk_arranger_project_edit_ready() __asm__("sdk_arranger_project_edit_ready");
 bool sdk_arranger_project_linear() __asm__("sdk_arranger_project_linear");
 bool sdk_arranger_project_set_linear(bool linear) __asm__("sdk_arranger_project_set_linear");
+// Veff: Lab by Veff's project mode, saved in the same companion (flags bit 2).
+bool sdk_arranger_project_lab() __asm__("sdk_arranger_project_lab");
+bool sdk_arranger_project_set_lab(bool lab) __asm__("sdk_arranger_project_set_lab");
 // 0 normal, 1 failed restore (saves blocked), 2 save failed, 3 failed companion rename (saves blocked).
 opxy::u32 sdk_arranger_project_status() __asm__("sdk_arranger_project_status");
 // MTP file allowlist keeps stock paths and admits their exact arrangement companions.

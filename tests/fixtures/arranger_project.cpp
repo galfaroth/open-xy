@@ -311,7 +311,9 @@ int main() {
     u32 old_row[14] = {};
     test::string_construct(old_row, "scene length"); test::string_construct(old_row+7, "longest");
     sdk_arranger_general_rows(&rows, old_row);
-    require(rows.size() == 3 && test::row_destructors == 1, "append exactly one native General row and destroy temporary");
+    require(rows.size() == 4 && test::row_destructors == 2, "append the arranger and lab rows and destroy temporaries");
+    require(std::strcmp(reinterpret_cast<const char*>(rows[3].data()), "lab mode") == 0 &&
+        std::strcmp(reinterpret_cast<const char*>(rows[3].data()+28), "Off") == 0, "General displays Lab off");
     require(std::strcmp(reinterpret_cast<const char*>(rows[2].data()), "arranger mode") == 0 &&
         std::strcmp(reinterpret_cast<const char*>(rows[2].data()+28), "Song") == 0, "General displays persisted Song mode");
     u32 general[40] = {}; general[0x90/4] = 1;
@@ -322,9 +324,17 @@ int main() {
     require(sdk_arranger_project_linear(), "E2 switches General to Linear");
     event[1] = -1; sdk_arranger_general_encoder(general, 3, event);
     require(!sdk_arranger_project_linear(), "E3 switches General to Song");
+    event[1] = 1; sdk_arranger_general_encoder(general, 1, event);
+    require(general[0x90/4] == 3, "fourth row selects Lab mode");
+    sdk_arranger_general_encoder(general, 2, event);
+    require(sdk_arranger_project_lab() && !sdk_arranger_project_linear(), "E2 turns Lab on, Linear unchanged");
+    event[1] = -1; sdk_arranger_general_encoder(general, 2, event);
+    require(!sdk_arranger_project_lab(), "E2 back turns Lab off");
     event[1] = 0x7fffffff; sdk_arranger_general_encoder(general, 1, event);
-    require(general[0x90/4] == 2, "extreme positive selector clamps");
+    require(general[0x90/4] == 3, "extreme positive selector clamps");
     event[1] = static_cast<opxy::i32>(0x80000000u); sdk_arranger_general_encoder(general, 1, event);
+    require(general[0x90/4] == 1, "extreme negative selector moves at most two rows");
+    sdk_arranger_general_encoder(general, 1, event);
     require(general[0x90/4] == 0, "extreme negative selector clamps");
     sdk_arranger_general_encoder(general, 2, event);
     require(test::encoder_calls == 1, "existing General setting delegates unchanged");

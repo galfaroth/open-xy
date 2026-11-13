@@ -22,7 +22,7 @@ State published, captured, staged, decode_scratch;
 const State empty_state;
 alignas(4) volatile u32 writer_intent, reader_intent, revision, retry, stage_ready, stage_cancelled, load_busy;
 u32 published_revision, published_generation, gui_generation, captured_revision, captured_generation, staged_generation, staged_revision;
-bool gui_bound, gui_active, publish_pending, published_bound, staged_recovered, staged_failed, captured_staged;
+bool gui_bound, gui_active, gui_lab, publish_pending, published_bound, staged_recovered, staged_failed, captured_staged;
 alignas(4) volatile u32 protected_generation, protection_active, io_status, rename_failed;
 u32 observed_retry, staged_pointer, gui_pointer;
 u8 gui_track;
@@ -46,7 +46,7 @@ bool publish_snapshot() {
     writer_intent = 1; barrier();
     if (reader_intent) { release_writer(); return false; }
     published.model = sdk_arranger_model();
-    published.enabled = gui_active; published.track = gui_track;
+    published.enabled = gui_active; published.lab = gui_lab; published.track = gui_track;
     published_bound = gui_bound;
     published_generation = gui_generation; published_revision = revision;
     release_writer();
@@ -159,7 +159,7 @@ bool write_file(const char* path) {
 void apply(const State& state, u32 current) {
     if (!gui_bound || gui_generation != current) io_status = 0;
     sdk_arranger_model() = state.model;
-    gui_active = state.enabled; gui_track = state.track;
+    gui_active = state.enabled; gui_lab = state.lab; gui_track = state.track;
     gui_generation = current; gui_pointer = word(0x840a0524); gui_bound = true;
     sdk_arranger_bind_project(current);
     ++revision;
@@ -339,6 +339,12 @@ void sdk_arranger_general_rows(void* rows, const void* row) {
     stock<void(void*, const char*)>(0x8c041788)(extra + 7, sdk_arranger_project_linear() ? "Linear" : "Song");
     stock<void(void*, const void*)>(0x8c087770)(rows, extra);
     stock<void(void*)>(0x8c086d28)(extra);
+    // Veff: Lab by Veff's mode, a fourth row.
+    u32 lab[14] = {};
+    stock<void(void*, const char*)>(0x8c041788)(lab, "lab mode");
+    stock<void(void*, const char*)>(0x8c041788)(lab + 7, sdk_arranger_project_lab() ? "On" : "Off");
+    stock<void(void*, const void*)>(0x8c087770)(rows, lab);
+    stock<void(void*)>(0x8c086d28)(lab);
 }
 
 // General's virtual encoder method: object+0x90 is selected row, event+4 delta.
@@ -349,10 +355,12 @@ void sdk_arranger_general_encoder(void* object, u32 encoder, const void* event) 
     const i32 delta = static_cast<const i32*>(event)[1];
     if (encoder == 1) {
         const i32 step = delta < -2 ? -2 : delta > 2 ? 2 : delta;
-        const i32 next = static_cast<i32>(selected < 3 ? selected : 2) + step;
-        selected = static_cast<u32>(next < 0 ? 0 : next > 2 ? 2 : next);
+        const i32 next = static_cast<i32>(selected < 4 ? selected : 3) + step;
+        selected = static_cast<u32>(next < 0 ? 0 : next > 3 ? 3 : next);
     } else if ((encoder == 2 || encoder == 3) && selected == 2) {
         if (delta) sdk_arranger_project_set_linear(delta > 0);
+    } else if ((encoder == 2 || encoder == 3) && selected == 3) {
+        if (delta) sdk_arranger_project_set_lab(delta > 0);
     } else {
         stock<void(void*, u32, const void*)>(0x8c0970d4)(object, encoder, event);
     }
@@ -375,5 +383,21 @@ bool sdk_arranger_project_set_linear(bool linear) {
     if (!sdk_arranger_project_changed(linear, gui_track)) return false;
     sdk_arranger_project_mode_changed(linear);
     sdk_arranger_publish(linear, false);
+    return true;
+}
+
+bool sdk_arranger_project_lab() {
+    return gui_bound && gui_generation == generation() && gui_lab;
+}
+
+bool sdk_arranger_project_set_lab(bool lab) {
+    sdk_arranger_project_poll();
+    if (!sdk_arranger_project_edit_ready()) return false;
+    if (gui_lab == lab) return true;
+    gui_lab = lab;
+    ++revision;
+    publish_pending = true;
+    dirty();
+    if (publish_snapshot()) publish_pending = false;
     return true;
 }
