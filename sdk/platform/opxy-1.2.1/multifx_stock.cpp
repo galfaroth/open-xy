@@ -26,6 +26,7 @@ namespace {
 using opxy::u32;
 using opxy::i32;
 using namespace opxy::platform;
+using opxy::multifx::kScratchBytes;
 const u32 kScratchBases = 0x84a50b90;
 const u32 kEffectRecords = 0x8d4cc380, kRecordBytes = 48, kEffectRecordCount = 63;
 const u32 kAudioRecords = 0x84eab39c, kRecordStride = 0xe8;
@@ -33,7 +34,7 @@ const u32 kMaxRequest = 524288;
 
 // The stage being initialized: its send's offset and what it took.
 bool initializing;
-u32 offset, taken;
+u32 offset, limit, taken;
 bool overflow;
 
 u32 base(u32 slot) { return word(kScratchBases + 4 * (slot == 14 ? 1 : 0)); }
@@ -43,9 +44,9 @@ bool send(u32 slot) { return slot == 14 || slot == 15; }
 u32 place(u32 slot, u32 bytes) {
     if (!initializing) return base(slot);
     const u32 at = (offset + taken + 31) & ~31u;
-    if (at + bytes > opxy::multifx::kScratchBytes) {
-        // Never hand out memory past the send's: the stage overlaps the first
-        // stage's instead, and the chain disables it.
+    if (at + bytes > limit) {
+        // Never hand out memory past the stage's part: it overlaps the send's
+        // start instead, and the chain disables it.
         overflow = true;
         return base(slot);
     }
@@ -83,8 +84,9 @@ bool stage_create(u32 type, void* storage) {
     return factory(storage) == storage;
 }
 
-u32 stage_init(void* object, u32 slot, u32 from) {
+u32 stage_init(void* object, u32 slot, u32 from, u32 end) {
     initializing = true; offset = from; taken = 0; overflow = false;
+    limit = end < kScratchBytes ? end : kScratchBytes;
     reinterpret_cast<void (*)(void*, u32)>(vtable(object)[5])(object, slot);
     initializing = false;
     return overflow ? 0xffffffffu : taken;

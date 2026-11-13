@@ -49,5 +49,15 @@
     }
   ],
   "presets": {},
-  "resources": {}
+  "resources": {
+    "display": {
+      "stateBytes": 20,
+      "stateAlignment": 4,
+      "paths": 0,
+      "points": 0,
+      "nodes": 13,
+      "texts": 24,
+      "palette": 4
+    }
+  }
 }

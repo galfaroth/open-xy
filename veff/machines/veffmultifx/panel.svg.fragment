@@ -1,0 +1,51 @@
+<g id="veffmultifx_panel">
+<!-- SDK two-page header: keep this block before machine artwork below y=38. -->
+<path d="M0,0 L480,0 L480,38 L0,38 Z" fill="#000000"/>
+<path id="veffmultifx_node_0" transform="matrix(1 0 0 1 0 0)" d="M0,0 L60,0 L60,20 L0,20 Z" fill="#000000" stroke="#000000" stroke-width="0.5"/>
+<path id="veffmultifx_node_1" transform="matrix(1 0 0 1 60 0)" d="M0,0 L60,0 L60,20 L0,20 Z" fill="#323232" stroke="#323232" stroke-width="0.5"/>
+<path id="veffmultifx_node_2" transform="matrix(1 0 0 1 120 0)" d="M0,0 L60,0 L60,20 L0,20 Z" fill="#4B4B4B" stroke="#4B4B4B" stroke-width="0.5"/>
+<path id="veffmultifx_node_3" transform="matrix(1 0 0 1 180 0)" d="M0,0 L60,0 L60,20 L0,20 Z" fill="#646464" stroke="#646464" stroke-width="0.5"/>
+<path id="veffmultifx_node_4" transform="matrix(1 0 0 1 240 0)" d="M0,0 L60,0 L60,20 L0,20 Z" fill="#7D7D7D" stroke="#7D7D7D" stroke-width="0.5"/>
+<path id="veffmultifx_node_5" transform="matrix(1 0 0 1 300 0)" d="M0,0 L60,0 L60,20 L0,20 Z" fill="#969696" stroke="#969696" stroke-width="0.5"/>
+<path id="veffmultifx_node_6" transform="matrix(1 0 0 1 360 0)" d="M0,0 L60,0 L60,20 L0,20 Z" fill="#AFAFAF" stroke="#AFAFAF" stroke-width="0.5"/>
+<path id="veffmultifx_node_7" transform="matrix(1 0 0 1 420 0)" d="M0,0 L60,0 L60,20 L0,20 Z" fill="#CDCDCD" stroke="#CDCDCD" stroke-width="0.5"/>
+<text id="veffmultifx_text_0" transform="matrix(1 0 0 1 5 10)" fill="#CBCBCB" font-family="UniversNextPro-Light" font-size="10px">-</text>
+<text id="veffmultifx_text_1" transform="matrix(1 0 0 1 125 10)" fill="#CBCBCB" font-family="UniversNextPro-Light" font-size="10px">-</text>
+<text id="veffmultifx_text_2" transform="matrix(1 0 0 1 245 10)" fill="#000000" font-family="UniversNextPro-Light" font-size="10px">-</text>
+<text id="veffmultifx_text_3" transform="matrix(1 0 0 1 365 10)" fill="#000000" font-family="UniversNextPro-Light" font-size="10px">-</text>
+<text id="veffmultifx_text_4" transform="matrix(1 0 0 1 65 17.4)" fill="#CBCBCB" font-family="UniversNextPro-Light" font-size="20px">-</text>
+<text id="veffmultifx_text_5" transform="matrix(1 0 0 1 185 17.4)" fill="#CBCBCB" font-family="UniversNextPro-Light" font-size="20px">-</text>
+<text id="veffmultifx_text_6" transform="matrix(1 0 0 1 305 17.4)" fill="#000000" font-family="UniversNextPro-Light" font-size="20px">-</text>
+<text id="veffmultifx_text_7" transform="matrix(1 0 0 1 425 17.4)" fill="#000000" font-family="UniversNextPro-Light" font-size="20px">-</text>
+<text id="veffmultifx_text_8" transform="matrix(1 0 0 1 5 33)" fill="#5A5A5A" font-family="UniversNextPro-Light" font-size="10px">-</text>
+<text id="veffmultifx_text_9" transform="matrix(1 0 0 1 125 33)" fill="#5A5A5A" font-family="UniversNextPro-Light" font-size="10px">-</text>
+<text id="veffmultifx_text_10" transform="matrix(1 0 0 1 245 33)" fill="#5A5A5A" font-family="UniversNextPro-Light" font-size="10px">-</text>
+<text id="veffmultifx_text_11" transform="matrix(1 0 0 1 365 33)" fill="#5A5A5A" font-family="UniversNextPro-Light" font-size="10px">-</text>
+<text id="veffmultifx_text_12" transform="matrix(1 0 0 1 65 33)" fill="#707070" font-family="UniversNextPro-Light" font-size="13px">-</text>
+<text id="veffmultifx_text_13" transform="matrix(1 0 0 1 185 33)" fill="#707070" font-family="UniversNextPro-Light" font-size="13px">-</text>
+<text id="veffmultifx_text_14" transform="matrix(1 0 0 1 305 33)" fill="#707070" font-family="UniversNextPro-Light" font-size="13px">-</text>
+<text id="veffmultifx_text_15" transform="matrix(1 0 0 1 425 33)" fill="#707070" font-family="UniversNextPro-Light" font-size="13px">-</text>
+  <path d="M0,38 L480,38 L480,220 L0,220 Z" fill="#000000"/>
+  <path id="veffmultifx_node_8" transform="matrix(1 0 0 1 34 84)" d="M0 0 L88 0 L88 88 L0 88 Z" fill="#3A3A3A" stroke="#7A7A7A" stroke-width="1.5"/>
+  <path id="veffmultifx_node_9" transform="matrix(1 0 0 1 142 84)" d="M0 0 L88 0 L88 88 L0 88 Z" fill="#3A3A3A" stroke="#7A7A7A" stroke-width="1.5"/>
+  <path id="veffmultifx_node_10" transform="matrix(1 0 0 1 250 84)" d="M0 0 L88 0 L88 88 L0 88 Z" fill="#3A3A3A" stroke="#7A7A7A" stroke-width="1.5"/>
+  <path id="veffmultifx_node_11" transform="matrix(1 0 0 1 358 84)" d="M0 0 L88 0 L88 88 L0 88 Z" fill="#3A3A3A" stroke="#7A7A7A" stroke-width="1.5"/>
+  <path id="veffmultifx_node_12" transform="matrix(1 0 0 1 34 184)" d="M0 0 L88 0 L88 4 L0 4 Z" fill="#FF4F9A" stroke="#FF4F9A" stroke-width="0.5"/>
+  <path d="M6 128 L34 128" fill="none" stroke="#555555" stroke-width="1.5"/>
+  <path d="M122 128 L142 128" fill="none" stroke="#555555" stroke-width="1.5"/>
+  <path d="M230 128 L250 128" fill="none" stroke="#555555" stroke-width="1.5"/>
+  <path d="M338 128 L358 128" fill="none" stroke="#555555" stroke-width="1.5"/>
+  <path d="M446 128 L474 128" fill="none" stroke="#555555" stroke-width="1.5"/>
+  <text id="veffmultifx_text_16" transform="matrix(1 0 0 1 42 136)" fill="#FFFFFF" font-family="UniversNextPro-Light" font-size="14px">-</text>
+  <text id="veffmultifx_text_17" transform="matrix(1 0 0 1 150 136)" fill="#FFFFFF" font-family="UniversNextPro-Light" font-size="14px">-</text>
+  <text id="veffmultifx_text_18" transform="matrix(1 0 0 1 258 136)" fill="#FFFFFF" font-family="UniversNextPro-Light" font-size="14px">-</text>
+  <text id="veffmultifx_text_19" transform="matrix(1 0 0 1 366 136)" fill="#FFFFFF" font-family="UniversNextPro-Light" font-size="14px">-</text>
+  <text id="veffmultifx_text_20" transform="matrix(1 0 0 1 34 74)" fill="#7A7A7A" font-family="UniversNextPro-Light" font-size="12px">-</text>
+  <text id="veffmultifx_text_21" transform="matrix(1 0 0 1 142 74)" fill="#7A7A7A" font-family="UniversNextPro-Light" font-size="12px">-</text>
+  <text id="veffmultifx_text_22" transform="matrix(1 0 0 1 250 74)" fill="#7A7A7A" font-family="UniversNextPro-Light" font-size="12px">-</text>
+  <text id="veffmultifx_text_23" transform="matrix(1 0 0 1 358 74)" fill="#7A7A7A" font-family="UniversNextPro-Light" font-size="12px">-</text>
+  <circle id="veffmultifx_palette_0" transform="matrix(1 0 0 1 640 120)" cx="0" cy="0" r="1" fill="#1A1A1A" stroke="#1A1A1A" stroke-width="1"/>
+  <circle id="veffmultifx_palette_1" transform="matrix(1 0 0 1 640 120)" cx="0" cy="0" r="1" fill="#3A3A3A" stroke="#3A3A3A" stroke-width="1"/>
+  <circle id="veffmultifx_palette_2" transform="matrix(1 0 0 1 640 120)" cx="0" cy="0" r="1" fill="#D2D2D2" stroke="#D2D2D2" stroke-width="1"/>
+  <circle id="veffmultifx_palette_3" transform="matrix(1 0 0 1 640 120)" cx="0" cy="0" r="1" fill="#FF4F9A" stroke="#FF4F9A" stroke-width="1"/>
+</g>

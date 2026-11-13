@@ -127,6 +127,29 @@ bool raw_event(const void* raw) {
 }
 }}}
 
+namespace opxy { namespace multifx {
+bool view(u32 track, View& out) {
+    namespace ui = platform::multifx_ui;
+    if (!ui::on(track)) return false;
+    out.slot = static_cast<u8>(ui::slot_of(track));
+    for (u32 k = 0; k < kSlots; ++k) out.type[k] = static_cast<u8>(ui::slot_choice(track, k));
+    for (u32 j = 0; j < 4; ++j) {
+        const char* t = ui::title(track, j);
+        out.title[j] = t ? t : "";
+        ui::caption(track, j, out.value[j]);
+    }
+    if (platform::shift_held()) {
+        // Shift + E1 chooses the slot's effect: its name in place of a value.
+        const char* name = kChoiceName[out.type[out.slot]];
+        u32 n = 0;
+        for (; name[n] && n < 7; ++n) out.value[0][n] = name[n];
+        out.value[0][n] = 0;
+        for (u32 j = 1; j < 4; ++j) out.value[j][0] = 0;
+    }
+    return true;
+}
+}}
+
 extern "C" void sdk_multifx_startup() __asm__("sdk_multifx_startup");
 void sdk_multifx_startup() {
     namespace ui = opxy::platform::multifx_ui;

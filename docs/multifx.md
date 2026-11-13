@@ -26,7 +26,15 @@ the distortion and adds its tail.
 
 Each send has 1 MiB of memory for delay lines. Stock gives all of it to one
 effect. MultiFX gives each stage its own part instead, so a delay, a reverb and a
-chorus fit together on one send. A stage that would not fit stays silent.
+chorus fit together on one send. Changing one slot's effect builds that slot
+alone in free memory, so the other slots keep playing, tails and all. A stage
+that does not fit stays silent until another slot frees memory.
+
+## The page
+
+MultiFX draws its own send page: the edited slot's parameters in the header,
+then the chain as four blocks from the send's input to its output, each named
+after its effect. The edited slot is lit and underlined.
 
 ## Where it lives
 
@@ -46,4 +54,3 @@ words are below 42, so step locks reach them.
 
 - Four slots per send.
 - The send's LFO moves slot 1's parameters only.
-- Changing a slot's effect builds the whole chain again, which restarts every tail.

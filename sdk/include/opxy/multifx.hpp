@@ -33,10 +33,22 @@ u32 send_of(const i32* record);
 // Builds stock effect `type` in `storage` (kObjectBytes, word aligned); false if none.
 bool stage_create(u32 type, void* storage);
 // Initializes a built stage for send `slot`, its scratch memory starting
-// `offset` bytes into the send's. Returns the scratch bytes it took, or
-// 0xffffffff if they did not fit.
-u32 stage_init(void* object, u32 slot, u32 offset);
+// `offset` bytes into the send's and ending before `limit`. Returns the
+// scratch bytes it took, or 0xffffffff if they did not fit.
+u32 stage_init(void* object, u32 slot, u32 offset, u32 limit);
 // One 64-frame block: the stage's wet signal in place, and its dry level.
 void stage_process(void* object, i32* left, i32* right, const i32* record);
 i32 stage_dry(void* object, const i32* record);
+
+// GUI side, implemented by the platform: what send `track`'s page shows. The
+// slot the encoders edit, each slot's choice, and the edited slot's four
+// parameter titles and 0..99 values ("--" without an effect). False when the
+// send does not hold the chain.
+struct View {
+    u8 slot;
+    u8 type[kSlots];
+    const char* title[4];
+    char value[4][8];
+};
+bool view(u32 track, View& out);
 }}

@@ -10,6 +10,8 @@ const u32 kRecordWords = 58;
 
 struct State {
     u32 send;                              // 14 or 15 once known
+    u32 at[opxy::multifx::kSlots];         // each ready stage's part of the send's scratch memory
+    u32 size[opxy::multifx::kSlots];
     u8 type[opxy::multifx::kSlots];        // each slot's choice the stages were built for
     u8 ready[opxy::multifx::kSlots];       // the stage is built and fits its memory
     u8 built;                              // the stages match `type`
