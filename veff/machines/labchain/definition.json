@@ -1,0 +1,170 @@
+{
+  "schema": 1,
+  "id": "labchain",
+  "name": "Lab Chain",
+  "parameters": [
+    {
+      "id": "p1",
+      "label": "P1",
+      "default": 0.5,
+      "mapping": {
+        "kind": "linear",
+        "minimum": 0,
+        "maximum": 1
+      },
+      "display": "percent"
+    },
+    {
+      "id": "p2",
+      "label": "P2",
+      "default": 0.5,
+      "mapping": {
+        "kind": "linear",
+        "minimum": 0,
+        "maximum": 1
+      },
+      "display": "percent"
+    },
+    {
+      "id": "p3",
+      "label": "P3",
+      "default": 0.5,
+      "mapping": {
+        "kind": "linear",
+        "minimum": 0,
+        "maximum": 1
+      },
+      "display": "percent"
+    },
+    {
+      "id": "p4",
+      "label": "P4",
+      "default": 0.5,
+      "mapping": {
+        "kind": "linear",
+        "minimum": 0,
+        "maximum": 1
+      },
+      "display": "percent"
+    }
+  ],
+  "shift": [
+    {
+      "id": "slot1",
+      "label": "Slot 1",
+      "default": 0,
+      "display": "enum",
+      "mapping": {
+        "kind": "enum",
+        "labels": [
+          "EQ",
+          "DRIVE",
+          "FOLD",
+          "CRUNCH",
+          "BITS",
+          "FILTER",
+          "TAPE DLY",
+          "REVERB",
+          "CHORUS",
+          "PHASER",
+          "RING",
+          "RESON",
+          "FREEZE",
+          "SHIFT",
+          "CLIP",
+          "LIMIT",
+          "OFF"
+        ]
+      }
+    },
+    {
+      "id": "slot2",
+      "label": "Slot 2",
+      "default": 0,
+      "display": "enum",
+      "mapping": {
+        "kind": "enum",
+        "labels": [
+          "EQ",
+          "DRIVE",
+          "FOLD",
+          "CRUNCH",
+          "BITS",
+          "FILTER",
+          "TAPE DLY",
+          "REVERB",
+          "CHORUS",
+          "PHASER",
+          "RING",
+          "RESON",
+          "FREEZE",
+          "SHIFT",
+          "CLIP",
+          "LIMIT",
+          "OFF"
+        ]
+      }
+    },
+    {
+      "id": "slot3",
+      "label": "Slot 3",
+      "default": 0,
+      "display": "enum",
+      "mapping": {
+        "kind": "enum",
+        "labels": [
+          "EQ",
+          "DRIVE",
+          "FOLD",
+          "CRUNCH",
+          "BITS",
+          "FILTER",
+          "TAPE DLY",
+          "REVERB",
+          "CHORUS",
+          "PHASER",
+          "RING",
+          "RESON",
+          "FREEZE",
+          "SHIFT",
+          "CLIP",
+          "LIMIT",
+          "OFF"
+        ]
+      }
+    },
+    {
+      "id": "slot4",
+      "label": "Slot 4",
+      "default": 0,
+      "display": "enum",
+      "mapping": {
+        "kind": "enum",
+        "labels": [
+          "EQ",
+          "DRIVE",
+          "FOLD",
+          "CRUNCH",
+          "BITS",
+          "FILTER",
+          "TAPE DLY",
+          "REVERB",
+          "CHORUS",
+          "PHASER",
+          "RING",
+          "RESON",
+          "FREEZE",
+          "SHIFT",
+          "CLIP",
+          "LIMIT",
+          "OFF"
+        ]
+      }
+    }
+  ],
+  "presets": {},
+  "resources": {
+    "bufferBytes": 131808,
+    "transport": 1
+  }
+}
