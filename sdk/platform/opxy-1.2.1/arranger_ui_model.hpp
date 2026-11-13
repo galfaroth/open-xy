@@ -125,14 +125,16 @@ struct ArrangerStopGesture {
 };
 // Destructive timeline replacement always needs a second distinct E4 press.
 struct ArrangerBounceChoice {
-    bool open, replace, confirmed;
+    bool open, replace, confirmed, post_master;
     u32 engine;
+    // The master choice (E3) stays as last chosen: before the master by default.
     void begin() { open = true; replace = confirmed = false; engine = 2; }
     void cancel() { open = confirmed = false; }
     void turn(u32 encoder, i32 delta) {
         if (!open || !delta) return;
         if (encoder % 4 == 0) { engine = delta > 0 ? 3 : 2; confirmed = false; }
         if (encoder % 4 == 1) { replace = delta > 0; confirmed = false; }
+        if (encoder % 4 == 2) post_master = delta > 0;
     }
     bool accept() {
         if (!open) return false;

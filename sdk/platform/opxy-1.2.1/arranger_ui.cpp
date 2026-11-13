@@ -1139,7 +1139,9 @@ struct Renderer {
             out = append(out, "% - STOP CANCEL");
             set_text(o->controls, bounce_status == 2 ? "RENDERING CLIP" : bounce_status == 7 ? "ASSIGNING SAMPLE BELOW" : "PREPARING / SAVING SAMPLE");
         } else if (bounce_choice.open) {
-            set_text(o->controls, bounce_choice.engine == 2 ? "E1 SAMPLER / E2 FREE OR REPLACE BELOW" : "E1 DRUM / E2 FREE OR REPLACE BELOW");
+            set_text(o->controls, bounce_choice.engine == 2
+                ? (bounce_choice.post_master ? "E1 SAMPLER / E2 BELOW / E3 POST MASTER" : "E1 SAMPLER / E2 BELOW / E3 PRE MASTER")
+                : (bounce_choice.post_master ? "E1 DRUM / E2 BELOW / E3 POST MASTER" : "E1 DRUM / E2 BELOW / E3 PRE MASTER"));
             out = append(info, bounce_choice.confirmed ? "REPLACE BELOW? E4 CONFIRM / STOP CANCEL" :
                 bounce_choice.replace ? "REPLACE BELOW - E4 NEXT / STOP CANCEL" : "FREE LANE BELOW - E4 BOUNCE / STOP CANCEL");
         }
@@ -1312,6 +1314,7 @@ void sdk_arranger_raw_event(const void* raw) {
                 announce("BOUNCE CANCELLED");
             } else if (bounce_choice.open && key == 13) {
                 if (bounce_choice.accept()) {
+                    sdk_arranger_bounce_post_master(bounce_choice.post_master);
                     const u32 result = selected_slot < 0 ? 2 : sdk_arranger_bounce_request(
                         static_cast<u32>(selected_slot), bounce_choice.engine, bounce_choice.replace);
                     if (!result) { bounce_choice.open = bounce_choice.confirmed = false; announce("BOUNCE STARTING"); }

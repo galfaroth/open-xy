@@ -286,5 +286,10 @@ int main() {
     const u8 unrelated[] = {7, 1, 2}; sdk_arranger_bounce_message(unrelated, sizeof(unrelated));
     require(test::captures == before_capture + 1 && writes == before_write + 1 && native_messages == before_native + 1,
         "inactive wrappers retain native behavior");
+    {   // A Prepare names the master choice in args[1]: 0 before, 1 after; others are invalid.
+        const u32 before = starts;
+        command(wire::Prepare, 100000, 10000, 2);
+        require(starts == before && reply_count(wire::Error, 100000), "an unknown master choice is rejected");
+    }
     std::puts("remote bounce ownership and wire checks passed");
 }

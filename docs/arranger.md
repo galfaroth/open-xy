@@ -320,6 +320,9 @@ the **track below**, at the same timeline position. The source clip stays intact
 2. Press **Shift + Sample** to open the bounce controls.
 3. Turn **E1** to choose **Sampler** or **Drum Sampler**.
 4. Turn **E2** to choose a free destination or replacement of overlapping clips.
+   Turn **E3** to record **pre master** (the default: the mix before the master
+   EQ and compressor/limiter) or **post master** (what you hear, as stock
+   resampling records it).
 5. Click **E4** to start. Replacement requires a second click to confirm.
 6. Listen and watch the progress. Press **Stop** to cancel.
 
@@ -330,7 +333,9 @@ instrument or full source pool prevents bounce.
 The sample is saved in the stock **User** sample directory under a stock-generated
 name, without an added date. The length limit is slightly below **20 seconds**.
 This is not a sample-exact or dry stem export: leading silence and a capture tail
-can remain, and output effects, normalization and edge fades are retained.
+can remain. A post-master bounce keeps the master EQ, dynamics, normalization and
+edge fades; a pre-master one leaves the master EQ and dynamics out, so it can be
+louder and clip where the master's limiter would have caught it.
 Bounce preserves leading and trailing rests in the requested region; the stock
 sample recorder’s automatic silence trimming still applies to ordinary recordings.
 An audio file can remain in User if later assignment fails or is cancelled.

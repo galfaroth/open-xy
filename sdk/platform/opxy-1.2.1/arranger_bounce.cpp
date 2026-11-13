@@ -23,6 +23,7 @@ using namespace opxy;
 using namespace opxy::platform;
 namespace wire = opxy::platform::bounce_wire;
 struct Request { u32 slot, engine, track, start, end, frames, project, generation; bool replace; } request;
+bool post_master;   // the next request records after the master section
 char saved_path[97];
 volatile u32 active, cancelled, dispatch_started, dispatch_done, ready, ready_frames, captured_frames;
 volatile u32 stop_ack, stop_intent, transport_started, trim_frames;
@@ -89,6 +90,8 @@ void finish(u32 result) {
     barrier(); active = 0; state = result;
 }
 }
+
+void sdk_arranger_bounce_post_master(bool post) { if (!active) post_master = post; }
 
 u32 sdk_arranger_bounce_request(u32 slot, u32 engine, bool replace) {
     if (active || byte(0x860c6adc + 0x305f) || byte(0x860c6adc + 0x3060)) return 1;
@@ -218,7 +221,7 @@ void sdk_arranger_bounce_poll() {
     }
     if (!prepare_sent && dispatch_started && !cancelled) {
         prepare_sent = true; barrier();
-        sdk_arranger_bounce_send(wire::Prepare, cookie, request.frames, 0, 0);
+        sdk_arranger_bounce_send(wire::Prepare, cookie, request.frames, post_master ? 1 : 0, 0);
     }
     if (transport_started && state == 1) state = 2;
     if (!prepare_sent) {

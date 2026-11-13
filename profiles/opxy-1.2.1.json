@@ -3390,6 +3390,16 @@
       "symbol": "sdk_multifx_lfo",
       "call": true,
       "name": "MultiFX: a send LFO's write, moved to the LFO slot's words"
+    },
+    {
+      "kind": "hook",
+      "address": "0x8d511b6c",
+      "file_offset": "0x148dc8",
+      "length": 4,
+      "before": "ffe3c46d",
+      "symbol": "sdk_arranger_bounce_master_tap",
+      "call": true,
+      "name": "Linear: the master EQ's object fetch, where a pre-master bounce copies the mix"
     }
   ],
   "compiler": "bfin-elf-gcc 8.0.0 (deanm1278/blackfin-plus-gnu e4408a1) + toolchain/gcc patches",
