@@ -407,6 +407,8 @@ export function createCatalogView({core, visuals, snapshots, modeFor, getKit, is
     // Firmware features every build carries (Linear by Veff), shown as fixed extension cards.
     builtIn: () => (data.features ?? []).map(f => ({name: f.name, summary: f.summary ?? '',
       screen: f.preview === 'linear' ? LINEAR_PREVIEW.gif : null, guide: f.preview === 'linear'})),
+    // The machines a built-in feature brings (MultiFX's chain effect): in every build, never a card of their own.
+    builtInMachines: () => (data.features ?? []).map(f => f.machine).filter(Boolean),
     selected: showSelection,
   };
 }

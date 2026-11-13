@@ -45,6 +45,17 @@
         "Lay out a song on your OP–XY from start to finish instead of only chaining patterns. It is part of every firmware built here; there is nothing to select."
       ],
       "note": "Linear by Veff lives here for now. Once the Open-XY SDK has grown the pieces it needs, we want to bring it to Open-XY properly — not rushed."
+    },
+    {
+      "id": "veffmultifx",
+      "name": "MultiFX by Veff",
+      "machine": "veffmultifx",
+      "summary": "Chains of up to four stock effects on FX I and FX II, built into this installer's firmware.",
+      "help": [
+        "Put MultiFX on a send, then press Stop + 1–4 to pick a slot, Shift + E1 to choose its effect (delay, reverb, chorus, phaser, dist, lofi) and E1–E4 for its parameters. Each slot's parameters take step locks.",
+        "Several delays and reverbs fit on one send: MultiFX gives each its own part of the send's memory."
+      ],
+      "note": "An early prototype: four slots for now; the send LFO moves slot 1."
     }
   ],
   "machines": {

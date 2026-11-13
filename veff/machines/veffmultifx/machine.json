@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "sdk": "1.13",
+  "kind": "effect",
+  "description": "A chain of up to four stock effects on one send. Stop+1-4 picks the slot, Shift+E1 its effect, E1-E4 its parameters."
+}

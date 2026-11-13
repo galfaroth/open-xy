@@ -14,6 +14,7 @@
 #include "drum_locks.hpp"
 #include "drum_lock_store.hpp"
 #include "drumline.hpp"
+#include "multifx_ui.hpp"
 
 extern "C" {
 void sdk_synth_press(opxy::u32) __asm__("sdk_synth_press");
@@ -26,6 +27,7 @@ const char* sdk_synth_title(opxy::u32, opxy::u32) __asm__("sdk_synth_title");
 opxy::u32 (*sdk_aux_engine)(opxy::u32) = nullptr;
 bool (*sdk_aux_owns_page)(opxy::u32) = nullptr;
 bool (*sdk_control_turn)(opxy::u32, opxy::u32, const opxy::i32*) = nullptr;
+opxy::platform::MultiFxUi sdk_multifx_ui = {};
 
 namespace {
 using opxy::u32;
@@ -335,6 +337,9 @@ void sdk_synth_press(u32 encoder) {
             const u32 next = m->next[t->slots[i]];
             if (next < opxy::parameter_slots) t->slots[i] = static_cast<u8>(next);
         }
+    } else if (controller == kAuxController && multifx_page(selected_track())) {
+        // MultiFX's positions follow its selected slot (Stop + 1..4), not clicks.
+        return;
     } else if (controller == kAuxController && (m = send_effect(selected_track(), t))) {
         // An owned effect's send page: the click selects the position's next
         // parameter, or every position's on a paged effect.
@@ -375,6 +380,8 @@ bool sdk_drum_shift_press(u32 track, u32 encoder) {
 // when turned fast), and stores the bucket's centre. An owned machine's enum
 // slot answers its choice count with scale 1: one choice per detent.
 u32 sdk_param_steps(u32 track, u32 index, u32* scale) {
+    // MultiFX's slot parameters are continuous words outside stock's send table.
+    if (multifx_page(track)) return 0xffffffffu;
     const SynthControls* m = index < opxy::parameter_slots ? editor(track) : nullptr;
     if (m && m->steps[index]) {
         *scale = 1;
@@ -446,6 +453,7 @@ u32 sdk_synth_turn(u32 project, u32 track, u32 index, u32 event) {
 // Ownership is checked against the FX registry, not the synth registry, except
 // for a machine holding an aux track, whose page (tab 0) edits it as a synth.
 u32 sdk_effect_turn(u32 project, u32 track, u32 index, u32 event) {
+    if (multifx_page(track)) return sdk_multifx_ui.turn(project, track, index, event);
     Track* t;
     const SynthControls* m = nullptr;
     if (index < opxy::page_controls) m = aux_engine(track) ? machine(track, t) : send_effect(track, t);
@@ -494,6 +502,21 @@ u32 sdk_fx_value_text(u32 widget, const char* text, u32 index, opxy::i32 value) 
     static char caption[16];
     Track* t;
     const u32 track = selected_track();
+    if (index < opxy::page_controls && multifx_page(track)) {
+        // MultiFX: the selected slot's words, in the captions and the bars.
+        u32 stand_in = 0;
+        if (index == 0) {
+            for (u32 i = 0; i < opxy::page_controls; ++i)
+                shown_words[i] = shown_words[i + opxy::page_controls] = current_value(track, sdk_multifx_ui.shown_word(track, i));
+            shown_vector.allocator = 0;
+            shown_vector.begin = static_cast<u32>(reinterpret_cast<Address>(shown_words));
+            shown_vector.end = shown_vector.capacity = shown_vector.begin + sizeof(shown_words);
+            stand_in = static_cast<u32>(reinterpret_cast<Address>(&shown_vector));
+        }
+        sdk_multifx_ui.caption(track, index, caption);
+        stock<u32(u32, const char*)>(0x8d6011f0)(widget, caption);
+        return stand_in;
+    }
     const SynthControls* m = index < opxy::page_controls ? send_effect(track, t) : nullptr;
     // While Shift is held, the shift row's choices, in the captions and the bars.
     const bool row = m && m->shift && shift_held();
@@ -548,6 +571,8 @@ u32 sdk_fx_value_text(u32 widget, const char* text, u32 index, opxy::i32 value) 
 // shown parameter; the record itself keeps naming raw slots.
 const char* sdk_fx_title(u32 effect, u32 index) {
     Track* t;
+    if (index < opxy::page_controls && multifx_page(selected_track()) && track_engine(selected_track()) == effect)
+        return sdk_multifx_ui.title(selected_track(), index);
     const SynthControls* m = index < opxy::page_controls ? send_effect(selected_track(), t) : nullptr;
     if (m && m->engine() == effect && m->shift && shift_held()) return index < m->shift ? m->shift_titles[index] : "";
     if (m && m->engine() == effect) index = t->slots[index];
