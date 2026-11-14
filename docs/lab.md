@@ -24,7 +24,9 @@ When the palette is full, or simply good, save T8 as an instrument preset (the
 OP-XY's own preset save) and load it on any track, in this project or another.
 Then clear T8, or load an empty Drum Sampler, and start a fresh palette.
 
-Make T7 a Sampler and T8 a Drum Sampler before the first commit.
+Turning lab mode on in Project Settings > General makes T7 a Sampler and T8 a
+Drum Sampler in the current pattern, replacing what they held, and a popup
+confirms it. Opening a project already in lab mode leaves its tracks as they are.
 
 ## Commit a sound
 
@@ -71,5 +73,6 @@ from 99, so the newest sorts first.
 
 - Not yet tested on a device.
 - The last note is replayed at velocity 100 and held one second, not as played.
+  Its file ends 0.1 s after the sound falls below -60 dB, up to 3 s in all.
 - A sequence commit needs Linear off.
-- T7 must already be a Sampler and T8 a Drum Sampler.
+- In other patterns, T7 and T8 keep their own instruments.

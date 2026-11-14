@@ -170,6 +170,7 @@ void* fake_address(u32 address) {
 opxy::arranger::Model& sdk_arranger_model() { return test::model; }
 void sdk_arranger_bind_project(u32 value) { test::bound = value; }
 void sdk_arranger_publish(bool, bool) {}
+bool sdk_arranger_bounce_busy() { return false; }
 extern "C" void sdk_arranger_project_mode_changed(bool linear) { test::enabled = linear; }
 extern "C" void sdk_arranger_project_restored(bool active, u32 track) {
     test::enabled = active; test::selected = track; ++test::restored_count;

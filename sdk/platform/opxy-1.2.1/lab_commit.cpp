@@ -138,7 +138,7 @@ const char* sdk_lab_commit_start(const lab::Commit& c) {
     running = c;
     note_on_now = note_done = false;
     result = 0;
-    const u32 refused = sdk_arranger_bounce_lab(frames, c.post_master);
+    const u32 refused = sdk_arranger_bounce_lab(frames, c.post_master, c.source == lab::Source::LastNote);
     if (refused) return refused == 1 ? "BUSY: STOP REC / PLAY" : refused == 3 ? "TOO SHORT / LONG" : "PROJECT BUSY";
     owned = true;
     return nullptr;

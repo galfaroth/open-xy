@@ -16,7 +16,8 @@ opxy::u32 sdk_arranger_bounce_request(opxy::u32 slot, opxy::u32 engine, bool rep
 bool sdk_arranger_bounce_busy() __asm__("sdk_arranger_bounce_busy");
 // GUI (Veff): a Lab by Veff commit through the same capture, writer checks and
 // result codes; lab_commit.cpp supplies its source, file and destination.
-opxy::u32 sdk_arranger_bounce_lab(opxy::u32 frames, bool post_master) __asm__("sdk_arranger_bounce_lab");
+// With `tail`, the file ends 0.1 s after the last block above -60 dBFS.
+opxy::u32 sdk_arranger_bounce_lab(opxy::u32 frames, bool post_master, bool tail) __asm__("sdk_arranger_bounce_lab");
 // GUI, before a request (Veff): record after the master EQ and dynamics, as
 // resampling hears, instead of before them (the default).
 void sdk_arranger_bounce_post_master(bool post) __asm__("sdk_arranger_bounce_post_master");

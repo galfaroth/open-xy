@@ -23,7 +23,11 @@ namespace {
 using namespace opxy;
 using namespace opxy::platform;
 namespace wire = opxy::platform::bounce_wire;
-struct Request { u32 slot, engine, track, start, end, frames, project, generation; bool replace, lab; } request;
+struct Request { u32 slot, engine, track, start, end, frames, project, generation; bool replace, lab, tail; } request;
+// Veff: a Lab note's commit ends a short release after its last loud block
+// (the remote's loud frame count) instead of at the end of its fixed capture.
+const u32 kRelease = 4410, kShortest = 6400;
+volatile u32 loud_frames, tail_cut;
 bool post_master;   // the next request records after the master section
 char saved_path[97];
 volatile u32 active, cancelled, dispatch_started, dispatch_done, ready, ready_frames, captured_frames;
@@ -113,15 +117,15 @@ u32 sdk_arranger_bounce_request(u32 slot, u32 engine, bool replace) {
     const u32 duration = duration_frames(clip->length, project_bpm_x10());
     if (!duration) return 3;
     return begin_session(Request{slot, engine, clip->track, clip->start, clip->start + clip->length,
-        duration, word(0x840a0524), stock<u32()>(0x8d584224)(), replace, false});
+        duration, word(0x840a0524), stock<u32()>(0x8d584224)(), replace, false, false});
 }
 
-u32 sdk_arranger_bounce_lab(u32 frames, bool post) {
+u32 sdk_arranger_bounce_lab(u32 frames, bool post, bool tail) {
     if (active || byte(0x860c6adc + 0x305f) || byte(0x860c6adc + 0x3060)) return 1;
     if (!sdk_arranger_project_edit_ready()) return 4;
     if (frames <= 6000 || frames > 882000 - 4096) return 3;
     post_master = post;
-    return begin_session(Request{0, 0, 0, 0, 0, frames, word(0x840a0524), stock<u32()>(0x8d584224)(), false, true});
+    return begin_session(Request{0, 0, 0, 0, 0, frames, word(0x840a0524), stock<u32()>(0x8d584224)(), false, true, tail});
 }
 
 namespace {
@@ -134,7 +138,7 @@ u32 begin_session(const Request& next) {
     previous_key = word(editor + 0x38);
     previous_native_state = word(0x84039384); previous_native_frames = word(0x84039394);
     cancelled = dispatch_started = dispatch_done = ready = ready_frames = captured_frames = 0;
-    stop_ack = stop_intent = transport_started = trim_frames = 0;
+    stop_ack = stop_intent = transport_started = trim_frames = loud_frames = tail_cut = 0;
     finish_requested = finish_ack = released = 0;
     writer_done = writer_ok = writer_frames = writer_path_hash = save_complete = saved_frames = 0;
     prepare_sent = stop_sent = release_sent = saving = false;
@@ -163,6 +167,7 @@ void sdk_arranger_bounce_receive(const wire::Message* message) {
         if (!stop_sent || stop_ack) return;
         if (message->args[0] > 882000u || message->args[0] < captured_frames) cancelled = 2;
         captured_frames = message->args[0]; diagnostic_captures = message->args[1];
+        loud_frames = message->args[2];
         barrier(); stop_ack = 1; break;
     case wire::WriteResult:
         if (!saving || writer_done) return;
@@ -273,6 +278,13 @@ void sdk_arranger_bounce_poll() {
             fail_reason(!cancelled && transport_started && captured_frames < trim_frames + request.frames ? 2 : 1);
             finish(cancelled == 1 ? 5 : 6); return;
         }
+        tail_cut = 0;
+        if (request.tail) {
+            const u32 keep = loud_frames > trim_frames ? loud_frames - trim_frames + kRelease : 0;
+            const u32 recorded = captured_frames - trim_frames;
+            const u32 length = keep < kShortest ? kShortest : keep;
+            if (length < recorded) tail_cut = recorded - length;
+        }
         saving = true; state = 3; barrier();
         stock<void(u32, u32)>(0x8c0a4bcc)(editor, captured_frames);
         return;
@@ -282,7 +294,7 @@ void sdk_arranger_bounce_poll() {
     if (!save_complete || !writer_done) return;
     barrier();
     if (cancelled || !bound()) { finish(cancelled == 1 ? 5 : 6); return; }
-    const u32 frames = captured_frames - trim_frames;
+    const u32 frames = captured_frames - trim_frames - tail_cut;
     if (!writer_ok) { fail_reason(3); finish(6); return; }
     if (writer_frames != frames || saved_frames != frames || !copy_path(saved_path) ||
         writer_path_hash != path_hash(saved_path)) { fail_reason(4); finish(6); return; }
@@ -301,6 +313,7 @@ void sdk_arranger_bounce_saved(u32 object, u32 frames) {
 void sdk_arranger_bounce_save_range(const char* path, u32 begin, u32 end, i32 key) {
     if (active && saving && !begin && end == captured_frames && key == 60) {
         begin = trim_frames;
+        end -= tail_cut;
         if (request.lab) path = sdk_lab_path();   // Lab's own folder and name
     }
     stock<void(const char*, u32, u32, i32)>(0x8d4d8874)(path, begin, end, key);
