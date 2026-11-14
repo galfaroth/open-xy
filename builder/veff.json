@@ -44,18 +44,21 @@
       "help": [
         "Lay out a song on your OP–XY from start to finish instead of only chaining patterns. It is part of every firmware built here; there is nothing to select."
       ],
-      "note": "Linear by Veff lives here for now. Once the Open-XY SDK has grown the pieces it needs, we want to bring it to Open-XY properly — not rushed."
+      "note": "Linear by Veff lives here for now. Once the Open-XY SDK has grown the pieces it needs, we want to bring it to Open-XY properly — not rushed.",
+      "guide": "linear"
     },
     {
       "id": "veffmultifx",
       "name": "MultiFX by Veff",
       "machine": "veffmultifx",
-      "summary": "Chains of up to eight stock effects on FX I and FX II, built into this installer's firmware: several delays, reverbs and more on one send.",
+      "summary": "Chains of up to eight effects on FX I and FX II, built into this installer's firmware: stock's delay, reverb and the rest, and any effect machine you install.",
       "help": [
-        "Put MultiFX on a send, then press Stop + 1–8 to pick a slot, Shift + E1 to choose its effect (delay, reverb, chorus, phaser, dist, lofi), Shift + E2 for the slot the send's LFO moves and E1–E4 for its parameters. Each slot's parameters take step locks.",
+        "Put MultiFX on a send, then press Stop + 1–8 to pick a slot, Shift + E1 to choose its effect, Shift + E2 for the slot the send's LFO moves and E1–E4 for its parameters. Each slot's parameters take step locks.",
+        "Shift + E1 offers stock's delay, reverb, chorus, phaser, dist and lofi, then every effect machine in your build: choose them on this site and they appear in the chain too.",
         "Several delays and reverbs fit on one send: MultiFX gives each its own part of the send's memory."
       ],
-      "note": "An early prototype."
+      "note": "An early prototype.",
+      "guide": "multifx"
     },
     {
       "id": "vefflab",
@@ -69,7 +72,8 @@
         "Turn on lab mode in Project Settings > General. Stop + Sample opens the commit panel: E1 last note or sequence, E2 track or bars, E3 before or after the master, E4 T7 or T7 + palette; click E4 to commit. The panel explains each choice on screen.",
         "Commits are saved under vefflab/ in User samples, named after the project with a lineage that counts down from 99."
       ],
-      "note": "An early prototype."
+      "note": "An early prototype.",
+      "guide": "lab"
     }
   ],
   "machines": {

@@ -3,7 +3,7 @@
 // MultiFX's send page: the edited slot's parameters in the header, then the
 // chain as two rows of four blocks, read from the send's input on the left of
 // the top row to its output on the right of the bottom row, each named after
-// its effect. The edited slot (Stop + 1..8) is lit and underlined, the slot
+// its effect (stock's, or any effect machine installed beside it). The edited slot (Stop + 1..8) is lit and underlined, the slot
 // the send's LFO moves carries a mark, and a slot without an effect is a dim
 // outline.
 namespace veffmultifx {
@@ -39,7 +39,7 @@ inline void display(DisplayState& state, const draw::Input& input, Frame& frame)
         const bool edited = known && v.slot == k, empty = !known || v.type[k] == kNone;
         draw::place(frame, kFirstBlock + k, x, y, unit,
                     edited ? kEdited : empty ? kEmpty : kFilled, empty && !edited ? draw::stroke : draw::fill_and_stroke);
-        draw::text(frame, kFirstName + k, x + 8 * unit, y + 36 * unit, unit, empty ? "-" : kChoiceName[v.type[k]]);
+        draw::text(frame, kFirstName + k, x + 8 * unit, y + 36 * unit, unit, known ? v.name[k] : "-");
         const char number[2] = {static_cast<char>('1' + k), 0};
         draw::text(frame, kFirstNumber + k, x, y - 5 * unit, unit, number);
     }

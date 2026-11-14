@@ -44,6 +44,11 @@ void mark_chain(u32 send) { marked = send; }
 
 int main() {
     using namespace opxy::multifx;
+    // A slot's byte: 0 none, 1..6 stock's six as first stored, 0x80 | any effect's number.
+    require(choice(0, 0) == kNone && choice(1, 0) == 0 && choice(2 << 8, 1) == 5 && choice(6 << 24, 3) == 15,
+            "the first prototype's bytes still name stock's effects");
+    require(choice(0x80 | 44, 0) == 44 && choice(0xff, 0) == kNone && choice(7, 0) == kNone && slot_byte(44) == (0x80 | 44),
+            "any installed effect by its number");
     ::veffmultifx::State state;
     ::veffmultifx::initialize(state);
     i32 l[64], r[64];

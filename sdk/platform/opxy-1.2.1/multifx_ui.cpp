@@ -26,14 +26,46 @@ bool blocked[72];           // track keys whose press MultiFX took; their releas
 // Whether effect `id` is the chain: its record (relocated to 0x8d4cc380, 48
 // bytes each) carries its stock name inline at byte 16. The builder links no
 // weak symbols, so the chain is found by name, not by its effect number.
+const u32 kEffectRecords = 0x8d4cc380, kRecordBytes = 48;
+const volatile unsigned char* record_name(u32 id) {
+    return at<const volatile unsigned char>(kEffectRecords + id * kRecordBytes + 16);
+}
 bool chain_effect(u32 id) {
-    const u32 kEffectRecords = 0x8d4cc380, kRecordBytes = 48, kCount = 63;
-    if (id >= kCount) return false;
+    if (id >= kEffects) return false;
     const char name[] = "veffmultifx";
-    const volatile unsigned char* stored = at<const volatile unsigned char>(kEffectRecords + id * kRecordBytes + 16);
+    const volatile unsigned char* stored = record_name(id);
     for (u32 i = 0; i < sizeof name; ++i)   // with its terminator
         if (stored[i] != static_cast<unsigned char>(name[i])) return false;
     return true;
+}
+// An effect a slot may hold: one of stock's six send effects, or an effect
+// machine this firmware installed (its factory lies in the SDK module, which
+// every layout places between 0x8d0d0380 and 0x8d4d0380), but not MultiFX.
+bool installed(u32 id) {
+    if (id >= kEffects) return false;
+    if (stock_effect(id)) return true;
+    const u32 factory = word(kEffectRecords + id * kRecordBytes);
+    return factory >= 0x8d0d0380u && factory < 0x8d4d0380u && record_name(id)[0] && !chain_effect(id);
+}
+// The effects in Shift + E1's order: none, stock's six, then the installed ones.
+u32 effect_list(u8 (&list)[kEffects + 1]) {
+    u32 n = 0;
+    list[n++] = static_cast<u8>(kNone);
+    for (u32 i = 0; i < kStockEffects; ++i) list[n++] = kStockEffect[i];
+    for (u32 id = 0; id < kEffects; ++id) if (!stock_effect(id) && installed(id)) list[n++] = static_cast<u8>(id);
+    return n;
+}
+// The effect's name in upper case, at most `capacity` - 1 characters.
+void effect_name(u32 id, char* out, u32 capacity) {
+    const char* none = "-";
+    u32 n = 0;
+    if (id >= kEffects) { while (none[n] && n + 1 < capacity) { out[n] = none[n]; ++n; } out[n] = 0; return; }
+    const volatile unsigned char* stored = record_name(id);
+    for (; stored[n] && n + 1 < capacity && n < 31; ++n) {
+        const char c = static_cast<char>(stored[n]);
+        out[n] = c >= 'a' && c <= 'z' ? static_cast<char>(c - 'a' + 'A') : c;
+    }
+    out[n] = 0;
 }
 u32 top_controller_vtable() { return *stock<const u32*()>(0x8c0944b0)(); }
 bool held(u32 key) { return stock<u32(u32)>(0x8d5b7d7c)(key) != 0; }
@@ -48,7 +80,9 @@ u32 lfo_of(u32 track) { return lfo_slot(current(track, kLfoWord)); }
 // "SLOT 2 DELAY"
 void announce(u32 track, u32 slot) {
     char text[24];
-    const char* name = kChoiceName[slot_choice(track, slot)];
+    char name[12];
+    effect_name(slot_choice(track, slot), name, sizeof name);
+    if (name[0] == '-' && !name[1]) { name[0] = 'N'; name[1] = 'O'; name[2] = 'N'; name[3] = 'E'; name[4] = 0; }
     u32 n = 0;
     for (const char* p = "SLOT "; *p; ++p) text[n++] = *p;
     text[n++] = static_cast<char>('1' + slot);
@@ -89,11 +123,16 @@ u32 turn(u32 project, u32 track, u32 position, u32 event) {
             announce_lfo(next);
             return 1;
         }
-        const u32 now = slot_choice(track, slot), next = step(now, kChoices);
+        u8 list[kEffects + 1];
+        const u32 count = effect_list(list), now = slot_choice(track, slot);
+        u32 at = 0;
+        while (at < count && list[at] != now) ++at;
+        if (at == count) at = 0;
+        const u32 next = list[step(at, count)];
         if (next == now) return 1;
         const u32 shift = 8 * (slot & 3);
         u32 packed = static_cast<u32>(current(track, type_word(slot)));
-        packed = (packed & ~(0xffu << shift)) | (next << shift);
+        packed = (packed & ~(0xffu << shift)) | (slot_byte(next) << shift);
         // A new effect starts from the middle of each of its parameters.
         for (u32 j = 0; j < 4; ++j) set_parameter(project, track, kParamWord[slot][j], kMiddle);
         set_parameter(project, track, type_word(slot), static_cast<i32>(packed));
@@ -108,7 +147,7 @@ const char* title(u32 track, u32 position) {
     const u32 c = slot_choice(track, slot_of(track));
     if (c == kNone) return position == 0 ? "none" : "";
     // The stock effect's own name for the parameter (its record's callback).
-    return stock<const char*(u32, u32)>(0x8d506c90)(kStockType[c], position);
+    return stock<const char*(u32, u32)>(0x8d506c90)(c, position);
 }
 
 void caption(u32 track, u32 position, char* text) {
@@ -149,7 +188,10 @@ bool view(u32 track, View& out) {
     if (!ui::on(track)) return false;
     out.slot = static_cast<u8>(ui::slot_of(track));
     out.lfo = static_cast<u8>(ui::lfo_of(track));
-    for (u32 k = 0; k < kSlots; ++k) out.type[k] = static_cast<u8>(ui::slot_choice(track, k));
+    for (u32 k = 0; k < kSlots; ++k) {
+        out.type[k] = static_cast<u8>(ui::slot_choice(track, k));
+        ui::effect_name(out.type[k], out.name[k], sizeof out.name[k]);
+    }
     for (u32 j = 0; j < 4; ++j) {
         const char* t = ui::title(track, j);
         out.title[j] = t ? t : "";
@@ -157,10 +199,7 @@ bool view(u32 track, View& out) {
     }
     if (platform::shift_held()) {
         // Shift + E1 chooses the slot's effect: its name in place of a value.
-        const char* name = kChoiceName[out.type[out.slot]];
-        u32 n = 0;
-        for (; name[n] && n < 7; ++n) out.value[0][n] = name[n];
-        out.value[0][n] = 0;
+        ui::effect_name(out.type[out.slot], out.value[0], sizeof out.value[0]);
         char lfo[] = "SLOT 1";
         lfo[5] = static_cast<char>('1' + out.lfo);
         for (u32 j = 0; j < sizeof lfo; ++j) out.value[1][j] = lfo[j];

@@ -1,7 +1,7 @@
 # MultiFX by Veff
 
 MultiFX is built into the Veff fork's firmware, like Linear by Veff. It is a send
-effect that runs a chain of up to eight stock OP-XY effects in series on FX I or FX II.
+effect that runs a chain of up to eight effects in series on FX I or FX II.
 Each send can hold its own chain.
 
 ## Use it
@@ -9,14 +9,24 @@ Each send can hold its own chain.
 1. Choose **MultiFX** as the send's effect, as you would choose delay or reverb.
 2. On the send page, press **Stop + 1–8** to pick the slot the encoders edit.
    A popup names the slot and its effect.
-3. Turn **Shift + E1** to choose the slot's effect: none, delay, reverb, chorus,
-   phaser, dist or lofi.
+3. Turn **Shift + E1** to choose the slot's effect: none, stock's delay, reverb,
+   chorus, phaser, dist and lofi, then every effect machine this firmware
+   installed (Ring Mod, Ping Pong and any you chose on the installer site).
 4. Turn **Shift + E2** to choose the slot the send's LFO moves. An LFO aimed at
    param 1–4 then moves that slot's four parameters.
 5. Turn **E1–E4** to set the slot's parameters. The titles are the stock effect's
    own names for them. With a step held, the turns lock the step, as on any send.
 
 A track's send amount and the send's mute work as they do for any send effect.
+
+## Installed effects in a slot
+
+An effect machine in a slot works as it does on a send of its own, with two
+differences. E1–E4 set its first four controls; its other controls stay in the
+middle of their range. And its memory comes from the send's 1 MiB like every
+stage's, so two effects that each take a 512 KiB buffer fill a send. The
+chain's CPU is the sum of its stages: several heavy effect machines on one send
+can exceed the budget.
 
 ## How the chain sounds
 

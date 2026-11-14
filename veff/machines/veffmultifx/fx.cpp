@@ -1,4 +1,5 @@
-// MultiFX: up to eight stock send effects in series on one send. The send
+// MultiFX: up to eight send effects in series on one send: stock's, or any
+// effect machine installed beside it. The send
 // page (the Veff fork's platform) picks each slot's effect and edits its
 // parameters, which live in the send track's own words; this host builds the
 // stages and runs them.
@@ -18,10 +19,19 @@ namespace {
 using namespace opxy::multifx;
 // The stages' stock objects, per send and slot. Stock objects are never destroyed.
 u32 objects[2][kSlots][kObjectBytes / 4];
-// The scratch bytes each choice's stage took when last built (unknown until
+// The scratch bytes each effect's stage took when last built (unknown until
 // then, except stock's delay, reverb and chorus, read from their inits).
 const u32 kUnknown = 0xffffffffu;
-u32 bytes_of[kChoices] = {0, 352800, 237864, 65536, kUnknown, kUnknown, kUnknown};
+u32 bytes_of[kEffects];
+bool sizes_known;
+u32 known_bytes(u32 effect) {
+    if (!sizes_known) {
+        for (u32 i = 0; i < kEffects; ++i) bytes_of[i] = kUnknown;
+        bytes_of[0] = 352800; bytes_of[5] = 237864; bytes_of[12] = 65536;
+        sizes_known = true;
+    }
+    return bytes_of[effect];
+}
 
 void* object(u32 send, u32 slot) { return objects[send - 14][slot]; }
 u32 aligned(u32 at) { return (at + 31) & ~31u; }
@@ -48,8 +58,8 @@ void gap_after(const State& s, u32 slot, u32 from, u32& start, u32& end) {
 void build_slot(State& s, u32 k, u32 c) {
     s.type[k] = static_cast<u8>(c);
     s.ready[k] = 0; s.at[k] = s.size[k] = 0;
-    if (c == kNone || !stage_create(kStockType[c], object(s.send, k))) return;
-    const u32 need = bytes_of[c];
+    if (c >= kEffects || !stage_create(c, object(s.send, k))) return;
+    const u32 need = known_bytes(c);
     u32 start = 0, end = 0, best = kScratchBytes, best_end = kScratchBytes;
     for (u32 from = 0; from < kScratchBytes; from = end + 1) {
         gap_after(s, k, from, start, end);
@@ -105,6 +115,9 @@ void process(State& s, opxy::Channel left, opxy::Channel right, opxy::Parameters
     for (u32 k = 0; k < kSlots; ++k) {
         if (!s.ready[k]) continue;
         for (u32 j = 0; j < 4; ++j) stage_record[j] = record[kParamWord[k][j]];
+        // An SDK effect reads eight controls: the slot sets four, the rest
+        // sit in the middle rather than in another slot's words.
+        if (!stock_effect(s.type[k])) for (u32 j = 4; j < 8; ++j) stage_record[j] = 0x40000000;
         for (u32 i = 0; i < opxy::block_frames; ++i) { wet_left[i] = left[i]; wet_right[i] = right[i]; }
         void* stage = object(send, k);
         stage_process(stage, wet_left, wet_right, stage_record);

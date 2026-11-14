@@ -22,20 +22,29 @@ const u32 kLfoWord = 45;
 const u8 kParamWord[kSlots][4] = {
     {0, 1, 2, 3}, {4, 5, 6, 7}, {8, 9, 10, 11}, {12, 13, 14, 15},
     {20, 21, 22, 28}, {29, 30, 31, 32}, {33, 34, 35, 37}, {38, 39, 17, 18}};
-// A slot's choices: none, then stock's send effects by their stock type IDs.
-const u32 kChoices = 7;
-const u32 kNone = 0;
-const u32 kStockType[kChoices] = {19, 0, 5, 12, 13, 14, 15};
-const char* const kChoiceName[kChoices] = {"NONE", "DELAY", "REVERB", "CHORUS", "PHASER", "DIST", "LOFI"};
+// A slot's effect, as an effect record number (stock's and the SDK's share
+// one table), or kNone. The slot's byte holds 0 for none, 0x80 | the number
+// for any installed effect, or 1..6 for stock's six send effects as the first
+// prototype stored them (delay, reverb, chorus, phaser, dist, lofi).
+const u32 kNone = 0xff;
+const u32 kEffects = 63;
+const u32 kStockEffects = 6;
+const u8 kStockEffect[kStockEffects] = {0, 5, 12, 13, 14, 15};
+inline bool stock_effect(u32 effect) {
+    for (u32 i = 0; i < kStockEffects; ++i) if (kStockEffect[i] == effect) return true;
+    return false;
+}
+inline u32 slot_byte(u32 effect) { return effect < kEffects ? 0x80 | effect : 0; }
 // A stock FX object's size: stock builds every effect in a 480-byte slot.
 const u32 kObjectBytes = 480;
 // Each send's scratch memory, which the chain divides among its stages.
 const u32 kScratchBytes = 1048576;
 
-// Slot `slot`'s choice from its type word (type_word(slot)).
+// Slot `slot`'s effect from its type word (type_word(slot)), or kNone.
 inline u32 choice(i32 word, u32 slot) {
-    const u32 c = (static_cast<u32>(word) >> (8 * (slot & 3))) & 0xff;
-    return c < kChoices ? c : kNone;
+    const u32 b = (static_cast<u32>(word) >> (8 * (slot & 3))) & 0xff;
+    if (b & 0x80) return (b & 0x7f) < kEffects ? b & 0x7f : kNone;
+    return b >= 1 && b <= kStockEffects ? kStockEffect[b - 1] : kNone;
 }
 // The slot the send's LFO moves, from word kLfoWord.
 inline u32 lfo_slot(i32 word) {
@@ -67,7 +76,8 @@ void mark_chain(u32 send);
 struct View {
     u8 slot;
     u8 lfo;   // the slot the send's LFO moves
-    u8 type[kSlots];
+    u8 type[kSlots];        // each slot's effect, or kNone
+    char name[kSlots][10];  // each slot's effect's name, upper case, "-" for none
     const char* title[4];
     char value[4][8];
 };
