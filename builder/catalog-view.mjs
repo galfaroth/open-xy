@@ -46,23 +46,24 @@ export function createCatalogView({core, visuals, snapshots, modeFor, getKit, is
     return b;
   }
 
-  // "Based on Open-XY 0.0.5 · staging a2893dd", linked to that upstream commit.
-  // Green when this installer carries Open-XY's latest staging; yellow while an Open-XY
-  // SDK change waits for its hardware test with Linear by Veff (tools/veff_sync.py).
+  // "Based on Open-XY 0.0.6 · staging a2893dd", linked to that upstream commit.
+  // Green: this installer is what was tested on an OP–XY ("tested" in sync-status.json,
+  // tools/veff_sync.py). A newer Open-XY staging waiting for that test is named beside it.
   function renderSync() {
     const repository = data.upstream?.repository ?? 'https://github.com/etcetc000/open-xy';
-    const testing = SYNC.state === 'in-testing';
-    const title = testing
-      ? 'Open-XY has changed its SDK' + (SYNC.pending?.since ? ' (in testing since ' + SYNC.pending.since + ')' : '') +
-        '. Linear by Veff is being tested on an OP–XY with it; until then this installer stays on the last tested Open-XY, and the update follows, usually within a few days.'
-      : 'Every synth, effect, player and extension on Open-XY staging is here.';
+    const waiting = SYNC.state === 'in-testing';
+    const tested = SYNC.tested ? 'Tested on Open-XY ' + SYNC.tested : 'Up to date with Open-XY';
+    const title = waiting
+      ? 'This installer is the Open-XY ' + (SYNC.tested ?? '') + ' build tested on an OP–XY with Linear, MultiFX and Lab by Veff. ' +
+        'Open-XY has moved on since' + (SYNC.pending?.since ? ' ' + SYNC.pending.since : '') +
+        '; that update follows once it is tested too, usually within a few days.'
+      : 'Every synth, effect, player and extension on Open-XY staging is here, tested on an OP–XY.';
     for (const target of doc.querySelectorAll('[data-veff-sync]')) {
-      const dot = node('span', undefined, 'sync-dot'); dot.dataset.state = testing ? 'testing' : 'current';
+      const dot = node('span', undefined, 'sync-dot'); dot.dataset.state = 'current';
       dot.setAttribute('aria-hidden', 'true');
-      const label = testing ? 'Open-XY SDK update in testing' : 'Up to date with Open-XY';
-      target.replaceChildren(dot, node('span', label, 'sync-label'));
-      if (testing && SYNC.pending?.commit)
-        target.append(' · ', link('staging ' + SYNC.pending.commit.slice(0, 7), repository + '/commit/' + SYNC.pending.commit));
+      target.replaceChildren(dot, node('span', tested, 'sync-label'));
+      if (waiting && SYNC.pending?.commit && target.dataset.veffSync !== 'short')
+        target.append(' · next: ', link('staging ' + SYNC.pending.commit.slice(0, 7), repository + '/commit/' + SYNC.pending.commit));
       target.title = title;
       if (target.dataset.veffSync !== 'short') target.append(node('span', ' — ' + title, 'sync-detail'));
     }
@@ -210,7 +211,6 @@ export function createCatalogView({core, visuals, snapshots, modeFor, getKit, is
         card.append(node('p', feature.summary ?? ''));
         if (target.dataset.veffFeatures === 'full') for (const text of feature.help ?? []) card.append(node('p', text, 'veff-feature-help'));
         if (feature.note) card.append(node('p', feature.note, 'veff-feature-note'));
-        if (feature.tested) card.append(node('p', feature.tested, 'veff-feature-tested'));
         if (feature.guide) {
           const more = node('a', 'Read more →', 'veff-feature-more');
           more.href = '#/' + feature.guide; more.dataset.guide = feature.guide; card.append(more);

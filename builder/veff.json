@@ -57,7 +57,6 @@
         "Shift + E1 offers stock's delay, reverb, chorus, phaser, dist and lofi, then every effect machine in your build: choose them on this site and they appear in the chain too.",
         "Several delays and reverbs fit on one send: MultiFX gives each its own part of the send's memory."
       ],
-      "tested": "Tested on an OP–XY: works.",
       "guide": "multifx"
     },
     {
@@ -72,7 +71,6 @@
         "Turn on lab mode in Project Settings > General. Stop + Sample opens the commit panel: E1 last note or sequence, E2 track or bars, E3 before or after the master, E4 T7 or T7 + palette; click E4 to commit. The panel explains each choice on screen.",
         "Commits are saved under vefflab/ in User samples, named after the project with a lineage that counts down from 99."
       ],
-      "tested": "Tested on an OP–XY: works.",
       "guide": "lab"
     }
   ],
