@@ -69,7 +69,7 @@
         "T7 is temporary: a Sampler that always holds the newest commit, replaced by the next one. Play it, sequence it, or commit it again to stack generations.",
         "T8 builds your palette: with E4 set to T7 + palette, each commit also lands on the next free pad of its Drum Sampler, left to right.",
         "When the palette is full or you like it, save T8 as an instrument preset and simply load it on any track, in this project or another, then start a fresh palette.",
-        "Turn on lab mode in Project Settings > General. Stop + Sample opens the commit panel: E1 last note or sequence, E2 track or bars, E3 before or after the master, E4 T7 or T7 + palette; click E4 to commit. The panel explains each choice on screen.",
+        "Turn on lab mode in Project Settings > General: it makes T7 a Sampler and T8 a Drum Sampler. Stop + Sample opens the commit panel: E1 last note or sequence, E2 track or bars, E3 before or after the master, E4 T7 or T7 + palette; click E4 to commit. The panel explains each choice on screen.",
         "Commits are saved under vefflab/ in User samples, named after the project with a lineage that counts down from 99."
       ],
       "guide": "lab"
