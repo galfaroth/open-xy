@@ -50,7 +50,7 @@
       "id": "veffmultifx",
       "name": "MultiFX by Veff",
       "machine": "veffmultifx",
-      "summary": "Chains of up to eight stock effects on FX I and FX II, built into this installer's firmware.",
+      "summary": "Chains of up to eight stock effects on FX I and FX II, built into this installer's firmware: several delays, reverbs and more on one send.",
       "help": [
         "Put MultiFX on a send, then press Stop + 1–8 to pick a slot, Shift + E1 to choose its effect (delay, reverb, chorus, phaser, dist, lofi), Shift + E2 for the slot the send's LFO moves and E1–E4 for its parameters. Each slot's parameters take step locks.",
         "Several delays and reverbs fit on one send: MultiFX gives each its own part of the send's memory."
@@ -60,9 +60,13 @@
     {
       "id": "vefflab",
       "name": "Lab by Veff",
-      "summary": "A sound-design bench in any project: commit a sound as a sample with one gesture, onto T7 and a palette on T8.",
+      "summary": "A sound-design bench in any project: make a sound on T1–T6, commit it as a sample with one gesture, play it on T7 and collect the keepers on T8.",
       "help": [
-        "Turn on lab mode in Project Settings > General. Stop + Sample opens the commit panel: E1 last note or sequence, E2 track or bars, E3 before or after the master, E4 T7 or T7 + palette; click E4 to commit.",
+        "T1–T6 stay ordinary tracks: build a sound and its sequence there, with MultiFX on the sends if you like. That is what you commit.",
+        "T7 is temporary: a Sampler that always holds the newest commit, replaced by the next one. Play it, sequence it, or commit it again to stack generations.",
+        "T8 builds your palette: with E4 set to T7 + palette, each commit also lands on the next free pad of its Drum Sampler, left to right.",
+        "When the palette is full or you like it, save T8 as an instrument preset and simply load it on any track, in this project or another, then start a fresh palette.",
+        "Turn on lab mode in Project Settings > General. Stop + Sample opens the commit panel: E1 last note or sequence, E2 track or bars, E3 before or after the master, E4 T7 or T7 + palette; click E4 to commit. The panel explains each choice on screen.",
         "Commits are saved under vefflab/ in User samples, named after the project with a lineage that counts down from 99."
       ],
       "note": "An early prototype."

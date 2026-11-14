@@ -63,6 +63,6 @@
   <text id="veffmultifx_text_31" transform="matrix(1 0 0 1 358 138)" fill="#7A7A7A" font-family="UniversNextPro-Light" font-size="11px">-</text>
   <circle id="veffmultifx_palette_0" transform="matrix(1 0 0 1 640 120)" cx="0" cy="0" r="1" fill="#1A1A1A" stroke="#1A1A1A" stroke-width="1"/>
   <circle id="veffmultifx_palette_1" transform="matrix(1 0 0 1 640 120)" cx="0" cy="0" r="1" fill="#3A3A3A" stroke="#3A3A3A" stroke-width="1"/>
-  <circle id="veffmultifx_palette_2" transform="matrix(1 0 0 1 640 120)" cx="0" cy="0" r="1" fill="#D2D2D2" stroke="#D2D2D2" stroke-width="1"/>
+  <circle id="veffmultifx_palette_2" transform="matrix(1 0 0 1 640 120)" cx="0" cy="0" r="1" fill="#5E5E5E" stroke="#5E5E5E" stroke-width="1"/>
   <circle id="veffmultifx_palette_3" transform="matrix(1 0 0 1 640 120)" cx="0" cy="0" r="1" fill="#FF4F9A" stroke="#FF4F9A" stroke-width="1"/>
 </g>

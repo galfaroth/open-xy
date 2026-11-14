@@ -10,7 +10,7 @@ const browserRoot = resolve(root, 'builder');
 const renderers = ['controls.mjs', 'display.mjs', 'engine.mjs', 'processor.mjs', 'graphics.mjs'].map(name => resolve(root, 'sdk/browser', name));
 // Data core.mjs shares with the tooling: the init preset template (tooling.adapters.default_preset).
 const sharedData = [resolve(root, 'tooling/default_preset.json'), resolve(root, 'docs/arranger.md')];
-const browserFiles = ['index.html', 'entry.mjs', 'style.css', 'app.mjs', 'graphics-configuration.mjs', 'machine-snapshots.mjs', 'graphics-dialog.mjs', 'core.mjs', 'browser.mjs', 'wizard.mjs', 'ferret.mjs', 'mtp.mjs', 'visuals.mjs', 'audition.mjs', 'catalog-view.mjs', 'veff.json', 'linear-preview.json', 'sync-status.json', 'linear-guide-media.json'];
+const browserFiles = ['index.html', 'entry.mjs', 'style.css', 'app.mjs', 'graphics-configuration.mjs', 'machine-snapshots.mjs', 'graphics-dialog.mjs', 'core.mjs', 'browser.mjs', 'wizard.mjs', 'ferret.mjs', 'mtp.mjs', 'visuals.mjs', 'audition.mjs', 'catalog-view.mjs', 'veff.json', 'linear-preview.json', 'sync-status.json', 'linear-guide-media.json', 'veff-media.json'];
 // The Open-XY revision this site is based on, for the installer to name
 // (builder/catalog-view.mjs): the release in VERSION and the upstream staging commit
 // this checkout contains, when that branch is known locally.

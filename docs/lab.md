@@ -10,14 +10,19 @@ Project Settings > General > **lab mode**: On. The project keeps the setting in
 its companion file (`song.xy.oxyl`), next to Linear's mode. Lab and Linear can
 be on together.
 
-Lab's two tracks:
+## How the tracks work in Lab
 
 | Track | Role |
 | --- | --- |
-| T7 | A Sampler that always holds the newest commit |
-| T8 | The palette: a Drum Sampler, filled pad by pad from the left |
+| T1–T6 | Ordinary tracks. Build a sound and its sequence here, with MultiFX on the sends if you like. This is what you commit: one track's last note, or the whole pattern. |
+| T7 | Temporary. A Sampler that always holds the newest commit; the next commit replaces it. Play it, sequence it, or commit it again to stack generations. |
+| T8 | The palette. A Drum Sampler: with E4 set to T7 + palette, each commit also lands on its next free pad, left to right, 24 pads. |
 
-T1–T6 stay ordinary tracks with their own sequences.
+When the palette is full, or simply good, save T8 as an instrument preset (the
+OP-XY's own preset save) and load it on any track, in this project or another.
+Then clear T8, or load an empty Drum Sampler, and start a fresh palette.
+
+Make T7 a Sampler and T8 a Drum Sampler before the first commit.
 
 ## Commit a sound
 
