@@ -32,6 +32,7 @@ int sdk_engine_installed(const void*) __asm__("sdk_engine_installed");
 int sdk_stock_engine_known(const void*) __asm__("sdk_stock_engine_known");
 void sdk_arranger_screen_startup() __asm__("sdk_arranger_screen_startup");
 void sdk_multifx_startup() __asm__("sdk_multifx_startup");
+void sdk_lab_startup() __asm__("sdk_lab_startup");
 int sdk_arranger_screen_owned(u32) __asm__("sdk_arranger_screen_owned");
 @DECLARATIONS@
 }
@@ -64,6 +65,7 @@ void sdk_startup_screen() {
 @SCREENS@
     sdk_arranger_screen_startup();  // Linear by Veff's timeline page
     sdk_multifx_startup();          // MultiFX's send-page controls
+    sdk_lab_startup();              // Lab by Veff's commit panel
 }
 
 // The stock catalog insertion ABI. An own name is admitted only with its

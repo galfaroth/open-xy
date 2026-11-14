@@ -1,5 +1,6 @@
 #include "arranger_bounce_destination.hpp"
 #include "arranger_bounce_job.hpp"
+#include "lab_commit.hpp"
 #include "arranger_project.hpp"
 #include "arranger_state.hpp"
 #include "arranger_resolver.hpp"
@@ -119,6 +120,8 @@ void sdk_arranger_bounce_destination_apply(void* raw) {
 void sdk_arranger_bounce_sort_regions(opxy::u32 supplied_track) {
     // Stock5893bc creates a region for its argument track but sorts the GUI's
     // selected track at589504. Bounce keeps that selection on the source lane.
-    const u32 destination = scope && stock_gui_role() && bound() ? track : supplied_track;
+    // Lab by Veff assigns to T7/T8 the same way, outside a Linear bounce.
+    const u32 lab = sdk_lab_sort_track();
+    const u32 destination = lab < 8 ? lab : scope && stock_gui_role() && bound() ? track : supplied_track;
     stock<void(u32)>(0x8d58938c)(destination);
 }

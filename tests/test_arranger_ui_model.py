@@ -35,6 +35,8 @@ struct { bool pending; } pending_add;
 struct { void breakGroup() {} } history;
 namespace opxy { namespace platform { u32 selected_track() { return native_track; } }}
 bool view_active() { return top; }
+namespace opxy { namespace platform { namespace lab { struct Screen; }}}
+bool (*sdk_lab_screen)(opxy::platform::lab::Screen*) = nullptr;
 bool sdk_arranger_bounce_busy() { return busy; }
 bool sdk_arranger_project_linear() { return linear; }
 bool registered() { return ready; }

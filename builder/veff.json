@@ -56,6 +56,16 @@
         "Several delays and reverbs fit on one send: MultiFX gives each its own part of the send's memory."
       ],
       "note": "An early prototype."
+    },
+    {
+      "id": "vefflab",
+      "name": "Lab by Veff",
+      "summary": "A sound-design bench in any project: commit a sound as a sample with one gesture, onto T7 and a palette on T8.",
+      "help": [
+        "Turn on lab mode in Project Settings > General. Stop + Sample opens the commit panel: E1 last note or sequence, E2 track or bars, E3 before or after the master, E4 T7 or T7 + palette; click E4 to commit.",
+        "Commits are saved under vefflab/ in User samples, named after the project with a lineage that counts down from 99."
+      ],
+      "note": "An early prototype."
     }
   ],
   "machines": {

@@ -1257,4 +1257,4 @@ def main(argv=None, command=None):
 from . import arranger  # noqa: E402
 SDK_UNITS += ('arranger_state', 'arranger_ui', 'arranger_transport', 'arranger_stock', 'arranger_project',
               'arranger_bounce', 'arranger_bounce_remote', 'arranger_bounce_job', 'arranger_bounce_destination',
-              'module_events', 'multifx_stock', 'multifx_ui')
+              'module_events', 'multifx_stock', 'multifx_ui', 'lab_ui', 'lab_commit')
