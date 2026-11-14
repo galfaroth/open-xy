@@ -1,5 +1,6 @@
 import VEFF from './veff.json' with { type: 'json' };
 import LINEAR_PREVIEW from './linear-preview.json' with { type: 'json' };
+import VEFF_MEDIA from './veff-media.json' with { type: 'json' };
 import SYNC from './sync-status.json' with { type: 'json' };
 // Linear by Veff's user guide, shown at #/linear exactly as the repository documents it.
 import LINEAR_GUIDE from '../docs/arranger.md?raw';
@@ -189,6 +190,15 @@ export function createCatalogView({core, visuals, snapshots, modeFor, getKit, is
           img.alt = 'Linear by Veff on the OP–XY screen: playing an arrangement, adding and stretching a clip, the actions menu, bouncing a clip to a sampler, the piano roll and muting a clip.';
           screen.append(img);
           screen.dataset.linearGuide = ''; screen.title = 'Read how Linear by Veff works';
+          card.append(screen);
+        }
+        // Other features' screens (builder/veff-media.json), each with its caption.
+        for (const shot of Array.isArray(VEFF_MEDIA[feature.id]) ? VEFF_MEDIA[feature.id] : []) {
+          const screen = node('figure', undefined, 'veff-feature-screen');
+          const img = doc.createElement('img');
+          img.src = shot.src; img.width = 480; img.height = 220; img.loading = 'lazy'; img.alt = shot.alt;
+          screen.append(img);
+          if (target.dataset.veffFeatures === 'full') screen.append(node('figcaption', shot.alt));
           card.append(screen);
         }
         card.append(node('p', feature.summary ?? ''));
@@ -407,6 +417,8 @@ export function createCatalogView({core, visuals, snapshots, modeFor, getKit, is
     // Firmware features every build carries (Linear by Veff), shown as fixed extension cards.
     builtIn: () => (data.features ?? []).map(f => ({name: f.name, summary: f.summary ?? '',
       screen: f.preview === 'linear' ? LINEAR_PREVIEW.gif : null, guide: f.preview === 'linear'})),
+    // The machines a built-in feature brings (MultiFX's chain effect): in every build, never a card of their own.
+    builtInMachines: () => (data.features ?? []).map(f => f.machine).filter(Boolean),
     selected: showSelection,
   };
 }

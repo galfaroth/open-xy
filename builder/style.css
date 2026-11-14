@@ -139,6 +139,7 @@ main { max-width:1440px; margin:0 auto; padding:0 var(--gutter) 28px; }
 .veff-feature .veff-kicker { margin-bottom:8px; }
 .veff-feature-screen { margin:4px 0 12px; background:#000; border:1px solid #2a2a2e; }
 .veff-feature-screen img { display:block; width:100%; height:auto; }
+.veff-feature-screen figcaption { padding:6px 8px; color:#9a9aa0; font-size:12px; line-height:1.4; }
 .veff-featured .veff-feature-screen { display:none; }
 .veff-feature h3 { font-size:22px; margin-bottom:6px; }
 .veff-feature p { margin:0; color:var(--ink-2); font-size:14.5px; }

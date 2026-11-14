@@ -143,7 +143,14 @@ export async function createBuilder({core = Core, wizardApi = Wizard, retained =
   document.addEventListener('keydown', event => { if (event.key === 'Escape') stopAudio(); });
   const status = (message = '', error = false) => { $('status').textContent = message; $('status').dataset.error = String(error); };
   const fail = error => status(error.message || String(error), true);
+  // Machines built into every firmware here (builder/veff.json features): always selected.
+  const builtInMachines = () => (view?.builtInMachines?.() ?? []).filter(id => kit?.machines.some(m => m.id === id));
+  function withBuiltIns() {
+    const missing = builtInMachines().filter(id => !selected.includes(id));
+    if (missing.length) selected = [...missing, ...selected];
+  }
   function invalidate() {
+    withBuiltIns();
     wizard.invalidate();
     revision++; layout = built = null;
     if (downloadUrl) { URL.revokeObjectURL(downloadUrl); downloadUrl = null; }
@@ -701,7 +708,7 @@ export async function createBuilder({core = Core, wizardApi = Wizard, retained =
     if (!builderPreview && browsing.kind === 'extension') browsing.kind = 'all';
     const rows = browsing.kind === 'extension' ? [] :
       core.browseMachines(kit.machines, {...browsing, keywords, favorites: browsing.favoritesOnly ? favorites : null})
-        .filter(({m}) => !veffOnly || view?.isVeff?.(m));
+        .filter(({m}) => (!veffOnly || view?.isVeff?.(m)) && !builtInMachines().includes(m.id));
     const extensionCards = catalogExtensions();
     const filtered = Boolean(browsing.query.trim() || browsing.kind !== 'all' || browsing.keywords.length || browsing.favoritesOnly);
     const hiddenSelected = selected.filter(id => !rows.some(({m}) => m.id === id)).length;
@@ -988,6 +995,7 @@ export async function createBuilder({core = Core, wizardApi = Wizard, retained =
     if (builderPreview || !acknowledged) return;
     const ticket = revision; $('build').disabled = true; status('Linking and checking your build…');
     try {
+      withBuiltIns();
       const selection = [...selected], settings = graphicsConfiguration.settings(selectedMachines()), extensions = core.extensionSelection(kit, selectedExtensions);
       const expanded = expandedMemory(), memory = kitFor(expanded), result = core.linkKit(memory, selection, numbers, extensions);
       const files = await core.buildAssets(memory, selection, catalog, result.numbers, settings, result.extensions);

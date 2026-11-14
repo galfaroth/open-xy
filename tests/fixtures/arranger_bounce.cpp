@@ -131,6 +131,11 @@ bool sdk_arranger_bounce_start(){running=start_ok;return start_ok;}
 void sdk_arranger_bounce_stop(){running=false;}
 void sdk_arranger_bounce_end(){++ends;running=false;}
 bool sdk_arranger_bounce_transport_running(){return running;}
+// Lab by Veff's source and destination: unused by Linear's bounces here.
+bool sdk_lab_source_begin(){return false;} bool sdk_lab_source_start(){return false;}
+bool sdk_lab_source_running(){return false;} void sdk_lab_source_stop(){} void sdk_lab_source_end(){}
+const char* sdk_lab_path(){return "";} bool sdk_lab_destination_begin(const char*,u32){return false;}
+u32 sdk_lab_destination_status(){return 2;}
 int main(){
     store_word(0x840a0524,0x8888);store_word(0x84039384,3);store_word(0x84039394,1234);require(model.insertAt(0,{0,0,0,1920,0,1920}),"clip");
     require(model.setMuted(0,true),"mute source instance");

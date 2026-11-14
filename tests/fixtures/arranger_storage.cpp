@@ -117,7 +117,7 @@ int main() {
     changedWord(length, 8, 4);                 // unsupported schema, even with valid checksum
     changedWord(length, 8, 1);                 // schema1 requires the original 20-byte record length
     changedWord(length, 12, length + 20);
-    changedWord(length, 32, 4);                // unknown flags
+    changedWord(length, 32, 8);                // unknown flags
     changedWord(length, 40, 999);              // empty loop
     changedWord(length, 48, 8);                // invalid selected track
     changedWord(length, 52, 0xffffffffu);      // bounded count before size arithmetic
@@ -173,6 +173,10 @@ int main() {
     require(encode(full, binding, bytes, max_bytes) == max_bytes, "maximum serialized size");
     require(decode(bytes, max_bytes, binding, loaded), "maximum decode");
     require(loaded.model.clip(255) && !loaded.enabled && !loaded.model.loopEnabled(), "maximum/default flags");
+    require(!loaded.lab, "Lab mode off by default");
+    State lab; lab.lab = true;
+    require(encode(lab, binding, bytes, max_bytes) == header_bytes && decode(bytes, header_bytes, binding, loaded) &&
+            loaded.lab && !loaded.enabled, "Lab mode round trip (flags bit 2)");
     State empty;
     require(encode(empty, binding, bytes, max_bytes) == header_bytes, "empty encoded");
     require(decode(bytes, header_bytes, binding, loaded) && !loaded.model.clip(255), "empty replaces full model");

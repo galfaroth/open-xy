@@ -14,6 +14,14 @@ volatile u32 owned, frames, captures, capture_error, stopped;
 volatile u32 saving, writer_done, writer_ok, writer_frames, writer_hash, save_complete;
 u32 last_cookie, rejected_cookie, released_cookie, previous_source, previous_enabled, previous_threshold;
 u32 started_ms, saving_ms, reported_frames, reported_error, expected_frames;
+// Veff: a pre-master bounce records the mix before the master EQ and dynamics.
+// The mix engine's sum of the tracks and both sends, still in the main bus
+// 0x11b00948 when it fetches the master EQ's object (8d511b6c), is copied
+// here each block, then recorded in place of the DAC feed resampling hears.
+const u32 kMainBus = 0x11b00948, kBusWords = 128;
+volatile u32 pre_master;
+i32 pre_master_block[kBusWords];
+bool pre_master_fresh;
 bool ready_sent, stop_sent, result_sent, release_pending;
 char expected_path[97];
 
@@ -63,11 +71,12 @@ void prepare(const wire::Message& message) {
         return;
     }
     last_cookie = message.cookie;
-    if (message.args[0] <= 6000 || message.args[0] > 877904 || message.args[1] || message.args[2]) {
+    if (message.args[0] <= 6000 || message.args[0] > 877904 || message.args[1] > 1 || message.args[2]) {
         reject(message.cookie, Invalid); return;
     }
     if (owned || word(0x842e2a18) || byte(recorder + 0x25) ||
         word(0x84a50b7c) != word(0x84a50b80)) { reject(message.cookie, Busy); return; }
+    pre_master = message.args[1] == 0; pre_master_fresh = false;
     previous_source = stock<u32()>(0x8d4db3f0)();
     previous_enabled = stock<u32()>(0x8d4db468)();
     previous_threshold = byte(recorder + 0x26);
@@ -161,10 +170,22 @@ void sdk_arranger_bounce_capture(u32 object, const void* pcm, u32 words) {
     }
     set_byte(recorder + 0x26, 0);
     *at<volatile u32>(0x840483e4) = 4;
+    // Pre-master: this block's mix as it was before the master section.
+    if (pre_master && pre_master_fresh) { pcm = pre_master_block; pre_master_fresh = false; }
     stock<void(u32, const void*, u32)>(0x8d5072d8)(object, pcm, words);
     frames = word(recorder + 0xc) / 2;
     if (frames >= 882000) capture_error = Capture;
     barrier();
+}
+
+u32 sdk_arranger_bounce_master_tap() {
+    const u32 equalizer = stock<u32()>(0x8d4ff6f4)();
+    if (owned && pre_master && !stopped) {
+        const volatile i32* bus = at<const volatile i32>(kMainBus);
+        for (u32 i = 0; i < kBusWords; ++i) pre_master_block[i] = bus[i];
+        pre_master_fresh = true;
+    }
+    return equalizer;
 }
 
 void sdk_arranger_bounce_stopped(u32 object) {

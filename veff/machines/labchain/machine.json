@@ -1,0 +1,7 @@
+{
+  "schema": 1,
+  "sdk": "1.13",
+  "kind": "effect",
+  "description": "Four effects in series for sound design: EQ, drive, fold, crunch, bits, filter, tape, reverb, chorus, phaser and more.",
+  "dryLevel": 0
+}

@@ -132,6 +132,11 @@ alignas(4) volatile u32 record_owner;
 alignas(4) volatile u32 record_status;
 u32 record_lane = 8, record_pattern, record_generation;
 bool bounce_active, bounce_was_playing, bounce_started;
+// Veff: Lab by Veff's commit plays the native pattern from its start for a
+// number of ticks (Linear off), counted in the native branch of the dispatch.
+bool lab_active;
+volatile u32 lab_running;
+u32 lab_limit, lab_elapsed;
 alignas(4) volatile u32 bounce_running;
 u32 bounce_track, bounce_limit, bounce_position, bounce_generation, bounce_project;
 const u32 recorder = 0x860c072c, pending_notes = 0x860c0134;
@@ -446,6 +451,18 @@ extern "C" void sdk_arranger_dispatch(u32 controller, u32 delta, u32 flag) {
     sdk_arranger_bounce_dispatch(controller);
     if (!sdk_arranger_audio_active()) {
         if (bounce_active) sdk_arranger_bounce_end();
+        if (lab_active && lab_running) {
+            // Lab: stop once the requested ticks have played; stock's interval
+            // includes its end, so the next bar's downbeat stays out.
+            if (lab_elapsed + delta >= lab_limit) {
+                const u32 rest = lab_limit - lab_elapsed;
+                if (rest > 1) stock<void(u32, u32, u32)>(0x8d598040)(controller, rest - 1, flag);
+                stock<void(u32)>(0x8d597d00)(controller);
+                lab_elapsed = lab_limit; lab_running = 0; barrier();
+                return;
+            }
+            lab_elapsed += delta;
+        }
         transport_handled = transport_sequence;
         if (was_active) {
             close_recorded_notes();
@@ -640,6 +657,31 @@ void sdk_arranger_bounce_end() {
     }
     barrier();
 }
+
+bool sdk_lab_transport_begin(u32 ticks) {
+    using namespace opxy::platform;
+    if (lab_active || bounce_active || !ticks || !dispatch_controller || sdk_arranger_audio_active() ||
+        !project_matches()) return false;
+    stock<void(u32)>(0x8d597d00)(dispatch_controller);
+    lab_limit = ticks; lab_elapsed = 0; lab_running = 0; lab_active = true;
+    barrier();
+    return true;
+}
+bool sdk_lab_transport_start() {
+    using namespace opxy::platform;
+    if (!lab_active || lab_running || !project_matches() || sdk_arranger_audio_active()) return false;
+    lab_elapsed = 0; lab_running = 1; barrier();
+    sdk_arranger_stock_start(dispatch_controller);
+    return true;
+}
+bool sdk_lab_transport_running() { opxy::platform::barrier(); return lab_running != 0; }
+void sdk_lab_transport_stop() {
+    using namespace opxy::platform;
+    if (!lab_active) return;
+    if (lab_running && project_matches()) stock<void(u32)>(0x8d597d00)(dispatch_controller);
+    lab_running = 0; barrier();
+}
+void sdk_lab_transport_end() { sdk_lab_transport_stop(); lab_active = false; opxy::platform::barrier(); }
 
 bool sdk_arranger_bounce_transport_running() {
     opxy::platform::barrier();

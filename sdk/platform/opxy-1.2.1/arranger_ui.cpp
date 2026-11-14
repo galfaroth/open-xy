@@ -12,6 +12,7 @@
 #include "arranger_menu.hpp"
 #include "arranger_bounce.hpp"
 #include "arranger_bounce_destination.hpp"
+#include "lab_ui.hpp"
 #include "arranger_project.hpp"
 #include "screen.hpp"
 #include "arranger_pending_add.hpp"
@@ -964,6 +965,27 @@ void render_menu(Object* o) {
     set_text(o->feedback, "E1 SELECT / E2 ADJUST / CLICK E1 OR E2 / ARRANGE CLOSE");
     render_toast(o); draw(&o->base);
 }
+// Lab by Veff's commit panel (lab_ui.cpp) on this page: the menu's rows show
+// a row per encoder (the turned one lit), then why, dimmed.
+void render_lab(Object* o, const platform::lab::Screen& lab) {
+    rectangle(o->loop_band, 0, 0, 0, 0);
+    rectangle(o->menu_background, 0, 22, 480, 174);
+    rectangle(o->menu_highlight, 8, 28 + lab.lit * 22, 464, 22);
+    set_text(o->title, "Lab by Veff - commit");
+    set_text(o->menu_selected, lab.rows[lab.lit]);
+    text_position(o->menu_selected, 16, 44 + lab.lit * 22, true);
+    for (u32 row = 0; row < 8; ++row) {
+        const bool shown = row < 7, plain = row < 4 && row != lab.lit, why = row >= 4 && shown;
+        set_text(o->menu_rows[row], plain ? lab.rows[row] : "");
+        set_text(o->menu_disabled[row], why ? lab.rows[row] : "");
+        text_position(o->menu_rows[row], 16, 44 + row * 22, plain);
+        text_position(o->menu_disabled[row], 16, 44 + row * 22, why);
+    }
+    set_text(o->controls, lab.controls);
+    set_text(o->feedback, lab.file);
+    set_text(o->status, "");
+    draw(&o->base);
+}
 void hide_menu(Object* o) {
     set_text(o->menu_selected, ""); text_position(o->menu_selected, 0, 0, false);
     rectangle(o->menu_background, 0, 0, 0, 0); rectangle(o->menu_highlight, 0, 0, 0, 0);
@@ -1036,6 +1058,8 @@ struct Renderer {
         o->bound = o->title && o->lane_highlight && o->selection && o->cursor && o->playhead && o->loop_band && o->status && o->controls && o->feedback;
     }
     static void frame(Object* o, i32) {
+        platform::lab::Screen lab;
+        if (o->bound && sdk_lab_screen && sdk_lab_screen(&lab)) { render_lab(o, lab); return; }
         if (!active || !o->bound) return;
         if (pending_add.pending && !pending_add.draw_requested) {
             // Keep the cached scene until publication and selection complete.
@@ -1139,7 +1163,9 @@ struct Renderer {
             out = append(out, "% - STOP CANCEL");
             set_text(o->controls, bounce_status == 2 ? "RENDERING CLIP" : bounce_status == 7 ? "ASSIGNING SAMPLE BELOW" : "PREPARING / SAVING SAMPLE");
         } else if (bounce_choice.open) {
-            set_text(o->controls, bounce_choice.engine == 2 ? "E1 SAMPLER / E2 FREE OR REPLACE BELOW" : "E1 DRUM / E2 FREE OR REPLACE BELOW");
+            set_text(o->controls, bounce_choice.engine == 2
+                ? (bounce_choice.post_master ? "E1 SAMPLER / E2 BELOW / E3 POST MASTER" : "E1 SAMPLER / E2 BELOW / E3 PRE MASTER")
+                : (bounce_choice.post_master ? "E1 DRUM / E2 BELOW / E3 POST MASTER" : "E1 DRUM / E2 BELOW / E3 PRE MASTER"));
             out = append(info, bounce_choice.confirmed ? "REPLACE BELOW? E4 CONFIRM / STOP CANCEL" :
                 bounce_choice.replace ? "REPLACE BELOW - E4 NEXT / STOP CANCEL" : "FREE LANE BELOW - E4 BOUNCE / STOP CANCEL");
         }
@@ -1262,6 +1288,8 @@ void sdk_arranger_screen_startup() {
 
 int sdk_arranger_screen_owned(u32 page) { return page == page_id && registered(); }
 u32 sdk_arranger_page(void*) {
+    // Lab by Veff's open commit panel draws on this page, Linear on or off.
+    if (sdk_lab_screen && sdk_lab_screen(nullptr) && registered()) return page_id;
     if (!sdk_arranger_project_linear() || editing || !registered()) return 47;
     // Stock can query the destination page before changing its top controller.
     sync_selected_lane(true);
@@ -1312,6 +1340,7 @@ void sdk_arranger_raw_event(const void* raw) {
                 announce("BOUNCE CANCELLED");
             } else if (bounce_choice.open && key == 13) {
                 if (bounce_choice.accept()) {
+                    sdk_arranger_bounce_post_master(bounce_choice.post_master);
                     const u32 result = selected_slot < 0 ? 2 : sdk_arranger_bounce_request(
                         static_cast<u32>(selected_slot), bounce_choice.engine, bounce_choice.replace);
                     if (!result) { bounce_choice.open = bounce_choice.confirmed = false; announce("BOUNCE STARTING"); }
@@ -1541,7 +1570,11 @@ void sdk_arranger_encoder(void* controller, u32 encoder, const void* raw) {
     }
 }
 
+bool (*sdk_lab_encoder)(u32, const void*) = nullptr;
+bool (*sdk_lab_screen)(platform::lab::Screen*) = nullptr;
 void sdk_arranger_encoder_dispatch(u32 encoder, const void* event) {
+    // Lab by Veff's open commit panel takes the encoders first.
+    if (sdk_lab_encoder && sdk_lab_encoder(encoder, event)) return;
     BarTimingEvent bar_event(0, false);
     if (pending_add.pending) return;
     if (sdk_arranger_bounce_busy()) return;

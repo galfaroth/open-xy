@@ -19,6 +19,7 @@ struct Binding {
 struct State {
     Model model;
     bool enabled = false;
+    bool lab = false;   // Veff: Lab by Veff's project mode (flags bit 2)
     u8 track = 0;
 };
 
@@ -64,7 +65,7 @@ inline u32 encode(const State& state, const Binding& binding, u8* output, u32 av
     write32(output + 20, binding.time_units);
     write32(output + 24, binding.project_bytes);
     write32(output + 28, binding.project_crc32);
-    write32(output + 32, (state.enabled ? 1u : 0u) | (state.model.loopEnabled() ? 2u : 0u));
+    write32(output + 32, (state.enabled ? 1u : 0u) | (state.model.loopEnabled() ? 2u : 0u) | (state.lab ? 4u : 0u));
     write32(output + 36, state.model.position());
     write32(output + 40, state.model.loopStart());
     write32(output + 44, state.model.loopEnd());
@@ -105,12 +106,13 @@ inline bool decode(const u8* input, u32 length, const Binding& expected, State& 
         read32(input + 24) != expected.project_bytes || read32(input + 28) != expected.project_crc32 ||
         read32(input + 60) != checksum(input, length)) return false;
     const u32 flags = read32(input + 32), track = read32(input + 48);
-    if (flags > 3 || track >= 8) return false;
+    if (flags > 7 || track >= 8) return false;
     // Caller-owned scratch avoids a full Model on the firmware worker stack.
     if (&candidate == &destination) return false;
     static const State blank;
     candidate = blank;
     candidate.enabled = (flags & 1) != 0;
+    candidate.lab = (flags & 4) != 0;
     candidate.track = static_cast<u8>(track);
     candidate.model.seek(read32(input + 36));
     if (!candidate.model.setLoop((flags & 2) != 0, read32(input + 40), read32(input + 44))) return false;

@@ -3360,6 +3360,46 @@
       "before": "ffe309ff",
       "symbol": "sdk_arranger_mtp_match",
       "call": true
+    },
+    {
+      "kind": "hook",
+      "address": "0x8d50dfc0",
+      "file_offset": "0x14521c",
+      "length": 4,
+      "before": "00e80000",
+      "symbol": "sdk_multifx_scratch_pair",
+      "call": false,
+      "name": "MultiFX: a send's paired scratch allocator, offset per chain stage"
+    },
+    {
+      "kind": "hook",
+      "address": "0x8d50e048",
+      "file_offset": "0x1452a4",
+      "length": 4,
+      "before": "00e80000",
+      "symbol": "sdk_multifx_scratch",
+      "call": false,
+      "name": "MultiFX: a send's scratch allocator, offset per chain stage"
+    },
+    {
+      "kind": "hook",
+      "address": "0x8d50f412",
+      "file_offset": "0x14666e",
+      "length": 4,
+      "before": "00e3594d",
+      "symbol": "sdk_multifx_lfo",
+      "call": true,
+      "name": "MultiFX: a send LFO's write, moved to the LFO slot's words"
+    },
+    {
+      "kind": "hook",
+      "address": "0x8d511b6c",
+      "file_offset": "0x148dc8",
+      "length": 4,
+      "before": "ffe3c46d",
+      "symbol": "sdk_arranger_bounce_master_tap",
+      "call": true,
+      "name": "Linear: the master EQ's object fetch, where a pre-master bounce copies the mix"
     }
   ],
   "compiler": "bfin-elf-gcc 8.0.0 (deanm1278/blackfin-plus-gnu e4408a1) + toolchain/gcc patches",

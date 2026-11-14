@@ -23,3 +23,10 @@ extern "C" bool sdk_arranger_bounce_transport_running() __asm__("sdk_arranger_bo
 // Capture adapters: Song delegates unchanged; Linear requires a current clip source.
 extern "C" bool sdk_arranger_extension_target(opxy::u32 track)
     __asm__("sdk_arranger_extension_target");
+// Veff: Lab by Veff's native playback for a commit (Linear off): stop, then
+// play the pattern from its start for `ticks` and stop.
+extern "C" bool sdk_lab_transport_begin(opxy::u32 ticks) __asm__("sdk_lab_transport_begin");
+extern "C" bool sdk_lab_transport_start() __asm__("sdk_lab_transport_start");
+extern "C" bool sdk_lab_transport_running() __asm__("sdk_lab_transport_running");
+extern "C" void sdk_lab_transport_stop() __asm__("sdk_lab_transport_stop");
+extern "C" void sdk_lab_transport_end() __asm__("sdk_lab_transport_end");

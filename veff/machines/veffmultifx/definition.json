@@ -1,0 +1,63 @@
+{
+  "schema": 1,
+  "id": "veffmultifx",
+  "name": "MultiFX",
+  "parameters": [
+    {
+      "id": "p1",
+      "label": "P1",
+      "default": 0.5,
+      "mapping": {
+        "kind": "linear",
+        "minimum": 0,
+        "maximum": 1
+      },
+      "display": "percent"
+    },
+    {
+      "id": "p2",
+      "label": "P2",
+      "default": 0.5,
+      "mapping": {
+        "kind": "linear",
+        "minimum": 0,
+        "maximum": 1
+      },
+      "display": "percent"
+    },
+    {
+      "id": "p3",
+      "label": "P3",
+      "default": 0.5,
+      "mapping": {
+        "kind": "linear",
+        "minimum": 0,
+        "maximum": 1
+      },
+      "display": "percent"
+    },
+    {
+      "id": "p4",
+      "label": "P4",
+      "default": 0.5,
+      "mapping": {
+        "kind": "linear",
+        "minimum": 0,
+        "maximum": 1
+      },
+      "display": "percent"
+    }
+  ],
+  "presets": {},
+  "resources": {
+    "display": {
+      "stateBytes": 20,
+      "stateAlignment": 4,
+      "paths": 0,
+      "points": 0,
+      "nodes": 18,
+      "texts": 32,
+      "palette": 4
+    }
+  }
+}

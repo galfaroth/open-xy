@@ -17,12 +17,14 @@ extern "C" bool sdk_arranger_bounce_destination_busy() __asm__("sdk_arranger_bou
 extern "C" void sdk_arranger_bounce_destination_cancel() __asm__("sdk_arranger_bounce_destination_cancel");
 extern "C" void sdk_arranger_bounce_send(opxy::u32, opxy::u32, opxy::u32, opxy::u32, opxy::u32)
     __asm__("sdk_arranger_bounce_send");
+#include "lab_commit.hpp"
 
 namespace {
 using namespace opxy;
 using namespace opxy::platform;
 namespace wire = opxy::platform::bounce_wire;
-struct Request { u32 slot, engine, track, start, end, frames, project, generation; bool replace; } request;
+struct Request { u32 slot, engine, track, start, end, frames, project, generation; bool replace, lab; } request;
+bool post_master;   // the next request records after the master section
 char saved_path[97];
 volatile u32 active, cancelled, dispatch_started, dispatch_done, ready, ready_frames, captured_frames;
 volatile u32 stop_ack, stop_intent, transport_started, trim_frames;
@@ -56,6 +58,14 @@ bool bound() {
 }
 void store_word(u32 address, u32 value) { *at<volatile u32>(address) = value; }
 bool copy_path(char (&path)[97]) {
+    if (request.lab) {
+        // Lab names its own file (lab_commit.cpp) in place of the editor's.
+        const char* own = sdk_lab_path();
+        u32 n = 0;
+        for (; own[n] && n < 96; ++n) path[n] = own[n];
+        path[n] = 0;
+        return n && !own[n];
+    }
     const u32 size = word(editor + 0x28), capacity = word(editor + 0x2c);
     if (!size || size > 96) return false;
     const char* source = at<const char>(capacity >= 16 ? word(editor + 0x18) : editor + 0x18);
@@ -88,7 +98,10 @@ void finish(u32 result) {
     if (editor) { store_word(editor + 0x38, previous_key); stock<void(u32, u32)>(0x8c0a46b4)(editor, 0); }
     barrier(); active = 0; state = result;
 }
+u32 begin_session(const Request& next);
 }
+
+void sdk_arranger_bounce_post_master(bool post) { if (!active) post_master = post; }
 
 u32 sdk_arranger_bounce_request(u32 slot, u32 engine, bool replace) {
     if (active || byte(0x860c6adc + 0x305f) || byte(0x860c6adc + 0x3060)) return 1;
@@ -99,10 +112,23 @@ u32 sdk_arranger_bounce_request(u32 slot, u32 engine, bool replace) {
         !sdk_arranger_bounce_destination_ready(slot, engine, replace)) return 2;
     const u32 duration = duration_frames(clip->length, project_bpm_x10());
     if (!duration) return 3;
+    return begin_session(Request{slot, engine, clip->track, clip->start, clip->start + clip->length,
+        duration, word(0x840a0524), stock<u32()>(0x8d584224)(), replace, false});
+}
+
+u32 sdk_arranger_bounce_lab(u32 frames, bool post) {
+    if (active || byte(0x860c6adc + 0x305f) || byte(0x860c6adc + 0x3060)) return 1;
+    if (!sdk_arranger_project_edit_ready()) return 4;
+    if (frames <= 6000 || frames > 882000 - 4096) return 3;
+    post_master = post;
+    return begin_session(Request{0, 0, 0, 0, 0, frames, word(0x840a0524), stock<u32()>(0x8d584224)(), false, true});
+}
+
+namespace {
+u32 begin_session(const Request& next) {
     editor = stock<u32()>(0x8c0a424c)();
     if (!editor || word(editor + 0x34)) return 1;
-    request = Request{slot, engine, clip->track, clip->start, clip->start + clip->length,
-        duration, word(0x840a0524), stock<u32()>(0x8d584224)(), replace};
+    request = next;
     if (!++cookie) ++cookie;
     diagnostic_polls = diagnostic_dispatches = diagnostic_captures = diagnostic_timeout = 0;
     previous_key = word(editor + 0x38);
@@ -117,6 +143,7 @@ u32 sdk_arranger_bounce_request(u32 slot, u32 engine, bool replace) {
     stock<void(u32, u32)>(0x8c0a46b4)(editor, 1);
     barrier(); active = 1;
     return 0;
+}
 }
 
 void sdk_arranger_bounce_receive(const wire::Message* message) {
@@ -166,20 +193,31 @@ u32 sdk_arranger_bounce_progress() {
     return request.frames ? (frames >= request.frames ? 1000 : frames * 1000u / request.frames) : 0;
 }
 
+namespace {
+// What plays during a capture: a Linear clip, or a Lab commit's source.
+bool source_begin() {
+    return request.lab ? sdk_lab_source_begin() : sdk_arranger_bounce_begin(request.track, request.start, request.end);
+}
+bool source_start() { return request.lab ? sdk_lab_source_start() : sdk_arranger_bounce_start(); }
+bool source_running() { return request.lab ? sdk_lab_source_running() : sdk_arranger_bounce_transport_running(); }
+void source_stop() { if (request.lab) sdk_lab_source_stop(); else sdk_arranger_bounce_stop(); }
+void source_end() { if (request.lab) sdk_lab_source_end(); else sdk_arranger_bounce_end(); }
+}
+
 void sdk_arranger_bounce_dispatch(u32) {
     if (!active) return;
     count(diagnostic_dispatches); barrier();
     if (finish_requested) {
-        if (!finish_ack) { if (dispatch_started) sdk_arranger_bounce_end(); barrier(); finish_ack = 1; }
+        if (!finish_ack) { if (dispatch_started) source_end(); barrier(); finish_ack = 1; }
         return;
     }
     if (dispatch_done) return;
     if (cancelled || !bound()) {
-        if (dispatch_started) sdk_arranger_bounce_stop();
+        if (dispatch_started) source_stop();
         barrier(); dispatch_done = 1; return;
     }
     if (!dispatch_started) {
-        if (!sdk_arranger_bounce_begin(request.track, request.start, request.end)) {
+        if (!source_begin()) {
             cancelled = 2; barrier(); dispatch_done = 1; return;
         }
         barrier(); dispatch_started = 1;
@@ -188,11 +226,11 @@ void sdk_arranger_bounce_dispatch(u32) {
         // Ready is a lower bound on stopped preroll: bridge latency may leave
         // additional leading silence. Do not claim sample-exact alignment.
         trim_frames = ready_frames;
-        if (!sdk_arranger_bounce_start()) { cancelled = 2; return; }
+        if (!source_start()) { cancelled = 2; return; }
         barrier(); transport_started = 1;
     }
-    if (transport_started && !sdk_arranger_bounce_transport_running()) {
-        sdk_arranger_bounce_stop();
+    if (transport_started && !source_running()) {
+        source_stop();
         stop_intent = 1; barrier(); dispatch_done = 1;
     }
 }
@@ -208,9 +246,9 @@ void sdk_arranger_bounce_poll() {
         fail_reason(1); cancelled = 2;
     }
     if (state == 7) {
-        if (cancelled) sdk_arranger_bounce_destination_cancel();
-        const u32 result = sdk_arranger_bounce_destination_status();
-        if (!sdk_arranger_bounce_destination_busy()) {
+        if (cancelled && !request.lab) sdk_arranger_bounce_destination_cancel();
+        const u32 result = request.lab ? sdk_lab_destination_status() : sdk_arranger_bounce_destination_status();
+        if (request.lab || !sdk_arranger_bounce_destination_busy()) {
             if (!cancelled && result != 1) fail_reason(5);
             finish(cancelled ? 5 : result == 1 ? 4 : 6);
         }
@@ -218,7 +256,7 @@ void sdk_arranger_bounce_poll() {
     }
     if (!prepare_sent && dispatch_started && !cancelled) {
         prepare_sent = true; barrier();
-        sdk_arranger_bounce_send(wire::Prepare, cookie, request.frames, 0, 0);
+        sdk_arranger_bounce_send(wire::Prepare, cookie, request.frames, post_master ? 1 : 0, 0);
     }
     if (transport_started && state == 1) state = 2;
     if (!prepare_sent) {
@@ -248,7 +286,8 @@ void sdk_arranger_bounce_poll() {
     if (!writer_ok) { fail_reason(3); finish(6); return; }
     if (writer_frames != frames || saved_frames != frames || !copy_path(saved_path) ||
         writer_path_hash != path_hash(saved_path)) { fail_reason(4); finish(6); return; }
-    if (!sdk_arranger_bounce_destination_begin(request.slot, request.engine, request.replace, saved_path, frames)) {
+    if (request.lab ? !sdk_lab_destination_begin(saved_path, frames) :
+        !sdk_arranger_bounce_destination_begin(request.slot, request.engine, request.replace, saved_path, frames)) {
         fail_reason(5); finish(6); return;
     }
     state = 7;
@@ -260,6 +299,9 @@ void sdk_arranger_bounce_saved(u32 object, u32 frames) {
     saved_frames = frames; barrier(); save_complete = 1;
 }
 void sdk_arranger_bounce_save_range(const char* path, u32 begin, u32 end, i32 key) {
-    if (active && saving && !begin && end == captured_frames && key == 60) begin = trim_frames;
+    if (active && saving && !begin && end == captured_frames && key == 60) {
+        begin = trim_frames;
+        if (request.lab) path = sdk_lab_path();   // Lab's own folder and name
+    }
     stock<void(const char*, u32, u32, i32)>(0x8d4d8874)(path, begin, end, key);
 }
