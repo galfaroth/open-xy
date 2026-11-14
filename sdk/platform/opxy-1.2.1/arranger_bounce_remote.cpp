@@ -11,6 +11,10 @@ namespace wire = opxy::platform::bounce_wire;
 const u32 recorder = 0x8429d5b0;
 enum Failure { Busy = 1, Invalid = 2, Capture = 3, Timeout = 4, Save = 5 };
 volatile u32 owned, frames, captures, capture_error, stopped;
+// Veff: the frame count after the last block louder than kQuiet (-60 dBFS),
+// sent with Stopped so a Lab note's commit can drop its silent tail.
+volatile u32 loud_frames;
+const i32 kQuiet = 0x200000;
 volatile u32 saving, writer_done, writer_ok, writer_frames, writer_hash, save_complete;
 u32 last_cookie, rejected_cookie, released_cookie, previous_source, previous_enabled, previous_threshold;
 u32 started_ms, saving_ms, reported_frames, reported_error, expected_frames;
@@ -60,7 +64,7 @@ void reject(u32 cookie, u32 reason) {
 }
 void prepare(const wire::Message& message) {
     if (message.cookie == owned) {
-        if (stopped) emit(wire::Stopped, frames, captures);
+        if (stopped) emit(wire::Stopped, frames, captures, loud_frames);
         else if (ready_sent) emit(wire::Ready, frames, captures);
         return;
     }
@@ -80,6 +84,7 @@ void prepare(const wire::Message& message) {
     previous_source = stock<u32()>(0x8d4db3f0)();
     previous_enabled = stock<u32()>(0x8d4db468)();
     previous_threshold = byte(recorder + 0x26);
+    loud_frames = 0;
     frames = captures = capture_error = stopped = saving = writer_done = writer_ok = writer_frames = writer_hash = save_complete = 0;
     reported_frames = reported_error = expected_frames = 0;
     ready_sent = stop_sent = result_sent = release_pending = false;
@@ -147,7 +152,7 @@ void sdk_arranger_bounce_message(const void* data, u32 size) {
         if (message.kind == wire::Release) {
             release_pending = true; release_capture();
         } else if (stopped) {
-            stop_sent = true; emit(wire::Stopped, frames, captures);
+            stop_sent = true; emit(wire::Stopped, frames, captures, loud_frames);
         }
         return;
     }
@@ -174,6 +179,9 @@ void sdk_arranger_bounce_capture(u32 object, const void* pcm, u32 words) {
     if (pre_master && pre_master_fresh) { pcm = pre_master_block; pre_master_fresh = false; }
     stock<void(u32, const void*, u32)>(0x8d5072d8)(object, pcm, words);
     frames = word(recorder + 0xc) / 2;
+    const i32* sample = static_cast<const i32*>(pcm);
+    for (u32 i = 0; i < words; ++i)
+        if (sample[i] > kQuiet || sample[i] < -kQuiet) { loud_frames = frames; break; }
     if (frames >= 882000) capture_error = Capture;
     barrier();
 }
@@ -255,7 +263,7 @@ void sdk_arranger_bounce_remote_poll() {
         if (!ready_sent) { ready_sent = true; reported_frames = frames; emit(wire::Ready, frames, captures); }
         else if (frames != reported_frames) { reported_frames = frames; emit(wire::Progress, frames, captures); }
     }
-    if (stopped && !stop_sent) { stop_sent = true; emit(wire::Stopped, frames, captures); }
+    if (stopped && !stop_sent) { stop_sent = true; emit(wire::Stopped, frames, captures, loud_frames); }
     if (save_complete && writer_done && !result_sent) { result_sent = true; emit(wire::WriteResult, writer_ok, writer_frames, writer_hash); }
     if (release_pending) release_capture();
 }

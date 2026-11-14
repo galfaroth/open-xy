@@ -6,6 +6,7 @@
 // What the shared units call; empty until sdk_lab_startup fills them on the GUI role.
 extern bool (*sdk_lab_raw_event)(const void*);           // module_events.cpp
 extern bool (*sdk_lab_encoder)(opxy::u32, const void*);  // arranger_ui.cpp's encoder dispatch
+extern void (*sdk_lab_poll)();                           // module_events.cpp, each GUI frame
 // The commit itself (lab_commit.cpp): 0 started, else a reason shown as a popup.
 const char* sdk_lab_commit_start(const opxy::platform::lab::Commit& commit);
 bool sdk_lab_commit_busy();

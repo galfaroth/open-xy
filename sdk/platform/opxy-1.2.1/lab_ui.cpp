@@ -6,6 +6,9 @@
 //   the file it will write; an E4 click starts the commit and the page shows
 //   its progress; Stop closes the panel, or cancels a running commit; the
 //   panel then returns to the page it opened from with a popup of the outcome;
+// - turning lab mode on sets T7 to a Sampler and T8 to a Drum Sampler, one
+//   after the other through stock's own instrument change (8d4df688, the
+//   chooser's call), which runs on a worker and merges back-to-back changes;
 // - consumed presses swallow their release.
 #include "lab_ui.hpp"
 #include "arranger_project.hpp"
@@ -30,6 +33,32 @@ u32 top_controller() {
 void select_controller(u32 id) { stock<void(u32)>(0x8c094178)(id); stock<void()>(0x8c093f50)(); }
 bool linear_timeline() { return sdk_arranger_project_linear() && top_controller() == kArrangeController; }
 void refresh_stem() { if (!sdk_lab_preview_stem(commit, stem)) stem[0] = 0; }
+
+// Lab mode turned on: T7 a Sampler, then T8 a Drum Sampler. Stock's change is
+// asynchronous and drops one of two changes posted together, so each waits
+// for the one before (or gives up after kSetupFrames GUI frames).
+const u32 kSampler = 2, kDrumSampler = 3, kSetupFrames = 240;
+bool was_lab;
+u32 setup_step, setup_frames, lab_generation;
+void post_engine(u32 engine, u32 track) { stock<void(u32, u32)>(0x8d4df688)(engine, track); }
+void poll() {
+    const bool lab_now = sdk_arranger_project_lab();
+    const u32 generation = stock<u32()>(0x8d584224)();
+    // Only a change made in this project (not opening a project in lab mode).
+    if (lab_now && !was_lab && generation == lab_generation && !setup_step) setup_step = 1;
+    if (!lab_now) setup_step = 0;
+    was_lab = lab_now; lab_generation = generation;
+    if (!setup_step || sdk_arranger_bounce_busy()) return;
+    const u32 track = setup_step == 1 ? lab::kNewestTrack : lab::kPaletteTrack;
+    const u32 engine = setup_step == 1 ? kSampler : kDrumSampler;
+    if (track_engine(track) == engine) {
+        setup_frames = 0;
+        if (++setup_step > 2) { setup_step = 0; notify("LAB: T7 SAMPLER / T8 DRUM SAMPLER"); }
+        return;
+    }
+    if (!setup_frames) post_engine(engine, track);
+    if (++setup_frames >= kSetupFrames) { setup_frames = 0; setup_step = 0; notify("LAB: SET T7 / T8 BY HAND"); }
+}
 
 // The panel draws on Linear's page, which the Arrange controller shows.
 void open() {
@@ -125,5 +154,6 @@ extern "C" void sdk_lab_startup() __asm__("sdk_lab_startup");
 void sdk_lab_startup() {
     sdk_lab_raw_event = raw_event;
     sdk_lab_encoder = encoder;
+    sdk_lab_poll = poll;
     sdk_lab_screen = screen;
 }

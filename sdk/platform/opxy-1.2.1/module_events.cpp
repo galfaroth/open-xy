@@ -20,6 +20,10 @@ void sdk_module_raw_event(const void* event) {
 }
 bool (*sdk_multifx_raw_event)(const void*) = nullptr;
 bool (*sdk_lab_raw_event)(const void*) = nullptr;
+void (*sdk_lab_poll)() = nullptr;
 void sdk_module_message(const void* data, opxy::u32 bytes) { sdk_arranger_bounce_message(data, bytes); }
 void sdk_module_remote_poll() { sdk_arranger_bounce_remote_poll(); }
-void sdk_module_gui_poll() { sdk_arranger_poll(); }
+void sdk_module_gui_poll() {
+    sdk_arranger_poll();
+    if (sdk_lab_poll) sdk_lab_poll();
+}
