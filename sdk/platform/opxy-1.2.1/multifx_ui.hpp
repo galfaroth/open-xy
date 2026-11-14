@@ -12,7 +12,7 @@ u32 turn(u32 project, u32 track, u32 position, u32 event);
 // The position's title (sdk_fx_title) and value caption (sdk_fx_value_text).
 const char* title(u32 track, u32 position);
 void caption(u32 track, u32 position, char* text);
-// A raw key event; true when MultiFX took it (Stop + 1..4, Shift + Stop + 1..8).
+// A raw key event; true when MultiFX took it (Stop + 1..8; with Stop and Shift, the E3 and E4 clicks).
 bool raw_event(const void* event);
 }
 
