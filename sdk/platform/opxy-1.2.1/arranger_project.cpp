@@ -5,6 +5,7 @@
 #include "stock.hpp"
 #include "barrier.hpp"
 #include "arranger_lock.hpp"
+#include "arranger_bounce.hpp"
 #include <opxy/arranger_storage.hpp>
 
 extern "C" void sdk_arranger_project_mode_changed(bool) __asm__("sdk_arranger_project_mode_changed");
@@ -347,6 +348,16 @@ void sdk_arranger_general_rows(void* rows, const void* row) {
     stock<void(void*)>(0x8c086d28)(lab);
 }
 
+// Why a mode change was refused, as a popup: the next report names the cause.
+void explain_refusal() {
+    const char* why = sdk_arranger_bounce_busy() ? "BOUNCE RUNNING / STOP CANCELS" :
+        !gui_bound ? "PROJECT NOT READY" : load_busy ? "PROJECT LOADING" :
+        stage_ready ? "PROJECT RESTORING" : word(0x840a0528) ? "PROJECT BUSY / TRY AGAIN" :
+        gui_generation != generation() ? "PROJECT CHANGED" :
+        gui_pointer != word(0x840a0524) ? "PROJECT MOVED / RELOAD IT" : "PROJECT BUSY";
+    stock<void(const char*, u32, u32, u32)>(0x8d549168)(why, 1, 0, 0x3f000000u);
+}
+
 // General's virtual encoder method: object+0x90 is selected row, event+4 delta.
 // Raw encoder index 1 selects; indices 2/3 edit, exactly as stock General.
 void sdk_arranger_general_encoder(void* object, u32 encoder, const void* event) {
@@ -358,9 +369,9 @@ void sdk_arranger_general_encoder(void* object, u32 encoder, const void* event) 
         const i32 next = static_cast<i32>(selected < 4 ? selected : 3) + step;
         selected = static_cast<u32>(next < 0 ? 0 : next > 3 ? 3 : next);
     } else if ((encoder == 2 || encoder == 3) && selected == 2) {
-        if (delta) sdk_arranger_project_set_linear(delta > 0);
+        if (delta && !sdk_arranger_project_set_linear(delta > 0)) explain_refusal();
     } else if ((encoder == 2 || encoder == 3) && selected == 3) {
-        if (delta) sdk_arranger_project_set_lab(delta > 0);
+        if (delta && !sdk_arranger_project_set_lab(delta > 0)) explain_refusal();
     } else {
         stock<void(void*, u32, const void*)>(0x8c0970d4)(object, encoder, event);
     }
