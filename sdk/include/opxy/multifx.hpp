@@ -54,6 +54,52 @@ inline u32 lfo_slot(i32 word) {
     const u32 slot = static_cast<u32>(word) & 0xff;
     return slot < kSlots ? slot : 0;
 }
+inline i32 with_lfo(i32 word, u32 slot) {
+    return static_cast<i32>((static_cast<u32>(word) & ~0xffu) | (slot & 0xff));
+}
+// Scramble's range, the fewest and most effects it puts in the chain, in bits
+// 8..11 and 12..15 of word kLfoWord (0 stands for the default, 1 and 7).
+const u32 kScrambleMin = 1, kScrambleMax = 7;
+inline u32 scramble_min(i32 word) {
+    const u32 n = (static_cast<u32>(word) >> 8) & 0xf;
+    return n >= 1 && n <= kSlots ? n : kScrambleMin;
+}
+inline u32 scramble_max(i32 word) {
+    const u32 n = (static_cast<u32>(word) >> 12) & 0xf, low = scramble_min(word);
+    const u32 high = n >= 1 && n <= kSlots ? n : kScrambleMax;
+    return high < low ? low : high;
+}
+inline i32 with_range(i32 word, u32 low, u32 high) {
+    return static_cast<i32>((static_cast<u32>(word) & ~0xff00u) | ((low & 0xf) << 8) | ((high & 0xf) << 12));
+}
+// The scratch bytes a stock effect's stage takes (delay, reverb, chorus); the
+// others take none. A scramble keeps the chain within a send's memory.
+inline u32 stock_bytes(u32 effect) {
+    return effect == 0 ? 352800 : effect == 5 ? 237864 : effect == 12 ? 65536 : 0;
+}
+// A scramble's chain: `count` effects in slots 1..count, drawn from `list`
+// (`size` installed effects, no kNone), within kScratchBytes; the rest none.
+// `next(span)` returns 0 .. span - 1. Returns the number placed.
+template <class Next>
+u32 scramble_plan(u32 low, u32 high, const u8* list, u32 size, Next&& next, u8 (&out)[kSlots]) {
+    for (u32 k = 0; k < kSlots; ++k) out[k] = static_cast<u8>(kNone);
+    if (!size) return 0;
+    if (high > kSlots) high = kSlots;
+    if (low < 1) low = 1;
+    if (low > high) low = high;
+    const u32 count = low + next(high - low + 1);
+    u32 left = kScratchBytes - kSlots * 32;   // each stage starts 32-byte aligned
+    for (u32 k = 0; k < count; ++k) {
+        u8 pick = list[next(size)];
+        for (u32 tries = 0; stock_bytes(pick) > left && tries < 16; ++tries) pick = list[next(size)];
+        if (stock_bytes(pick) > left)   // fall back to one that takes no scratch
+            for (u32 i = 0; i < size; ++i) if (!stock_bytes(list[i])) { pick = list[i]; break; }
+        if (stock_bytes(pick) > left) return k;
+        left -= stock_bytes(pick);
+        out[k] = pick;
+    }
+    return count;
+}
 
 // Audio side, implemented by the platform. `record` is the send track's
 // parameter record a send effect's process receives.

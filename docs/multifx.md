@@ -25,6 +25,21 @@ A track's send amount and the send's mute work as they do for any send effect.
 
 ![With Shift held: E1 chooses the slot's effect, E2 the slot the send's LFO moves](images/multifx/shift.png)
 
+## Scramble and undo
+
+Hold **Stop + Shift** on the send page for scramble's layer:
+
+- Turn **E3** and **E4** to set the fewest and most effects a scramble puts in
+  the chain, 1–8 (1–7 at first). The header shows both.
+- Click **E4** to scramble: a random number of effects in that range fills
+  slots 1 onwards, each a random installed effect with random parameters, and
+  the send's LFO moves one of them. Slots after them are emptied. A scramble
+  never picks more delays and reverbs than fit in the send's memory.
+- Click **E3** to go back to the chain before the last scramble or effect
+  change, up to 8 steps back. The history lasts until the OP–XY restarts.
+
+Each send keeps its own range, saved with the project.
+
 ## Installed effects in a slot
 
 An effect machine in a slot works as it does on a send of its own, with two
@@ -65,7 +80,9 @@ slot carries a mark.
 | The installer's always-included card | `builder/veff.json` (`features`, `machine`) |
 
 Slots 1–4 store their effect in send track word 47 and slots 5–8 in word 46,
-one byte per slot; word 45 names the LFO's slot. The slots' parameters use the
+one byte per slot (bit 7 stays clear, so slots 4 and 8 never make their word
+negative); word 45 names the LFO's slot in its low byte and scramble's range
+in bits 8–15. The slots' parameters use the
 send words below 42 that stock leaves alone on a send: 0–15, 17, 18, 20–22,
 28–35, 37–39 (`sdk/include/opxy/multifx.hpp`). Step locks reach them all.
 A hook on the LFO's write (`8d50f412`) moves param 1–4 to the LFO slot's words.

@@ -51,6 +51,32 @@ int main() {
     require(choice(0x80 | 44, 0) == 44 && choice(0xff, 0) == kNone && choice(7, 0) == kNone && slot_byte(44) == (0x40 | 44) &&
             choice(0x40 | 44, 0) == 44 && choice(static_cast<i32>(slot_byte(44) << 24), 3) == 44 && static_cast<i32>(slot_byte(62) << 24) > 0,
             "any installed effect by its number");
+    // Scramble's range lives above the LFO's slot in word 45; 0 is the default 1..7.
+    require(scramble_min(0) == 1 && scramble_max(0) == 7 && lfo_slot(with_range(5, 2, 4)) == 5 &&
+            scramble_min(with_range(5, 2, 4)) == 2 && scramble_max(with_range(5, 2, 4)) == 4 &&
+            scramble_max(with_range(0, 6, 3)) == 6 && scramble_min(with_lfo(with_range(0, 3, 8), 7)) == 3 &&
+            lfo_slot(with_lfo(with_range(0, 3, 8), 7)) == 7 && scramble_max(with_lfo(with_range(0, 3, 8), 7)) == 8,
+            "scramble's range and the LFO's slot share word 45");
+    {
+        // Every effect a delay: only two fit a send's memory, the rest fall back to lofi.
+        const u8 delays[] = {0, 0, 0, 15};
+        u32 rolls = 0;
+        auto pick_first = [&rolls](u32 span) { ++rolls; return span ? 0u : 0u; };
+        u8 chain[kSlots];
+        const u32 n = scramble_plan(8, 8, delays, 4, pick_first, chain);
+        u32 delay_count = 0;
+        for (u32 k = 0; k < kSlots; ++k) delay_count += chain[k] == 0;
+        require(n == 8 && delay_count == 2 && chain[7] == 15, "a scramble keeps within the send's memory");
+        u32 x = 12345;
+        auto rnd = [&x](u32 span) { x ^= x << 13; x ^= x >> 17; x ^= x << 5; return span ? ((x >> 16) * span) >> 16 : 0u; };
+        const u8 all[] = {0, 5, 12, 13, 14, 15};
+        for (u32 t = 0; t < 200; ++t) {
+            const u32 m = scramble_plan(2, 5, all, 6, rnd, chain);
+            u32 bytes = 0, filled = 0;
+            for (u32 k = 0; k < kSlots; ++k) if (chain[k] != kNone) { bytes += stock_bytes(chain[k]); ++filled; if (k >= m) filled = 99; }
+            require(m >= 2 && m <= 5 && filled == m && bytes <= kScratchBytes, "a scramble's count stays in its range, in slots 1..n");
+        }
+    }
     ::veffmultifx::State state;
     ::veffmultifx::initialize(state);
     i32 l[64], r[64];

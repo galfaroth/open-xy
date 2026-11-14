@@ -6,7 +6,10 @@
 //   send parameter: the slots' words are all below 42 (opxy/multifx.hpp);
 // - Shift + E1 steps the slot's effect (none, delay, reverb, chorus, phaser,
 //   dist, lofi), stored in the send's type word through stock's set;
-// - titles are the slot's effect's own parameter names.
+// - titles are the slot's effect's own parameter names;
+// - with Stop and Shift held, E3 and E4 set scramble's range (the fewest and
+//   most effects), an E4 click scrambles the chain and an E3 click goes back
+//   to the state before the last scramble or effect change.
 // Stock does nothing with Stop + a track key on a send page.
 #include "multifx_ui.hpp"
 #include <opxy/multifx.hpp>
@@ -17,7 +20,7 @@ namespace {
 using namespace opxy::multifx;
 const u32 kAuxController = 0x0803fb6c;   // the send page's controller vtable
 const u32 kProject = 0x86bd027c;
-const u32 kStop = 52, kShift = 55, kFirstTrackKey = 14;
+const u32 kStop = 52, kShift = 55, kFirstTrackKey = 14, kUndoClick = 12, kScrambleClick = 13;
 const i32 kMiddle = 0x40000000;
 
 u8 selected[2];             // the slot each send's encoders edit
@@ -76,6 +79,47 @@ void notify(const char* text) { stock<void(const char*, u32, u32, u32)>(0x8d5491
 u32 slot_of(u32 track) { return selected[track - 14] < kSlots ? selected[track - 14] : 0; }
 u32 slot_choice(u32 track, u32 slot) { return choice(current(track, type_word(slot)), slot); }
 u32 lfo_of(u32 track) { return lfo_slot(current(track, kLfoWord)); }
+bool scramble_layer() { return shift_held() && held(kStop); }
+
+// Back: the chain before each scramble or effect change, per send, the newest
+// last; the oldest goes when it is full. Scramble's range is not part of it.
+const u32 kHistory = 8, kSaved = kSlots * 4 + 3;
+u32 saved_word(u32 i) { return i < kSlots * 4 ? kParamWord[i / 4][i % 4] : i == kSlots * 4 + 2 ? kLfoWord : kTypeWords[i - kSlots * 4]; }
+i32 history[2][kHistory][kSaved];
+u8 depth[2];
+void remember(u32 track) {
+    const u32 send = track - 14;
+    if (depth[send] == kHistory) {
+        for (u32 h = 1; h < kHistory; ++h) for (u32 i = 0; i < kSaved; ++i) history[send][h - 1][i] = history[send][h][i];
+        --depth[send];
+    }
+    for (u32 i = 0; i < kSaved; ++i) history[send][depth[send]][i] = current(track, saved_word(i));
+    ++depth[send];
+}
+void go_back(u32 project, u32 track) {
+    const u32 send = track - 14;
+    if (!depth[send]) { notify("NOTHING TO UNDO"); return; }
+    const i32* old = history[send][--depth[send]];
+    // Parameters first, then the effects and the LFO's slot (keeping the range).
+    for (u32 i = 0; i < kSaved; ++i) {
+        const u32 w = saved_word(i);
+        i32 value = old[i];
+        if (w == kLfoWord) value = with_lfo(current(track, w), lfo_slot(value));
+        if (current(track, w) != value) set_parameter(project, track, w, value);
+    }
+    notify("UNDO");
+}
+
+u32 seed;
+u32 next_random(u32 span) {
+    if (!seed) seed = static_cast<u32>(stock<i32(u32, u32)>(0x8c0b5230)(0, 0)) | 1u;
+    seed ^= seed << 13; seed ^= seed >> 17; seed ^= seed << 5;
+    return span ? ((seed >> 16) * span) >> 16 : 0;   // 0 .. span - 1, without a divide
+}
+i32 random_value() {
+    next_random(0);
+    return static_cast<i32>(seed >> 1);
+}
 
 // "SLOT 2 DELAY"
 void announce(u32 track, u32 slot) {
@@ -97,6 +141,38 @@ void announce_lfo(u32 slot) {
     text[9] = static_cast<char>('1' + slot);
     notify(text);
 }
+// "SCRAMBLE 1-7"
+void announce_range(u32 track) {
+    char text[] = "SCRAMBLE 1-7";
+    const i32 w = current(track, kLfoWord);
+    text[9] = static_cast<char>('0' + scramble_min(w));
+    text[11] = static_cast<char>('0' + scramble_max(w));
+    notify(text);
+}
+// A new chain: scramble's range of effects in slots 1.., each with random
+// parameters, the rest none; the LFO on one of them.
+void scramble(u32 project, u32 track) {
+    u8 list[kEffects + 1];
+    const u32 size = effect_list(list) - 1;   // without none, first in the list
+    u8 chain[kSlots];
+    const i32 range = current(track, kLfoWord);
+    const u32 count = scramble_plan(scramble_min(range), scramble_max(range), list + 1, size, next_random, chain);
+    if (!count) return;
+    remember(track);
+    u32 packed[2] = {0, 0};
+    for (u32 k = 0; k < kSlots; ++k) {
+        if (chain[k] == kNone) continue;
+        for (u32 j = 0; j < 4; ++j) set_parameter(project, track, kParamWord[k][j], random_value());
+        packed[k / 4] |= slot_byte(chain[k]) << (8 * (k & 3));
+    }
+    for (u32 t = 0; t < 2; ++t)
+        if (static_cast<u32>(current(track, kTypeWords[t])) != packed[t])
+            set_parameter(project, track, kTypeWords[t], static_cast<i32>(packed[t]));
+    set_parameter(project, track, kLfoWord, with_lfo(range, next_random(count)));
+    char text[] = "SCRAMBLE 0 FX";
+    text[9] = static_cast<char>('0' + count);
+    notify(text);
+}
 }
 
 bool on(u32 track) {
@@ -108,6 +184,22 @@ u32 shown_word(u32 track, u32 position) { return kParamWord[slot_of(track)][posi
 u32 turn(u32 project, u32 track, u32 position, u32 event) {
     if (position >= 4) return stock<u32(u32, u32, u32, u32)>(0x8d5ad5bc)(project, track, position, event);
     const u32 slot = slot_of(track);
+    if (scramble_layer()) {
+        // Stop + Shift + E3 / E4: scramble's fewest and most effects.
+        if (position < 2 || !event) return 1;
+        const i32 delta = reinterpret_cast<const i32*>(event)[0];
+        if (!delta) return 1;
+        const i32 w = current(track, kLfoWord);
+        u32 low = scramble_min(w), high = scramble_max(w);
+        u32& n = position == 2 ? low : high;
+        n = delta > 0 ? (n < kSlots ? n + 1 : n) : (n > 1 ? n - 1 : n);
+        if (position == 2 && high < low) high = low;
+        if (position == 3 && low > high) low = high;
+        const i32 next = with_range(w, low, high);
+        if (next != w) set_parameter(project, track, kLfoWord, next);
+        announce_range(track);
+        return 1;
+    }
     if (shift_held()) {
         // Shift + E1: the slot's effect. Shift + E2: the slot the send's LFO
         // moves. The other encoders do nothing with Shift.
@@ -119,7 +211,8 @@ u32 turn(u32 project, u32 track, u32 position, u32 event) {
         if (position == 1) {
             const u32 now = lfo_of(track), next = step(now, kSlots);
             if (next == now) return 1;
-            set_parameter(project, track, kLfoWord, static_cast<i32>(next));
+            remember(track);
+            set_parameter(project, track, kLfoWord, with_lfo(current(track, kLfoWord), next));
             announce_lfo(next);
             return 1;
         }
@@ -130,6 +223,7 @@ u32 turn(u32 project, u32 track, u32 position, u32 event) {
         if (at == count) at = 0;
         const u32 next = list[step(at, count)];
         if (next == now) return 1;
+        remember(track);
         const u32 shift = 8 * (slot & 3);
         u32 packed = static_cast<u32>(current(track, type_word(slot)));
         packed = (packed & ~(0xffu << shift)) | (slot_byte(next) << shift);
@@ -143,6 +237,7 @@ u32 turn(u32 project, u32 track, u32 position, u32 event) {
 }
 
 const char* title(u32 track, u32 position) {
+    if (scramble_layer()) return position == 2 ? "min" : position == 3 ? "max" : "";
     if (shift_held()) return position == 0 ? "effect" : position == 1 ? "lfo" : "";
     const u32 c = slot_choice(track, slot_of(track));
     if (c == kNone) return position == 0 ? "none" : "";
@@ -171,6 +266,13 @@ bool raw_event(const void* raw) {
         return true;
     }
     if (blocked[key]) return true;   // a repeat of a press MultiFX took
+    if ((key == kUndoClick || key == kScrambleClick) && scramble_layer()) {
+        const u32 track = selected_track();
+        if (!on(track) || top_controller_vtable() != kAuxController) return false;
+        blocked[key] = true;
+        if (key == kScrambleClick) scramble(kProject, track); else go_back(kProject, track);
+        return true;
+    }
     if (key < kFirstTrackKey || key >= kFirstTrackKey + 8 || !held(kStop)) return false;
     const u32 track = selected_track();
     if (!on(track) || top_controller_vtable() != kAuxController) return false;
@@ -197,7 +299,13 @@ bool view(u32 track, View& out) {
         out.title[j] = t ? t : "";
         ui::caption(track, j, out.value[j]);
     }
-    if (platform::shift_held()) {
+    if (ui::scramble_layer()) {
+        // Stop + Shift: scramble's range under E3 and E4.
+        const i32 w = ui::current(track, kLfoWord);
+        out.value[0][0] = out.value[1][0] = 0;
+        out.value[2][0] = static_cast<char>('0' + scramble_min(w)); out.value[2][1] = 0;
+        out.value[3][0] = static_cast<char>('0' + scramble_max(w)); out.value[3][1] = 0;
+    } else if (platform::shift_held()) {
         // Shift + E1 chooses the slot's effect: its name in place of a value.
         // The header's value fields are 60 pixels wide: the name's first five
         // letters (the block below shows it whole) and the LFO slot's number.
