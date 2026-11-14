@@ -199,10 +199,10 @@ bool view(u32 track, View& out) {
     }
     if (platform::shift_held()) {
         // Shift + E1 chooses the slot's effect: its name in place of a value.
-        ui::effect_name(out.type[out.slot], out.value[0], sizeof out.value[0]);
-        char lfo[] = "SLOT 1";
-        lfo[5] = static_cast<char>('1' + out.lfo);
-        for (u32 j = 0; j < sizeof lfo; ++j) out.value[1][j] = lfo[j];
+        // The header's value fields are 60 pixels wide: the name's first five
+        // letters (the block below shows it whole) and the LFO slot's number.
+        ui::effect_name(out.type[out.slot], out.value[0], 6);
+        out.value[1][0] = static_cast<char>('1' + out.lfo); out.value[1][1] = 0;
         for (u32 j = 2; j < 4; ++j) out.value[j][0] = 0;
     }
     return true;

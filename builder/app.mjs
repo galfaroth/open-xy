@@ -260,7 +260,7 @@ export async function createBuilder({core = Core, wizardApi = Wizard, retained =
     if (landing && builderPreview && kit && $('builder-workspace').dataset.browse === 'true') {
       if (route?.machine && kit.machines.some(m => m.id === route.machine)) { inspect(route.machine); view.open(); }
       else view.close();
-      view.showAbout(!!route?.about); view.showGuide?.(!!route?.linear);
+      view.showAbout(!!route?.about); view.showGuide?.(route?.guide ?? false);
       return;
     }
     builderPreview = !!match;
@@ -280,7 +280,7 @@ export async function createBuilder({core = Core, wizardApi = Wizard, retained =
           else inspect(kit.machines.find(m => m.id === match[2])?.id ?? kit.machines[0].id);
           if (match[1] === 'machines' && kit.machines.some(m => m.id === match[2])) view?.open();
           if (route?.machine && kit.machines.some(m => m.id === route.machine)) { inspect(route.machine); view.open(); }
-          view?.showAbout?.(!!route?.about); view?.showGuide?.(!!route?.linear);
+          view?.showAbout?.(!!route?.about); view?.showGuide?.(route?.guide ?? false);
           recalculate();
         }
       } else {
@@ -819,7 +819,7 @@ export async function createBuilder({core = Core, wizardApi = Wizard, retained =
         }, {favorite: 'setting:grayscale'}));
     return cards;
   }
-  function extensionCard(name, description, facts, included, blocked, toggle, {locked = null, screen: art = null, id = null, favorite = null, guide = false} = {}) {
+  function extensionCard(name, description, facts, included, blocked, toggle, {locked = null, screen: art = null, id = null, favorite = null, guide = null} = {}) {
     const row = node('article', undefined, 'machine card' + (included ? ' selected' : ''));
     row.dataset.kind = 'extension';
     if (locked) { row.dataset.locked = 'true'; row.title = locked; }
@@ -842,13 +842,13 @@ export async function createBuilder({core = Core, wizardApi = Wizard, retained =
     if (blocked) button.append(node('span', blocked, 'card-keywords'));
     if (locked) { button.append(node('span', 'Built into every firmware', 'card-keywords')); button.title = locked; label.title = locked; }
     if (locked && guide) {
-      const more = node('a', 'Read more →', 'card-more'); more.href = '#/linear';
-      more.onclick = event => { event.preventDefault(); location.hash = '#/linear'; };
-      row.append(more); row.dataset.guide = 'linear';
+      const more = node('a', 'Read more →', 'card-more'); more.href = '#/' + guide;
+      more.onclick = event => { event.preventDefault(); location.hash = '#/' + guide; };
+      row.append(more); row.dataset.guide = guide;
     }
     button.setAttribute('aria-label', name + ', extension. ' + (locked ? locked : (included ? 'Remove from' : 'Add to') + ' the install'));
     // A locked card (Linear by Veff) cannot be toggled: anywhere on it opens its guide.
-    button.onclick = () => { if (locked && guide) location.hash = '#/linear'; else if (!input.disabled) toggle(!included); };
+    button.onclick = () => { if (locked && guide) location.hash = '#/' + guide; else if (!input.disabled) toggle(!included); };
     row.append(label, button);
     if (favorite) {
       const star = node('button', undefined, 'machine-favorite'); star.type = 'button';

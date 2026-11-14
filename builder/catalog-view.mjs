@@ -5,6 +5,9 @@ import SYNC from './sync-status.json' with { type: 'json' };
 // Linear by Veff's user guide, shown at #/linear exactly as the repository documents it.
 import LINEAR_GUIDE from '../docs/arranger.md?raw';
 import GUIDE_MEDIA from './linear-guide-media.json' with { type: 'json' };
+// MultiFX by Veff's and Lab by Veff's guides, at #/multifx and #/lab, with their screens.
+import MULTIFX_GUIDE from '../docs/multifx.md?raw';
+import LAB_GUIDE from '../docs/lab.md?raw';
 
 // The Open-XY Mods by Veff presentation of the machine collection: a browsable grid of
 // machine cards, a detail view per machine, the fork's own features and its own
@@ -113,14 +116,20 @@ export function createCatalogView({core, visuals, snapshots, modeFor, getKit, is
     out.push(text.slice(at));
     return out;
   }
-  function markdown(source) {
+  // Each guide's Markdown and the images its ![...](path) lines name.
+  const GUIDES = {
+    linear: {source: LINEAR_GUIDE, images: GUIDE_MEDIA.images ?? {}, title: 'Linear by Veff'},
+    multifx: {source: MULTIFX_GUIDE, images: VEFF_MEDIA.veffmultifx?.images ?? {}, title: 'MultiFX by Veff'},
+    lab: {source: LAB_GUIDE, images: VEFF_MEDIA.vefflab?.images ?? {}, title: 'Lab by Veff'},
+  };
+  function markdown(source, images = GUIDE_MEDIA.images ?? {}) {
     const blocks = [], lines = source.replace(/\r/g, '').split('\n');
     for (let i = 0; i < lines.length;) {
       const line = lines[i];
       if (!line.trim()) { ++i; continue; }
       const image = /^!\[([^\]]*)\]\(([^)]+)\)$/.exec(line.trim());
       if (image) {
-        const src = GUIDE_MEDIA.images?.[image[2]];
+        const src = images[image[2]];
         if (src) {
           const figure = node('figure', undefined, 'guide-figure'), picture = doc.createElement('img');
           picture.src = src; picture.alt = image[1]; picture.loading = 'lazy'; picture.width = 480; picture.height = 220;
@@ -156,16 +165,19 @@ export function createCatalogView({core, visuals, snapshots, modeFor, getKit, is
     }
     return blocks;
   }
-  function renderGuide() {
-    const dialog = doc.getElementById('linear-guide');
-    if (!dialog || !LINEAR_GUIDE) return;
+  let shownGuide = null;
+  function renderGuide(name = shownGuide ?? 'linear') {
+    const dialog = doc.getElementById('linear-guide'), guide = GUIDES[name];
+    if (!dialog || !guide?.source) return;
     const close = node('button', 'Close', 'secondary about-close'); close.type = 'button'; close.onclick = () => dialog.close();
-    const body = node('div', undefined, 'guide-body'); body.append(...markdown(LINEAR_GUIDE));
+    const body = node('div', undefined, 'guide-body'); body.append(...markdown(guide.source, guide.images));
     body.querySelector('h2')?.setAttribute('id', 'linear-guide-title');
     dialog.replaceChildren(close, body);
     dialog.onclick = event => { if (event.target === dialog) dialog.close(); };
-    dialog.addEventListener('close', () => { if (location.hash === '#/linear') leave(); });
-    for (const target of doc.querySelectorAll('[data-linear-guide]')) target.onclick = event => { event.preventDefault(); event.stopPropagation(); go('#/linear'); };
+    dialog.onclose = () => { if (location.hash === '#/' + name) leave(); };
+    for (const target of doc.querySelectorAll('[data-guide]')) target.onclick = event => {
+      event.preventDefault(); event.stopPropagation(); go('#/' + target.dataset.guide);
+    };
   }
   function renderBase(version = base?.version) {
     renderSync(); renderAbout(); renderGuide();
@@ -183,30 +195,24 @@ export function createCatalogView({core, visuals, snapshots, modeFor, getKit, is
       target.replaceChildren(...(data.features ?? []).map(feature => {
         const card = node('article', undefined, 'veff-feature');
         card.append(node('span', 'Built into this firmware', 'veff-kicker'), node('h3', feature.name));
-        if (feature.preview === 'linear' && LINEAR_PREVIEW.gif) {
+        const animation = feature.preview === 'linear' ? LINEAR_PREVIEW.gif : VEFF_MEDIA[feature.id]?.gif;
+        if (animation) {
           const screen = node('figure', undefined, 'veff-feature-screen');
           const img = doc.createElement('img');
-          img.src = LINEAR_PREVIEW.gif; img.width = 480; img.height = 220; img.loading = 'lazy';
-          img.alt = 'Linear by Veff on the OP–XY screen: playing an arrangement, adding and stretching a clip, the actions menu, bouncing a clip to a sampler, the piano roll and muting a clip.';
+          img.src = animation; img.width = 480; img.height = 220; img.loading = 'lazy';
+          img.alt = feature.preview === 'linear'
+            ? 'Linear by Veff on the OP–XY screen: playing an arrangement, adding and stretching a clip, the actions menu, bouncing a clip to a sampler, the piano roll and muting a clip.'
+            : VEFF_MEDIA[feature.id]?.alt ?? feature.name;
           screen.append(img);
-          screen.dataset.linearGuide = ''; screen.title = 'Read how Linear by Veff works';
-          card.append(screen);
-        }
-        // Other features' screens (builder/veff-media.json), each with its caption.
-        for (const shot of Array.isArray(VEFF_MEDIA[feature.id]) ? VEFF_MEDIA[feature.id] : []) {
-          const screen = node('figure', undefined, 'veff-feature-screen');
-          const img = doc.createElement('img');
-          img.src = shot.src; img.width = 480; img.height = 220; img.loading = 'lazy'; img.alt = shot.alt;
-          screen.append(img);
-          if (target.dataset.veffFeatures === 'full') screen.append(node('figcaption', shot.alt));
+          if (feature.guide) { screen.dataset.guide = feature.guide; screen.title = 'Read how ' + feature.name + ' works'; }
           card.append(screen);
         }
         card.append(node('p', feature.summary ?? ''));
         if (target.dataset.veffFeatures === 'full') for (const text of feature.help ?? []) card.append(node('p', text, 'veff-feature-help'));
         if (feature.note) card.append(node('p', feature.note, 'veff-feature-note'));
-        if (feature.preview === 'linear') {
+        if (feature.guide) {
           const more = node('a', 'Read more →', 'veff-feature-more');
-          more.href = '#/linear'; more.dataset.linearGuide = ''; card.append(more);
+          more.href = '#/' + feature.guide; more.dataset.guide = feature.guide; card.append(more);
         }
         return card;
       }));
@@ -400,23 +406,29 @@ export function createCatalogView({core, visuals, snapshots, modeFor, getKit, is
     card, detail, open, close,
     // The catalog's own route: {machine} or {about}, or null for the catalog itself.
     route() {
-      const m = /^#\/(?:machine\/([a-z0-9_-]+)|(about)|(linear))?$/.exec(location.hash);
-      return m && {machine: m[1] ?? null, about: !!m[2], linear: !!m[3]};
+      const m = /^#\/(?:machine\/([a-z0-9_-]+)|(about)|(linear|multifx|lab))?$/.exec(location.hash);
+      return m && {machine: m[1] ?? null, about: !!m[2], guide: m[3] ?? null, linear: m[3] === 'linear'};
     },
     showAbout(show) {
       const dialog = doc.getElementById('about-veff');
       if (!dialog) return;
       if (show && !dialog.open) dialog.showModal(); else if (!show && dialog.open) dialog.close();
     },
+    // show: a guide's name (linear, multifx, lab), or false to close it.
     showGuide(show) {
       const dialog = doc.getElementById('linear-guide');
       if (!dialog) return;
-      if (show && !dialog.open) { dialog.showModal(); dialog.scrollTop = 0; } else if (!show && dialog.open) dialog.close();
+      const name = show === true ? 'linear' : show;
+      if (name && GUIDES[name]) {
+        if (shownGuide !== name || !dialog.open) { shownGuide = name; renderGuide(name); }
+        if (!dialog.open) dialog.showModal();
+        dialog.scrollTop = 0;
+      } else if (!name && dialog.open) dialog.close();
     },
     isVeff: m => !!veffMachine(m.id),
     // Firmware features every build carries (Linear by Veff), shown as fixed extension cards.
     builtIn: () => (data.features ?? []).map(f => ({name: f.name, summary: f.summary ?? '',
-      screen: f.preview === 'linear' ? LINEAR_PREVIEW.gif : null, guide: f.preview === 'linear'})),
+      screen: f.preview === 'linear' ? LINEAR_PREVIEW.gif : VEFF_MEDIA[f.id]?.gif ?? null, guide: f.guide ?? null})),
     // The machines a built-in feature brings (MultiFX's chain effect): in every build, never a card of their own.
     builtInMachines: () => (data.features ?? []).map(f => f.machine).filter(Boolean),
     selected: showSelection,

@@ -4,6 +4,8 @@ MultiFX is built into the Veff fork's firmware, like Linear by Veff. It is a sen
 effect that runs a chain of up to eight effects in series on FX I or FX II.
 Each send can hold its own chain.
 
+![MultiFX on a send: Stop + 1–3 picks a slot, Shift + E1 gives slot 4 an installed effect, Shift + E2 moves the LFO, E1 turns a parameter](images/multifx/chain.gif)
+
 ## Use it
 
 1. Choose **MultiFX** as the send's effect, as you would choose delay or reverb.
@@ -18,6 +20,10 @@ Each send can hold its own chain.
    own names for them. With a step held, the turns lock the step, as on any send.
 
 A track's send amount and the send's mute work as they do for any send effect.
+
+![Slot 3, a reverb, edited: the header shows its own parameters; slot 2 carries the LFO mark](images/multifx/edit.png)
+
+![With Shift held: E1 chooses the slot's effect, E2 the slot the send's LFO moves](images/multifx/shift.png)
 
 ## Installed effects in a slot
 

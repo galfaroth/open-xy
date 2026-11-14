@@ -4,6 +4,8 @@ Lab by Veff is built into the Veff fork's firmware, beside Linear by Veff. It
 turns a project into a sound-design bench: make a sound on any track, commit it
 as a sample with one gesture, and play or process it straight away.
 
+![The commit panel: each encoder's choice, what it will do, then a commit recording, saving and assigning](images/lab/commit.gif)
+
 ## Turn it on
 
 Project Settings > General > **lab mode**: On. The project keeps the setting in
@@ -37,6 +39,10 @@ Make T7 a Sampler and T8 a Drum Sampler before the first commit.
    - **E4 to**: **T7**, or **T7 + palette** to also fill T8's next free pad.
 3. Click **E4** to commit. The page shows the progress; **Stop** cancels. When
    it is done, the panel closes with a popup of the outcome.
+
+![The panel explains each choice and names the file before you commit](images/lab/panel.png)
+
+![A commit running: the last note on T2 replayed and recorded; Stop cancels](images/lab/recording.png)
 
 A last note is replayed held for one second at velocity 100 and recorded for
 two more seconds for its tail. A sequence needs Linear off: it plays the native
