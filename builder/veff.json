@@ -55,7 +55,8 @@
       "help": [
         "Put MultiFX on a send, then press Stop + 1–8 to pick a slot, Shift + E1 to choose its effect, Shift + E2 for the slot the send's LFO moves and E1–E4 for its parameters. Each slot's parameters take step locks.",
         "Shift + E1 offers stock's delay, reverb, chorus, phaser, dist and lofi, then every effect machine in your build: choose them on this site and they appear in the chain too.",
-        "Several delays and reverbs fit on one send: MultiFX gives each its own part of the send's memory."
+        "Several delays and reverbs fit on one send: MultiFX gives each its own part of the send's memory.",
+        "Hold Stop + Shift to scramble: E3 and E4 set the fewest and most effects, an E4 click rolls a new chain and an E3 click goes back a step."
       ],
       "guide": "multifx"
     },
