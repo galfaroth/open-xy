@@ -210,6 +210,7 @@ export function createCatalogView({core, visuals, snapshots, modeFor, getKit, is
         card.append(node('p', feature.summary ?? ''));
         if (target.dataset.veffFeatures === 'full') for (const text of feature.help ?? []) card.append(node('p', text, 'veff-feature-help'));
         if (feature.note) card.append(node('p', feature.note, 'veff-feature-note'));
+        if (feature.tested) card.append(node('p', feature.tested, 'veff-feature-tested'));
         if (feature.guide) {
           const more = node('a', 'Read more →', 'veff-feature-more');
           more.href = '#/' + feature.guide; more.dataset.guide = feature.guide; card.append(more);

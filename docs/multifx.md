@@ -70,6 +70,6 @@ send words below 42 that stock leaves alone on a send: 0–15, 17, 18, 20–22,
 28–35, 37–39 (`sdk/include/opxy/multifx.hpp`). Step locks reach them all.
 A hook on the LFO's write (`8d50f412`) moves param 1–4 to the LFO slot's words.
 
-## Limits of this prototype
+## Limits
 
 - The page has not been tested on a device yet.

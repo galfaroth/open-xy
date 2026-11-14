@@ -974,6 +974,12 @@ export async function createBuilder({core = Core, wizardApi = Wizard, retained =
         const segment = node('div', undefined, 'memory-segment'); segment.style.width = a.size / memory.profile.reserved_bytes * 100 + '%';
         segment.style.background = a.color; segment.title = a.name + ': ' + kib(a.size); $('memory-map').append(segment);
         const legend = node('span', a.name + ' ' + kib(a.size)); legend.style.setProperty('--swatch', a.color); $('memory-legend').append(legend);
+        // Pointing at a share lights it and its legend line, and dims the rest.
+        const light = on => {
+          segment.classList.toggle('hot', on); legend.classList.toggle('hot', on);
+          $('memory-map').classList.toggle('pointing', on); $('memory-legend').classList.toggle('pointing', on);
+        };
+        for (const target of [segment, legend]) { target.onmouseenter = () => light(true); target.onmouseleave = () => light(false); }
       }
       $('room-value').textContent = kib(linked.sizes.allocated) + ' of ' + kib(core.moduleBytes(memory.profile)) + ' used';
       $('extension-memory').textContent = $('room-value').textContent;

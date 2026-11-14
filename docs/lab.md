@@ -67,7 +67,7 @@ from 99, so the newest sorts first.
 | Native playback for a sequence | `arranger_transport.cpp` (`sdk_lab_transport_*`) |
 | Mode flag | `arranger_project.cpp`, companion flags bit 2 (`arranger_storage.hpp`) |
 
-## Limits of this prototype
+## Limits
 
 - Not yet tested on a device.
 - The last note is replayed at velocity 100 and held one second, not as played.
