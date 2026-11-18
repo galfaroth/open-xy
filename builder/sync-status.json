@@ -4,7 +4,7 @@
   "upstream": "91b5e9642c8087ae45db093d3b081c67cb201726",
   "tested": "0.0.6",
   "pending": {
-    "commit": "151bc0385e6fa9ebd907c4bbee16cc9f33239238",
+    "commit": "4dcecb00eb53b69fe5624432861d1852f04e9b69",
     "version": "0.0.6",
     "reason": "conflict",
     "since": "2026-11-12",
